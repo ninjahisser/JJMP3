@@ -1,14 +1,11 @@
-# Python environment and caches
-app/.venv/
-app/.venv.bak/
-__pycache__/
-*.pyc
+# Desktop app (app/): dependencies and build output
+node_modules/
+out/
+release/
 
-# Your library: downloaded music, covers, settings, logs (personal, can be large)
-app/data/
-
-# Build output (rebuild with firmware/flash.ps1 and app/launcher/build_exe.ps1)
+# Firmware build output (rebuild with firmware/flash.ps1)
 build/
+!app/build/
 
 # Editors / OS
 .vscode/
