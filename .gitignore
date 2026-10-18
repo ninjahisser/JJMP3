@@ -3,6 +3,9 @@ node_modules/
 out/
 release/
 
+# Runnable app copy, made by app/build-local.ps1 (too big for git)
+/bin/
+
 # Firmware build output (rebuild with firmware/flash.ps1)
 build/
 !app/build/
