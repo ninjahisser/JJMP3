@@ -1,0 +1,17 @@
+# Python environment and caches
+app/.venv/
+app/.venv.bak/
+__pycache__/
+*.pyc
+
+# Your library: downloaded music, covers, settings, logs (personal, can be large)
+app/data/
+
+# Build output (rebuild with firmware/flash.ps1 and app/launcher/build_exe.ps1)
+build/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

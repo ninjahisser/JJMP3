@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pyserial
+pillow
+mutagen
+requests
+yt-dlp[default]
