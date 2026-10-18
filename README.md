@@ -2,9 +2,9 @@
 
 A pocket MP3 player built on an ESP32, with a desktop app that fills it with music.
 
-- **Player (ESP32):** plays MP3s from the SD card and streams them over **Bluetooth** to headphones or a speaker. The OLED shows a now-playing screen with dithered cover art. One button: click play/pause, double-click next, hold previous.
+- **Player (ESP32):** plays MP3s from the SD card and streams them over **Bluetooth** to headphones or a speaker. The OLED is a two-colour panel: the yellow top band (rows 0-15) is a status bar with the play state, time, Bluetooth/Wi-Fi/volume, and a slim bar while a song is being received; the blue area shows 48x48 dithered cover art, title, artist and progress. One button: click play/pause, double-click next, hold previous.
 - **Two modes:** the ESP32 doesn't have the RAM to run Bluetooth audio and Wi-Fi at the same time, so the board carries two firmwares. **Music mode** plays over Bluetooth. **Wi-Fi mode** syncs and takes control over the network. Switch from the app or triple-click the button; the player restarts in about 3 seconds. USB works in both modes.
-- **App (Windows, Electron):** paste a **YouTube or Spotify** link (song, album or playlist). The app downloads it, converts it, makes the artwork and sends it to the player over USB, or over Wi-Fi once the player is on your network. It also does playlists, playback control, a live mirror of the OLED, and Wi-Fi/Bluetooth setup.
+- **App (Windows, Electron):** paste a **YouTube or Spotify** link (song, album or playlist). The app downloads it, converts it, makes the artwork and sends it to the player over USB, or over Wi-Fi once the player is on your network. It also does playlists, playback control, a live mirror of the OLED, and Wi-Fi/Bluetooth setup. **Add songs** asks for a link and shows a preview (cover, title, artist, or the full track list) before anything downloads. The **JJMP3 | Computer** switch in the player bar moves playback between the player and this computer's speakers, at the same song and second.
 
 ## Wiring
 
@@ -56,5 +56,7 @@ This builds both firmwares (`-DJJ_WIFI=0` for music mode, `-DJJ_WIFI=1` for Wi-F
 - `app/src/main/`: `device.ts` (USB serial via serialport, or Wi-Fi HTTP), `library.ts`, `sync.ts` (keeps the card in step with the library), `importer.ts` (Spotify metadata, yt-dlp, ffmpeg), `artwork.ts` (600px covers and 64x64 dithered OLED art), `tools.ts` (finds or downloads yt-dlp and ffmpeg), `index.ts` (window, IPC, `jjmp3://cover/<id>` images).
 - `app/src/renderer/`: the React UI (pages Library, Playlists, Player; the live OLED mirror is `components/Oled.tsx`). There's no local web server: the UI talks to the main process over IPC.
 - Audio is stored as 44.1 kHz stereo 128 kbps MP3, about 1 MB per minute.
+- All heavy work happens on the computer (link lookup, download, conversion, artwork dithering, ASCII titles, durations); the player only decodes and plays.
+- If `library.json` ever loses songs whose files are still in `%APPDATA%\JJMP3\media`, the app restores them on start, named from the player's index; pasting the link again restores full details without downloading again.
 
 Only download music you have the right to use. Downloading from YouTube is against its terms of service.
