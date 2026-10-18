@@ -9,15 +9,16 @@ import type { Job } from '@shared/types'
 import { saveArtwork } from './artwork'
 import { Library } from './library'
 import { log } from './log'
-import { MEDIA_DIR, TMP_DIR } from './paths'
+import { COVER_DIR, MEDIA_DIR, TMP_DIR } from './paths'
 import { ensureTools, jsRuntime, run, tools } from './tools'
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36'
 const SPOTIFY_RE = /open\.spotify\.com\/(?:intl-[\w-]+\/)?(?:embed\/)?(track|album|playlist)\/([A-Za-z0-9]+)/
 const NOISE_RE = /\s*[([][^)\]]*(official|video|audio|lyrics?|visuali[sz]er|hd|4k|remaster(ed)?|mv|m\/v)[^)\]]*[)\]]/gi
 
-interface Item {
+export interface Item {
   key: string
+  thumb?: string | null // preview picture
   title: string
   artist: string
   duration: number
@@ -65,12 +66,12 @@ export async function resolve(url: string): Promise<[string | null, Item[]]> {
     const ent = await spotifyEntity(kind, id)
     if (kind === 'track') {
       const artist = (ent.artists || []).map((a: any) => a.name).join(', ')
-      return [null, [{ key: `sp:${id}`, title: ent.title, artist, duration: (ent.duration || 0) / 1000, cover: bestImage(ent), source: 'spotify', url: `https://open.spotify.com/track/${id}` }]]
+      return [null, [{ key: `sp:${id}`, title: ent.title, artist, duration: (ent.duration || 0) / 1000, cover: bestImage(ent), thumb: bestImage(ent), source: 'spotify', url: `https://open.spotify.com/track/${id}` }]]
     }
     const cover = kind === 'album' ? bestImage(ent) : null
     const items: Item[] = (ent.trackList || []).map((t: any) => {
       const tid = String(t.uri).split(':').pop()!
-      return { key: `sp:${tid}`, title: t.title, artist: t.subtitle || '', duration: (t.duration || 0) / 1000, cover, spotifyTrack: cover ? null : tid, source: 'spotify', url: `https://open.spotify.com/track/${tid}` }
+      return { key: `sp:${tid}`, title: t.title, artist: t.subtitle || '', duration: (t.duration || 0) / 1000, cover, thumb: cover, spotifyTrack: cover ? null : tid, source: 'spotify', url: `https://open.spotify.com/track/${tid}` }
     })
     return [ent.title || ent.name || null, items]
   }
@@ -81,13 +82,13 @@ export async function resolve(url: string): Promise<[string | null, Item[]]> {
       .filter((e: any) => e?.id)
       .map((e: any) => {
         const [artist, title] = cleanTitle(e.title, e.uploader || e.channel)
-        return { key: `yt:${e.id}`, title, artist, duration: e.duration || 0, source: 'youtube', url: e.url || `https://www.youtube.com/watch?v=${e.id}` }
+        return { key: `yt:${e.id}`, title, artist, duration: e.duration || 0, thumb: e.thumbnails?.at(-1)?.url || `https://i.ytimg.com/vi/${e.id}/mqdefault.jpg`, source: 'youtube', url: e.url || `https://www.youtube.com/watch?v=${e.id}` }
       })
     return [info.title || null, items]
   }
   let [artist, title] = cleanTitle(info.track || info.title, info.artist || info.uploader || info.channel)
   if (info.track && info.artist) [artist, title] = [info.artist, info.track]
-  return [null, [{ key: `yt:${info.id}`, title, artist, duration: info.duration || 0, source: 'youtube', url: info.webpage_url || url }]]
+  return [null, [{ key: `yt:${info.id}`, title, artist, duration: info.duration || 0, thumb: info.thumbnail || null, source: 'youtube', url: info.webpage_url || url }]]
 }
 
 async function matchOnYouTube(item: Item): Promise<string> {
@@ -137,6 +138,19 @@ export class Importer {
     return job
   }
 
+  /** Looks a link up without downloading anything: what would be added. */
+  async preview(url: string): Promise<{ name: string | null; items: (Item & { id: string; inLibrary: boolean })[] }> {
+    await ensureTools()
+    if (!tools.ytdlp) throw new Error('yt-dlp is missing')
+    const [name, items] = await resolve(url)
+    return { name, items: items.map((it) => ({ ...it, id: trackId(it.key), inLibrary: !!this.library.get(trackId(it.key)) && !this.library.get(trackId(it.key))?.recovered })) }
+  }
+
+  /** Adds songs from a preview. A collection of several becomes a playlist too. */
+  addItems(items: Item[], name: string | null): void {
+    void this.enqueue(name, items, null)
+  }
+
   private async resolveJob(job: Job, playlistId: string | null): Promise<void> {
     let name: string | null
     let items: Item[]
@@ -153,12 +167,32 @@ export class Importer {
       return this.onChange()
     }
     this.jobs = this.jobs.filter((j) => j !== job)
+    await this.enqueue(name, items, playlistId)
+  }
+
+  private async enqueue(name: string | null, items: Item[], playlistId: string | null): Promise<void> {
+    await ensureTools()
     if (name && !playlistId && items.length > 1) playlistId = this.library.createPlaylist(name).id
     const ids: string[] = []
     for (const item of items) {
       const id = trackId(item.key)
       ids.push(id)
-      if (this.library.has(id)) {
+      const existing = this.library.get(id)
+      const file = join(MEDIA_DIR, `${id}.mp3`)
+      if ((existing?.recovered || !existing) && existsSync(file)) {
+        // the audio is already here: put the details back instead of downloading again
+        const fields = {
+          title: item.title, artist: item.artist, source: item.source, url: item.url,
+          cover: existsSync(join(COVER_DIR, `${id}.jpg`)), recovered: false,
+          duration: Math.round(statSync(file).size / 16000), size: statSync(file).size
+        }
+        if (existing) this.library.update(id, fields)
+        else this.library.add({ id, ...fields })
+        this.onTrackAdded(id)
+        this.job({ url: item.url, title: item.title, artist: item.artist, state: 'done', progress: 1, trackId: id })
+        continue
+      }
+      if (existing) {
         this.job({ url: item.url, title: item.title, artist: item.artist, state: 'skipped', error: 'Already in your library', trackId: id })
         continue
       }

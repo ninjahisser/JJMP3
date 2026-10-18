@@ -29,6 +29,7 @@ export class Sync {
   progress = new Map<string, number>() // id -> 0..1 while uploading
   error = ''
   onChange: () => void = () => {}
+  onLoaded: () => void = () => {}
   private removals = new Set<string>()
   private indexDirty = false
   private running = false
@@ -67,6 +68,7 @@ export class Sync {
     }
     this.onDevice = parseIndex(text)
     this.loaded = true
+    this.onLoaded()
     this.onChange()
     this.kick()
   }
@@ -103,6 +105,13 @@ export class Sync {
     }
     if (changed) await this.writeIndex()
 
+    // artwork redone on this computer (e.g. a new format) goes out to songs already on the card
+    const pending = this.library.setting<string[]>('artPending', [])
+    for (const id of pending) {
+      const art = join(ART_DIR, `${id}.bin`)
+      if (this.onDevice.has(id) && existsSync(art)) await this.device.put(`/art/${id}.bin`, readFileSync(art))
+      this.library.setSetting('artPending', this.library.setting<string[]>('artPending', []).filter((x) => x !== id))
+    }
     for (const t of this.library.tracks()) {
       const mp3 = join(MEDIA_DIR, `${t.id}.mp3`)
       if (this.onDevice.has(t.id) || !existsSync(mp3)) continue

@@ -10,6 +10,7 @@ export interface Track {
   cover?: boolean
   size?: number
   added?: number
+  recovered?: boolean // details came back from the player's index or are missing; pasting the link again restores them
   // view-only fields, filled in by the main process
   onDevice?: boolean
   uploading?: number | null

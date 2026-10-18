@@ -136,6 +136,7 @@ function Headphones() {
 
 function Wifi() {
   const st = useStore((s) => s.snap.device.status)
+  const toast = useStore((s) => s.toast)
   const w = st.wifi
   const wifiMode = st.mode === 'wifi'
   const [nets, setNets] = useState<Net[] | null>(null)
@@ -153,8 +154,10 @@ function Wifi() {
       <>On <b>{w.ssid}</b> · <span className="mono">{w.ip}</span></>
     ) : w?.state === 'connecting' ? (
       <>Trying to join <b>{w.ssid}</b>…</>
+    ) : w?.state === 'failed' ? (
+      <span className="err-text">Couldn't join <b>{w.ssid}</b>. Check the network name and password.</span>
     ) : w?.ssid ? (
-      <>Saved network: <b>{w.ssid}</b>. Used in Wi-Fi mode.</>
+      <>Saved network: <b>{w.ssid}</b>. The player joins it in Wi-Fi mode.</>
     ) : (
       'Join Wi-Fi to add music and control the player without a cable.'
     )
@@ -176,10 +179,13 @@ function Wifi() {
               'Choose network'
             )}
           </Button>
+        ) : w?.ssid ? (
+          <>
+            <Button onClick={async () => { if (await call('mode:switch')) toast('Switching to Wi-Fi mode…') }}>Switch to Wi-Fi mode</Button>
+            <Button variant="ghost" onClick={() => wifiDialog(w.ssid, true, true)}>Change network</Button>
+          </>
         ) : (
-          <Button variant={w?.ssid ? 'ghost' : undefined} onClick={() => wifiDialog(w?.ssid || '', true, true)}>
-            {w?.ssid ? 'Change network' : 'Set up Wi-Fi'}
-          </Button>
+          <Button onClick={() => wifiDialog('', true, true)}>Set up Wi-Fi</Button>
         )}
         {w?.ssid && (
           <Button variant="danger" onClick={() => void call('wifi:forget')}>

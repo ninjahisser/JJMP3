@@ -5,6 +5,7 @@ import { play, TrackRow } from '../components/TrackRow'
 import { newPlaylistDialog, pickSongsDialog } from '../components/dialogs'
 import { Button, Empty, IconButton } from '../components/ui'
 import { call, coverUrl, fmtLong, plural, useStore } from '../store'
+import { playList } from '../playback'
 
 function Mosaic({ p }: { p: Playlist }) {
   const tracks = useStore((s) => s.snap.tracks)
@@ -81,10 +82,7 @@ export function PlaylistPage({ id }: { id: string }) {
 
   const tracks = p.tracks.map((tid) => all.find((t) => t.id === tid)).filter(Boolean) as typeof all
   const total = tracks.reduce((a, t) => a + (t.duration || 0), 0)
-  const start = async (shuffle: boolean) => {
-    const first = shuffle ? tracks[Math.floor(Math.random() * tracks.length)] : tracks[0]
-    await call('play', { trackId: first.id, playlistId: p.id, shuffle })
-  }
+  const start = (shuffle: boolean) => playList(p.id, shuffle)
   const rename = () => {
     const name = titleRef.current?.textContent?.trim()
     if (name && name !== p.name) void call('playlist:update', p.id, { name })

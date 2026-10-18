@@ -22,7 +22,9 @@ const PATHS: Record<string, string> = {
   list: '<path d="M4 6h16M4 12h10M4 18h7M17 15v6M14 18h6"/>',
   lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   power: '<path d="M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0"/>',
-  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  player: '<rect x="7" y="3" width="10" height="18" rx="2.5"/><rect x="9.5" y="5.5" width="5" height="4" rx=".6"/><circle cx="12" cy="15" r="2.6"/>',
+  laptop: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/>'
 }
 
 export function Icon({ name, size = 18, className = '' }: { name: string; size?: number; className?: string }) {

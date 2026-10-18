@@ -13,7 +13,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "electron-builder failed" }
 } finally { Pop-Location }
 
-Get-Process JJMP3 -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$bin*" } | Stop-Process -Force
-robocopy (Join-Path $tmp "win-unpacked") $bin /MIR /MT:16 /NFL /NDL /NJH /NP | Out-Null
+Get-Process JJMP3 -ErrorAction SilentlyContinue | Stop-Process -Force  # any running copy locks files in bin
+robocopy (Join-Path $tmp "win-unpacked") $bin /MIR /MT:16 /R:2 /W:1 /NFL /NDL /NJH /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "copying to bin failed" }
 Write-Host "Updated $bin\JJMP3.exe"

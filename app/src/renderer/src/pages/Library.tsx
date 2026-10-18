@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import type { Job } from '@shared/types'
 import { Icon } from '../components/Icon'
 import { TrackRow } from '../components/TrackRow'
 import { Button, Dot, Empty } from '../components/ui'
+import { addSongsDialog } from '../components/dialogs'
 import { call, fmtLong, plural, useStore } from '../store'
 
 const LABELS: Record<string, string> = {
@@ -34,20 +34,9 @@ export function Library() {
   const { tracks, jobs } = useStore((s) => s.snap)
   const filter = useStore((s) => s.filter)
   const setFilter = useStore((s) => s.setFilter)
-  const toast = useStore((s) => s.toast)
-  const [url, setUrl] = useState('')
   const total = tracks.reduce((a, t) => a + (t.duration || 0), 0)
   const q = filter.toLowerCase()
   const list = tracks.filter((t) => !q || `${t.title} ${t.artist}`.toLowerCase().includes(q))
-
-  const add = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!url.trim()) return
-    if (await call('import', url.trim())) {
-      setUrl('')
-      toast('Looking up that link…')
-    }
-  }
 
   return (
     <>
@@ -60,19 +49,9 @@ export function Library() {
             {total ? ` · ${fmtLong(total)}` : ''}
           </div>
         </div>
-      </div>
-      <form className="import" onSubmit={add}>
-        <Icon name="link" />
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste a YouTube or Spotify link…" autoComplete="off" spellCheck={false} />
-        <Button type="submit" icon="plus">
-          Add
+        <Button icon="plus" onClick={addSongsDialog}>
+          Add songs
         </Button>
-      </form>
-      <div className="import-hint">
-        <span>
-          <b>Songs, albums & playlists</b> work from both.
-        </span>
-        <span>Albums and playlists become a playlist here too.</span>
       </div>
       {jobs.length > 0 && (
         <div className="jobs">
@@ -103,7 +82,7 @@ export function Library() {
           </div>
         </>
       ) : (
-        <Empty title="A blank page.">Paste a link above. Your first song will be on the player in about a minute.</Empty>
+        <Empty title="A blank page.">Add a YouTube or Spotify link and your first song is on the player in about a minute.<div className="actions center"><Button icon="plus" onClick={addSongsDialog}>Add songs</Button></div></Empty>
       )}
     </>
   )

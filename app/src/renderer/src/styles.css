@@ -24,7 +24,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+html, body, #root { margin: 0; height: 100%; }
 body {
   background: var(--paper);
   color: var(--ink);
@@ -56,15 +56,10 @@ main { overflow-y: auto; padding: 56px 56px 64px; }
 .brand h1 { font: italic 400 38px/1 var(--serif); margin: 0; letter-spacing: -.01em; }
 .brand span { color: var(--ink-3); }
 
-.module {
-  background: linear-gradient(160deg, #1d3557, #142640); border-radius: 10px; padding: 12px 12px 10px;
-  box-shadow: var(--shadow), inset 0 0 0 1px rgba(255, 255, 255, .06);
-}
-.module .glass { background: #05070a; border-radius: 3px; padding: 7px; aspect-ratio: 128 / 64; position: relative; overflow: hidden; }
-.module canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; filter: drop-shadow(0 0 2px rgba(190, 230, 255, .55)); opacity: .96; }
-.module .glass .off { position: absolute; inset: 0; display: grid; place-items: center; color: #4b5a6b; font: 11px var(--mono); text-align: center; padding: 10px; }
-.module .pins { display: flex; justify-content: center; gap: 7px; margin-top: 8px; }
-.module .pins i { width: 5px; height: 5px; border-radius: 50%; background: #c9a64a; box-shadow: inset 0 -1px 0 rgba(0,0,0,.35); }
+/* the OLED itself: yellow top band (rows 0-15), blue below, like the real two-colour panel */
+.oled { background: #050608; border-radius: 4px; padding: 6px; aspect-ratio: 128 / 64; position: relative; box-shadow: var(--shadow); }
+.oled canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, .35)); }
+.oled .off { position: absolute; inset: 0; display: grid; place-items: center; color: #4b4f55; font: 11px var(--mono); }
 
 .conn { display: flex; flex-direction: column; gap: 9px; }
 .conn .row { display: flex; align-items: center; gap: 10px; color: var(--ink-2); }
@@ -281,3 +276,40 @@ label.pick { margin: 0; color: var(--ink); cursor: pointer; }
 .track .icon-btn { width: 30px; height: 30px; }
 .icon-btn { position: relative; }
 .badge { position: absolute; right: 3px; top: 4px; margin: 0; transform: none; background: var(--sheet); line-height: 1.1; }
+
+/* ---------- activity (downloads and uploads, visible from every page) ---------- */
+.top-progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--ink); z-index: 6; transition: width .4s ease; }
+.top-progress.indeterminate { width: 30% !important; animation: slide 1.4s ease-in-out infinite; }
+@keyframes slide { from { left: -30%; } to { left: 100%; } }
+.activity { margin-top: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); padding: 10px 12px 12px; box-shadow: var(--shadow); animation: rise .25s ease both; }
+.activity .what { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--ink-2); }
+.activity .what span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.activity .name { font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 2px 0 8px; }
+.activity .line { height: 2px; background: var(--rule); border-radius: 2px; overflow: hidden; position: relative; }
+.activity .line i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); transition: width .4s ease; }
+.activity .line.indeterminate i { width: 30%; animation: slide 1.4s ease-in-out infinite; }
+.activity .more { font-size: 11.5px; color: var(--ink-3); margin-top: 7px; }
+.activity + .side-foot { display: none; }
+.err-text { color: var(--accent); }
+
+/* ---------- output switch + volume readout ---------- */
+.output { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; margin-right: 10px; background: var(--paper); }
+.output button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--ink-3); transition: background .15s, color .15s; }
+.output button.on { background: var(--ink); color: var(--paper); }
+.output button:not(.on):hover { color: var(--ink); }
+.output button:disabled { opacity: .4; }
+.vol { position: relative; display: inline-flex; align-items: center; }
+.vol-tip { position: absolute; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--paper); border-radius: 4px; padding: 2px 6px; font-size: 11px; pointer-events: none; opacity: 0; transition: opacity .12s; white-space: nowrap; }
+.vol.dragging .vol-tip, .vol:hover .vol-tip { opacity: 1; }
+.vol:hover:not(.dragging) .vol-tip { opacity: .0; }
+.player { grid-template-columns: minmax(200px, 1fr) minmax(300px, 520px) minmax(300px, 1fr); }
+/* ---------- add songs ---------- */
+dialog:has(.add-preview) { width: min(640px, 92vw); }
+.pv-single { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; }
+.pv-cover { width: 150px; height: 150px; border-radius: 4px; background: var(--paper-2) center / cover; box-shadow: 0 2px 6px rgba(0,0,0,.15), 0 0 0 1px rgba(0,0,0,.04); }
+.pv-title { font: 400 30px/1.1 var(--serif); margin-bottom: 4px; }
+.pv-artist { color: var(--ink-2); margin-bottom: 10px; }
+.pv-sum { margin: -8px 0 4px; }
+.pv-list { max-height: 340px; }
+.muted-row { opacity: .5; }
+.actions.center { justify-content: center; margin-top: 18px; }

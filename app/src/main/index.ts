@@ -1,20 +1,29 @@
 import { BrowserWindow, Menu, app, ipcMain, net, protocol, shell } from 'electron'
-import { existsSync } from 'node:fs'
+import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs'
+import { Readable } from 'node:stream'
 import { createServer } from 'node:http'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { EVENT_CHANNEL, type Snapshot } from '@shared/types'
 import { Device } from './device'
-import { Importer } from './importer'
+import { Importer, type Item } from './importer'
 import { Library } from './library'
 import { log } from './log'
-import { COVER_DIR } from './paths'
+import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
+import { makeOledArt } from './artwork'
 import { Sync } from './sync'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
 
-protocol.registerSchemesAsPrivileged([{ scheme: 'jjmp3', privileges: { standard: true, secure: true, supportFetchAPI: true } }])
+protocol.registerSchemesAsPrivileged([{ scheme: 'jjmp3', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }])
 
-if (!app.requestSingleInstanceLock()) app.quit()
+// Every copy (installed, bin\, dev) must share one lock and one data folder: two instances
+// writing library.json at once lose songs. The lock lives in userData, so pin both.
+app.setName('JJMP3')
+app.setPath('userData', DATA_DIR)
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+  process.exit(0)
+}
 
 const library = new Library()
 const device = new Device(
@@ -22,7 +31,7 @@ const device = new Device(
   (h) => library.setSetting('wifiHost', h)
 )
 const sync = new Sync(library, device)
-const importer = new Importer(library, () => sync.kick())
+const importer = new Importer(library, () => sync.kick(true))
 let win: BrowserWindow | null = null
 
 function snapshot(): Snapshot {
@@ -57,6 +66,55 @@ async function deviceCall(cmd: string, params: Record<string, unknown> = {}, tim
   return r
 }
 
+/** OLED art is 48x48 (it fits the blue area). Redo any older 64x64 art from the saved cover. */
+async function migrateArt(): Promise<void> {
+  const stale = library.tracks().filter((t) => existsSync(join(ART_DIR, `${t.id}.bin`)) && statSync(join(ART_DIR, `${t.id}.bin`)).size !== 288)
+  if (!stale.length) return
+  await ensureTools()
+  if (!tools.ffmpeg) return
+  const redone: string[] = []
+  for (const t of stale) {
+    const cover = join(COVER_DIR, `${t.id}.jpg`)
+    if (!existsSync(cover)) continue
+    try {
+      await makeOledArt(t.id, cover)
+      redone.push(t.id)
+    } catch (e) {
+      log('art migration failed for', t.id, e)
+    }
+  }
+  library.setSetting('artPending', [...new Set([...library.setting<string[]>('artPending', []), ...redone])])
+  library.setSetting('artVersion', 2)
+  log('art migrated to 48x48:', redone.length)
+  sync.kick()
+}
+
+/** Songs whose files exist but that the library lost track of come back, named from the player's index when possible. */
+function recoverOrphans(): void {
+  let n = 0
+  for (const f of readdirSync(MEDIA_DIR)) {
+    const id = f.replace(/\.mp3$/, '')
+    if (!f.endsWith('.mp3') || !/^[a-f0-9]{10}$/.test(id) || library.has(id)) continue
+    const meta = sync.onDevice.get(id)
+    library.add({
+      id,
+      title: meta?.title || 'Untitled',
+      artist: meta?.artist || '',
+      duration: meta?.duration || Math.round(statSync(join(MEDIA_DIR, f)).size / 16000),
+      cover: existsSync(join(COVER_DIR, `${id}.jpg`)),
+      recovered: true,
+      added: statSync(join(MEDIA_DIR, f)).mtimeMs / 1000
+    })
+    n++
+  }
+  // fill in names for earlier recoveries once the player's index is known
+  for (const t of library.tracks()) {
+    const meta = sync.onDevice.get(t.id)
+    if (t.recovered && t.title === 'Untitled' && meta) library.update(t.id, { title: meta.title, artist: meta.artist, duration: meta.duration })
+  }
+  if (n) log('recovered', n, 'songs from files on disk')
+}
+
 const CONTROLS = new Set(['toggle', 'play', 'pause', 'next', 'prev', 'seek', 'vol', 'mode'])
 
 function registerIpc(): void {
@@ -69,6 +127,12 @@ function registerIpc(): void {
     if (!/^https?:\/\//.test(url)) throw new Error('Paste a full YouTube or Spotify link.')
     return importer.submit(url, playlistId)
   })
+  h('preview', (url: string) => {
+    url = String(url || '').trim()
+    if (!/^https?:\/\//.test(url)) throw new Error('Paste a full YouTube or Spotify link.')
+    return importer.preview(url)
+  })
+  h('import:items', (items: Item[], name: string | null) => importer.addItems(items, name))
   h('jobs:clear', () => importer.clearFinished())
   h('tools:install', () => ensureTools())
 
@@ -89,8 +153,8 @@ function registerIpc(): void {
   h('playlist:update', (id: string, fields: { name?: string; tracks?: string[] }) => library.updatePlaylist(id, fields))
   h('playlist:remove', (id: string) => library.deletePlaylist(id))
 
-  h('play', async ({ trackId, playlistId, shuffle }: { trackId?: string; playlistId?: string; shuffle?: boolean }) => {
-    let ids = playlistId ? library.playlist(playlistId)?.tracks ?? [] : [...library.tracks(), ...sync.deviceOnly()].map((t) => t.id)
+  h('play', async ({ trackId, playlistId, shuffle, queue }: { trackId?: string; playlistId?: string; shuffle?: boolean; queue?: string[] }) => {
+    let ids = queue ?? (playlistId ? library.playlist(playlistId)?.tracks ?? [] : [...library.tracks(), ...sync.deviceOnly()].map((t) => t.id))
     ids = ids.filter((id) => sync.onDevice.has(id))
     if (!ids.length) throw new Error('Nothing on the player yet. Wait for the upload to finish.')
     if (shuffle !== undefined) await deviceCall('mode', { shuffle })
@@ -160,18 +224,36 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null)
+  // jjmp3://cover/<id> artwork, jjmp3://media/<id> audio (with byte ranges, so seeking works)
   protocol.handle('jjmp3', (req) => {
     const { host, pathname } = new URL(req.url)
     const id = pathname.replace(/^\//, '')
-    const file = host === 'cover' && /^[a-f0-9]{6,40}$/.test(id) ? join(COVER_DIR, `${id}.jpg`) : ''
-    if (!file || !existsSync(file)) return new Response('not found', { status: 404 })
-    return net.fetch(pathToFileURL(file).toString())
+    if (!/^[a-f0-9]{6,40}$/.test(id)) return new Response('not found', { status: 404 })
+    if (host === 'cover') {
+      const file = join(COVER_DIR, `${id}.jpg`)
+      return existsSync(file) ? net.fetch(pathToFileURL(file).toString()) : new Response('not found', { status: 404 })
+    }
+    if (host === 'media') {
+      const file = join(MEDIA_DIR, `${id}.mp3`)
+      if (!existsSync(file)) return new Response('not found', { status: 404 })
+      const size = statSync(file).size
+      const m = /bytes=(\d*)-(\d*)/.exec(req.headers.get('range') || '')
+      const start = m && m[1] ? Number(m[1]) : 0
+      const end = m && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1
+      const body = Readable.toWeb(createReadStream(file, { start, end })) as ReadableStream
+      const headers = { 'Content-Type': 'audio/mpeg', 'Accept-Ranges': 'bytes', 'Content-Length': String(end - start + 1), ...(m && { 'Content-Range': `bytes ${start}-${end}/${size}` }) }
+      return new Response(body, { status: m ? 206 : 200, headers })
+    }
+    return new Response('not found', { status: 404 })
   })
   registerIpc()
   createWindow()
   detectTools()
   updateYtDlpLater()
   ensureTools().catch((e) => log('tool setup failed:', e))
+  recoverOrphans()
+  sync.onLoaded = recoverOrphans
+  migrateArt().catch((e) => log('art migration failed:', e))
   log('JJMP3 started', app.getVersion())
 })
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f2ea"/>
+      <stop offset="1" stop-color="#ebe5d8"/>
+    </linearGradient>
+  </defs>
+  <!-- paper tile -->
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#paper)"/>
+  <rect x="8.75" y="8.75" width="238.5" height="238.5" rx="53.25" fill="none" stroke="#d6cebe" stroke-width="1.5"/>
+  <!-- the player, in ink -->
+  <rect x="70" y="40" width="116" height="176" rx="22" fill="#1b1a17"/>
+  <!-- two-colour screen: yellow band over blue -->
+  <rect x="84" y="56" width="88" height="56" rx="5" fill="#0b0c0e"/>
+  <rect x="90" y="62" width="76" height="9" rx="2" fill="#ffd640"/>
+  <rect x="90" y="77" width="26" height="28" rx="2" fill="#78ceff"/>
+  <rect x="122" y="79" width="44" height="6" rx="2" fill="#78ceff"/>
+  <rect x="122" y="91" width="30" height="5" rx="2" fill="#78ceff" opacity=".7"/>
+  <!-- the button -->
+  <circle cx="128" cy="164" r="30" fill="none" stroke="#f1ede4" stroke-width="7"/>
+  <circle cx="128" cy="164" r="10" fill="#c4472b"/>
+</svg>

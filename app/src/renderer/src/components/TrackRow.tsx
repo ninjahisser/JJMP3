@@ -3,6 +3,7 @@ import { Icon } from './Icon'
 import { IconButton } from './ui'
 import { call, coverUrl, fmt, useStore } from '../store'
 import { editTrackDialog, newPlaylistDialog } from './dialogs'
+import { playTrack, usePlayback } from '../playback'
 
 export function Cover({ track, size }: { track?: Track; size?: 'lg' }) {
   const url = coverUrl(track)
@@ -30,7 +31,7 @@ function State({ t }: { t: Track }) {
 }
 
 export function play(trackId: string, playlistId?: string) {
-  void call('play', { trackId, playlistId })
+  playTrack(trackId, playlistId)
 }
 
 export function trackMenu(t: Track, anchor: Element) {
@@ -81,7 +82,10 @@ export function TrackRow({
   dragProps?: React.HTMLAttributes<HTMLDivElement>
 }) {
   const st = useStore((s) => s.snap.device.status)
-  const playing = st.track === t.id
+  const pb = usePlayback()
+  const onComputer = pb.output === 'computer'
+  const playing = onComputer ? pb.trackId === t.id : st.track === t.id
+  const audible = onComputer ? pb.playing : st.state === 'playing'
   return (
     <div {...dragProps} className={`track ${playing ? 'playing' : ''} ${dragProps?.className || ''}`} onDoubleClick={() => play(t.id, playlistId)} draggable={draggable}>
       <div className="n">
@@ -90,7 +94,7 @@ export function TrackRow({
             <Icon name="grip" />
           </span>
         ) : playing ? (
-          <span className={`eq ${st.state === 'playing' ? '' : 'paused'}`}>
+          <span className={`eq ${audible ? '' : 'paused'}`}>
             <i />
             <i />
             <i />
@@ -110,7 +114,7 @@ export function TrackRow({
       <Cover track={t} />
       <div className="meta">
         <div className="title">{t.title}</div>
-        <div className="artist">{t.artist || 'Unknown artist'}</div>
+        <div className="artist">{t.recovered && t.title === 'Untitled' ? 'Details lost. Paste its link again to restore them.' : t.artist || 'Unknown artist'}</div>
       </div>
       <State t={t} />
       <div className="dur mono">{fmt(t.duration)}</div>

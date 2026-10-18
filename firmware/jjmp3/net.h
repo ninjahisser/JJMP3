@@ -17,6 +17,7 @@ static WebServer server(80);
 static bool serverUp = false;
 static bool wasConnected = false;
 static String ssid;
+static uint32_t connectStart = 0;
 
 static void connect() {
   String pass = prefs.getString("wifi_pass", "");
@@ -26,6 +27,7 @@ static void connect() {
   WiFi.setHostname(HOSTNAME);
   WiFi.setSleep(true);  // required when sharing the radio with Bluetooth
   WiFi.begin(ssid.c_str(), pass.c_str());
+  connectStart = millis();
 }
 
 static void begin() { connect(); }
@@ -50,7 +52,11 @@ static bool connected() { return WiFi.status() == WL_CONNECTED; }
 
 static const char *stateName() {
   if (!ssid.length()) return "off";
-  return connected() ? "connected" : "connecting";
+  if (connected()) return "connected";
+  wl_status_t st = WiFi.status();
+  // wrong password / unknown network, or simply no luck after 20 s
+  if (st == WL_CONNECT_FAILED || st == WL_NO_SSID_AVAIL || millis() - connectStart > 20000) return "failed";
+  return "connecting";
 }
 
 static String ip() { return connected() ? WiFi.localIP().toString() : String(""); }

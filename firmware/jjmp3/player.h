@@ -31,7 +31,8 @@ static std::vector<String> queue;
 static int qpos = 0;
 static Track current;
 static bool hasArt = false;
-static uint8_t art[512];  // 64x64 1-bit, row-major, MSB first
+static uint8_t art[512];  // 1-bit, row-major, MSB first: 48x48 (288 bytes) or 64x64 (512)
+static int artSize = 48;
 
 static uint8_t volume = 60;  // 0..100
 static RepeatMode repeat = REPEAT_ALL;
@@ -106,7 +107,9 @@ static bool loadTrack(int index) {
   eof = false;
   File a = SD.open(Library::artPath(id), FILE_READ);
   if (a) {
-    hasArt = a.read(art, sizeof(art)) == sizeof(art);
+    int n = a.read(art, sizeof(art));
+    hasArt = n == 288 || n == 512;
+    artSize = n == 288 ? 48 : 64;
     a.close();
   }
   prefs.putInt("qpos", qpos);

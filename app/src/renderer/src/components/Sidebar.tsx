@@ -1,5 +1,6 @@
 import { Icon } from './Icon'
 import { Oled } from './Oled'
+import { Activity } from './Activity'
 import { Dot } from './ui'
 import { plural, useStore, type Page } from '../store'
 
@@ -16,7 +17,7 @@ function Nav({ label, page, count }: { label: string; page: Page; count?: number
 }
 
 export function Sidebar() {
-  const { device, tracks, playlists, tools } = useStore((s) => s.snap)
+  const { device, tracks, playlists } = useStore((s) => s.snap)
   const st = device.status
   const sending = tracks.filter((t) => t.uploading != null).length
   const onPlayer = tracks.filter((t) => t.onDevice || t.deviceOnly).length
@@ -77,20 +78,13 @@ export function Sidebar() {
             <div className="row muted">Plug the player in with USB, or keep it on the same Wi-Fi.</div>
           </>
         )}
-        {tools.busy && (
-          <div className="row">
-            <Icon name="download" />
-            <span>
-              <Dot kind="busy" /> {tools.busy}
-            </span>
-          </div>
-        )}
       </div>
       <nav>
         <Nav label="Library" page={{ name: 'library' }} count={tracks.length} />
         <Nav label="Playlists" page={{ name: 'playlists' }} count={playlists.length} />
         <Nav label="Player" page={{ name: 'player' }} />
       </nav>
+      <Activity />
       <div className="side-foot">
         Paste a link, it lands on the player.
         <br />

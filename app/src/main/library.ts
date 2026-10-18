@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { Playlist, Track } from '@shared/types'
@@ -23,16 +23,37 @@ export function deviceText(s: string): string {
 /** Local music library: track metadata, playlists and settings in one JSON file. */
 export class Library {
   private data: LibraryData = { tracks: {}, order: [], playlists: [], settings: {} }
+  private diskTime = 0 // mtime of library.json as we last read or wrote it
+  private dropped = new Set<string>() // removed in this session, so a merge doesn't bring them back
   onChange: () => void = () => {}
 
   constructor() {
-    if (existsSync(LIBRARY_FILE)) Object.assign(this.data, JSON.parse(readFileSync(LIBRARY_FILE, 'utf-8')))
+    if (existsSync(LIBRARY_FILE)) {
+      Object.assign(this.data, JSON.parse(readFileSync(LIBRARY_FILE, 'utf-8')))
+      this.diskTime = statSync(LIBRARY_FILE).mtimeMs
+    }
+  }
+
+  /** If something else wrote library.json since we read it, keep its songs and playlists too. */
+  private mergeFromDisk(): void {
+    if (!existsSync(LIBRARY_FILE) || statSync(LIBRARY_FILE).mtimeMs === this.diskTime) return
+    try {
+      const disk: LibraryData = JSON.parse(readFileSync(LIBRARY_FILE, 'utf-8'))
+      for (const [id, t] of Object.entries(disk.tracks || {})) if (!(id in this.data.tracks) && !this.dropped.has(id)) this.data.tracks[id] = t
+      const extra = (disk.order || []).filter((id) => !this.data.order.includes(id) && id in this.data.tracks)
+      this.data.order = [...extra, ...this.data.order]
+      for (const p of disk.playlists || []) if (!this.data.playlists.some((q) => q.id === p.id)) this.data.playlists.push(p)
+    } catch {
+      // unreadable: ours wins
+    }
   }
 
   private save(): void {
+    this.mergeFromDisk()
     const tmp = LIBRARY_FILE + '.tmp'
     writeFileSync(tmp, JSON.stringify(this.data, null, 1))
     renameSync(tmp, LIBRARY_FILE)
+    this.diskTime = statSync(LIBRARY_FILE).mtimeMs
     this.onChange()
   }
 
@@ -65,6 +86,7 @@ export class Library {
   }
 
   drop(id: string): void {
+    this.dropped.add(id)
     delete this.data.tracks[id]
     this.data.order = this.data.order.filter((x) => x !== id)
     for (const p of this.data.playlists) p.tracks = p.tracks.filter((x) => x !== id)

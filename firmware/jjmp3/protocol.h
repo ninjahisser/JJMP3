@@ -218,12 +218,14 @@ static void serialPut(int id, const String &path, uint32_t size) {
       } else if (millis() - lastByte > 5000) {
         f.close();
         SD.remove(tmp);
+        UI::doneReceiving();
         return replyError(id, "timeout");
       }
     }
     if (f.write(buf, want) != want) {
       f.close();
       SD.remove(tmp);
+      UI::doneReceiving();
       return replyError(id, "write failed (card full?)");
     }
     got += want;
@@ -236,6 +238,7 @@ static void serialPut(int id, const String &path, uint32_t size) {
   f.close();
   SD.remove(path);
   SD.rename(tmp, path);
+  UI::doneReceiving();
   Serial.printf("{\"id\":%d,\"ok\":true,\"done\":true,\"size\":%lu}\n", id, (unsigned long)got);
   if (resume) Player::play();
 }
@@ -344,8 +347,10 @@ static void httpRoutes() {
             SD.remove(path);
             SD.rename(tmp, path);
           }
+          UI::doneReceiving();
           if (httpResume) Player::play();
         } else if (up.status == UPLOAD_FILE_ABORTED) {
+          UI::doneReceiving();
           if (httpUploadFile) httpUploadFile.close();
           SD.remove(tmp);
         }
