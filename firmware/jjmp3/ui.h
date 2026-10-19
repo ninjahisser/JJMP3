@@ -8,8 +8,8 @@
 #include "player.h"
 #include "bt.h"
 
-// 128x64 two-colour OLED: rows 0-15 glow yellow, rows 16-63 blue.
-// The yellow band is the status bar (icons, time, transfer progress); the blue area holds the content.
+// Drawing on the 128x64 two-colour OLED: rows 0-15 glow yellow (the status band),
+// rows 16-63 blue (the screen's content). What to show is decided by os.h.
 namespace UI {
 
 static Adafruit_SSD1306 oled(128, 64, &Wire, -1);
@@ -19,8 +19,10 @@ static uint32_t toastUntil = 0;
 static uint32_t lastDraw = 0;
 static bool dirty = true;
 static uint32_t rxDone = 0, rxTotal = 0, rxAt = 0;  // incoming file transfer
+static void (*redrawHook)() = nullptr;           // set by the OS: draws the current screen now
 
 static const int BAND = 16;  // height of the yellow band
+static const int ROW_H = 12; // list rows in the blue area: 4 visible
 static const uint8_t ICON_WIFI[] PROGMEM = {0x7C, 0x82, 0x38, 0x44, 0x10};
 
 static void centerText(const String &s, int y, int size = 1) {
@@ -58,7 +60,7 @@ static String fmtTime(uint32_t s) {
   return b;
 }
 
-// Text in a horizontal window, scrolling when it doesn't fit
+/** Text in a window [x, x+w), scrolling when it doesn't fit. Callers clear what's left of x afterwards. */
 static void marquee(const String &text, int x, int y, int w) {
   int tw = text.length() * 6;
   int off = 0;
@@ -100,38 +102,61 @@ static void iconVolume(int x, int y) {
 }
 
 static bool receiving() { return rxTotal && millis() - rxAt < 2500; }
-static bool hasTrack() { return Player::current.id.length() && Player::state != STOPPED; }
 
-// ---- yellow band ----
-static void drawBand() {
+/** Yellow band: status icons, and in the middle the title (or a transfer bar while receiving). */
+static void drawBand(const String &center) {
   iconPlayState(1, 4);
   if (BT::connected()) iconBT(12, 4);
   if (Net::connected()) oled.drawBitmap(23, 5, ICON_WIFI, 8, 5, SSD1306_WHITE);
   iconVolume(113, 4);
-
-  const int X = 36, W = 70;  // middle of the band
+  const int X = 36, W = 70;
   if (receiving()) {
-    // a slim loading bar, nothing more
     oled.drawRoundRect(X, 5, W, 6, 2, SSD1306_WHITE);
     int fill = (uint64_t)(W - 4) * rxDone / max<uint32_t>(1, rxTotal);
     if (fill > 0) oled.fillRect(X + 2, 7, fill, 2, SSD1306_WHITE);
-  } else if (JJ_WIFI) {
-    oled.setCursor(X + (W - 60) / 2, 4);
-    oled.print("Wi-Fi mode");
-  } else if (hasTrack()) {
-    String t = fmtTime(Player::position()) + "/" + fmtTime(Player::current.dur);
-    oled.setCursor(X + max(0, (W - (int)t.length() * 6) / 2), 4);
-    oled.print(t);
-  } else {
-    oled.setCursor(X + (W - 30) / 2, 4);
-    oled.print("JJMP3");
+    return;
   }
+  String t = center.length() > 11 ? center.substring(0, 10) + "." : center;
+  oled.setCursor(X + max(0, (W - (int)t.length() * 6) / 2), 4);
+  oled.print(t);
 }
 
-// ---- blue area ----
+/** One list row in the blue area; the selected row is drawn inverted. */
+static void drawRow(int row, const String &label, const String &detail, bool selected, bool scrollbar) {
+  int y = BAND + row * ROW_H;
+  int w = scrollbar ? 124 : 128;
+  int dw = detail.length() * 6;
+  if (selected) oled.fillRect(0, y, w, ROW_H, SSD1306_WHITE);
+  oled.setTextColor(selected ? SSD1306_BLACK : SSD1306_WHITE);
+  int labelW = w - 6 - (dw ? dw + 6 : 0);
+  if (selected && (int)label.length() * 6 > labelW) {
+    marquee(label, 3, y + 2, labelW);
+    // tidy the overflow on both sides of the window
+    oled.fillRect(0, y, 3, ROW_H, SSD1306_WHITE);
+    oled.fillRect(3 + labelW, y, w - 3 - labelW, ROW_H, SSD1306_WHITE);
+  } else {
+    String l = (int)label.length() * 6 > labelW ? label.substring(0, max(0, labelW / 6 - 1)) + "." : label;
+    oled.setCursor(3, y + 2);
+    oled.print(l);
+  }
+  if (dw) {
+    oled.setCursor(w - 3 - dw, y + 2);
+    oled.print(detail);
+  }
+  oled.setTextColor(SSD1306_WHITE);
+}
+
+static void drawScrollbar(int top, int visible, int count) {
+  if (count <= visible) return;
+  int h = 64 - BAND;
+  int bar = max(4, h * visible / count);
+  int y = BAND + (h - bar) * top / max(1, count - visible);
+  oled.drawFastVLine(126, BAND, h, SSD1306_WHITE);
+  oled.fillRect(125, y, 3, bar, SSD1306_WHITE);
+}
+
 static void drawArt(int x, int y) {
   if (!Player::hasArt) {
-    // vinyl placeholder
     oled.drawCircle(x + 23, y + 23, 22, SSD1306_WHITE);
     oled.drawCircle(x + 23, y + 23, 15, SSD1306_WHITE);
     oled.fillCircle(x + 23, y + 23, 4, SSD1306_WHITE);
@@ -141,8 +166,7 @@ static void drawArt(int x, int y) {
     oled.drawBitmap(x, y, Player::art, 48, 48, SSD1306_WHITE);
     return;
   }
-  // older 64x64 artwork: sample it down to 48x48
-  for (int j = 0; j < 48; j++)
+  for (int j = 0; j < 48; j++)  // older 64x64 artwork: sample down to 48x48
     for (int i = 0; i < 48; i++) {
       int sx = i * 4 / 3, sy = j * 4 / 3;
       if (Player::art[sy * 8 + (sx >> 3)] & (0x80 >> (sx & 7))) oled.drawPixel(x + i, y + j, SSD1306_WHITE);
@@ -151,13 +175,15 @@ static void drawArt(int x, int y) {
 
 static void drawNowPlaying() {
   const int X = 52, W = 76;
+  if (!Player::current.id.length()) {
+    centerText("Nothing playing", 26);
+    centerText("Pick a song in Music", 42);
+    return;
+  }
   marquee(Player::current.title, X, 19, W);
   marquee(Player::current.artist.length() ? Player::current.artist : String("Unknown"), X, 31, W);
-
-  // art goes on after the text, so scrolling text never runs over it
-  oled.fillRect(0, BAND, X - 1, 64 - BAND, SSD1306_BLACK);
+  oled.fillRect(0, BAND, X - 1, 64 - BAND, SSD1306_BLACK);  // art over any scrolled text
   drawArt(0, BAND);
-
   uint32_t pos = Player::position(), dur = Player::current.dur;
   oled.drawRect(X, 45, W, 4, SSD1306_WHITE);
   if (dur) oled.fillRect(X, 45, min<uint32_t>(W, W * pos / dur), 4, SSD1306_WHITE);
@@ -165,24 +191,6 @@ static void drawNowPlaying() {
     oled.setCursor(X, 54);
     oled.print(String(Player::qpos + 1) + " of " + String(Player::queue.size()));
   }
-}
-
-static void drawIdle() {
-  uint32_t n = Library::count();
-  centerText(n ? "Ready" : "Empty", 22, 2);
-  centerText(n ? String(n) + (n == 1 ? " song" : " songs") : String("Add songs in the app"), 43);
-  if (n) centerText("Click to play", 54);
-}
-
-static void drawWifiMode() {
-  String state = Net::stateName();
-  String a = Net::connected() ? Net::ip()
-           : !Net::ssid.length() ? String("No network set")
-           : state == "failed" ? "Can't join " + Net::ssid
-           : "Joining " + Net::ssid;
-  centerText(a, 22);
-  centerText(String(Library::count()) + " songs", 35);
-  centerText("Triple-click: music", 54);
 }
 
 static void drawToast() {
@@ -194,41 +202,19 @@ static void drawToast() {
   oled.print(toastText);
 }
 
-static void draw() {
-  oled.clearDisplay();
-  oled.setTextSize(1);
-  drawBand();
-  if (JJ_WIFI) drawWifiMode();
-  else if (hasTrack()) drawNowPlaying();
-  else drawIdle();
-  if (millis() < toastUntil) drawToast();
-  oled.display();
-}
-
-// Called during file transfers: keeps the normal screen, with a loading bar in the yellow band
+// During file transfers: the normal screen, with a loading bar in the yellow band
 static void progress(const String &, uint32_t done, uint32_t total) {
   if (!ok) return;
   rxDone = done;
   rxTotal = total;
   rxAt = millis();
-  draw();
+  if (redrawHook) redrawHook();
   lastDraw = millis();
 }
 
 static void doneReceiving() {
   rxTotal = 0;
   dirty = true;
-}
-
-static void loop() {
-  if (!ok) return;
-  uint32_t now = millis();
-  bool animating = Player::state == PLAYING || now < toastUntil || receiving() ||
-                   Player::current.title.length() * 6 > 76;
-  if (!dirty && now - lastDraw < (animating ? 120u : 1000u)) return;
-  lastDraw = now;
-  dirty = false;
-  draw();
 }
 
 static uint8_t *buffer() { return oled.getBuffer(); }

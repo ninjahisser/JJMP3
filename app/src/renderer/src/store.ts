@@ -42,7 +42,8 @@ const empty: Snapshot = {
   tracks: [],
   playlists: [],
   jobs: [],
-  tools: { ffmpeg: null, ytdlp: null }
+  tools: { ffmpeg: null, ytdlp: null },
+  theme: 'light'
 }
 
 let toastId = 0
@@ -82,11 +83,17 @@ export async function call<T = any>(channel: string, ...args: unknown[]): Promis
   }
 }
 
+export const applyTheme = (theme: 'light' | 'dark') => (document.documentElement.dataset.theme = theme)
+
 export async function boot(): Promise<void> {
   const snap = await window.jjmp3.invoke<Snapshot>('state')
+  applyTheme(snap.theme)
   useStore.setState({ snap, statusAt: performance.now() })
   window.jjmp3.on((channel, payload) => {
-    if (channel === 'state') useStore.setState({ snap: payload as Snapshot, statusAt: performance.now() })
+    if (channel === 'state') {
+      useStore.setState({ snap: payload as Snapshot, statusAt: performance.now() })
+      applyTheme((payload as Snapshot).theme)
+    }
     if (channel === 'dev:go') useStore.getState().go(payload as Page)
   })
 }

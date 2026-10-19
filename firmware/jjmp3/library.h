@@ -14,6 +14,7 @@ struct Track {
 namespace Library {
 
 static uint32_t cachedCount = 0;
+static std::vector<uint32_t> offsets;  // where each entry starts in the index, for quick lookups by position
 
 static bool parseLine(const String &line, Track &t) {
   int a = line.indexOf('\t');
@@ -45,10 +46,28 @@ static void forEach(F fn) {
 }
 
 static uint32_t reload() {
-  uint32_t n = 0;
-  forEach([&](uint32_t, const Track &) { n++; return true; });
-  cachedCount = n;
-  return n;
+  offsets.clear();
+  File f = SD.open(INDEX_PATH, FILE_READ);
+  Track t;
+  while (f && f.available()) {
+    uint32_t at = f.position();
+    String line = f.readStringUntil('\n');
+    if (parseLine(line, t)) offsets.push_back(at);
+  }
+  if (f) f.close();
+  cachedCount = offsets.size();
+  return cachedCount;
+}
+
+/** The i-th song in library order. */
+static bool trackAt(uint32_t i, Track &out) {
+  if (i >= offsets.size()) return false;
+  File f = SD.open(INDEX_PATH, FILE_READ);
+  if (!f) return false;
+  f.seek(offsets[i]);
+  bool ok = parseLine(f.readStringUntil('\n'), out);
+  f.close();
+  return ok;
 }
 
 static uint32_t count() { return cachedCount; }

@@ -10,6 +10,7 @@
 #include "net.h"
 #include "ui.h"
 #include "mode.h"
+#include "input.h"
 
 // JSON command protocol shared by USB serial and HTTP.
 // Request:  {"id":1,"cmd":"status", ...}
@@ -119,6 +120,16 @@ static void handle(JsonDocument &req, JsonObject res) {
     String path = req["path"] | "";
     Player::releaseFile(path);
     res["ok"] = path.length() && SD.remove(path);
+  } else if (cmd == "btn") {
+    // the desktop app's buttons: same as pressing the real ones
+    String k = req["k"] | "";
+    int key = k == "left" ? K_LEFT : k == "play" ? K_PLAY : k == "right" ? K_RIGHT : k == "up" ? K_UP : k == "down" ? K_DOWN : -1;
+    if (key < 0) {
+      res["ok"] = false;
+      res["error"] = "unknown button";
+    } else {
+      Input::inject((Key)key, req["hold"] | false);
+    }
   } else if (cmd == "screen") {
     res["b64"] = base64::encode(UI::buffer(), 1024);
   } else if (cmd == "wifi_set") {

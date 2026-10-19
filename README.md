@@ -2,9 +2,28 @@
 
 A pocket MP3 player built on an ESP32, with a desktop app that fills it with music.
 
-- **Player (ESP32):** plays MP3s from the SD card and streams them over **Bluetooth** to headphones or a speaker. The OLED is a two-colour panel: the yellow top band (rows 0-15) is a status bar with the play state, time, Bluetooth/Wi-Fi/volume, and a slim bar while a song is being received; the blue area shows 48x48 dithered cover art, title, artist and progress. One button: click play/pause, double-click next, hold previous.
+- **Player (ESP32):** plays MP3s from the SD card and streams them over **Bluetooth** to headphones or a speaker. The OLED is a two-colour panel: the yellow top band (rows 0-15) is a status bar with the play state, time, Bluetooth/Wi-Fi/volume, and a slim bar while a song is being received; the blue area shows 48x48 dithered cover art, title, artist and progress. Five buttons (< P > and volume) drive a small menu OS; see below.
 - **Two modes:** the ESP32 doesn't have the RAM to run Bluetooth audio and Wi-Fi at the same time, so the board carries two firmwares. **Music mode** plays over Bluetooth. **Wi-Fi mode** syncs and takes control over the network. Switch from the app or triple-click the button; the player restarts in about 3 seconds. USB works in both modes.
 - **App (Windows, Electron):** paste a **YouTube or Spotify** link (song, album or playlist). The app downloads it, converts it, makes the artwork and sends it to the player over USB, or over Wi-Fi once the player is on your network. It also does playlists, playback control, a live mirror of the OLED, and Wi-Fi/Bluetooth setup. **Add songs** asks for a link and shows a preview (cover, title, artist, or the full track list) before anything downloads. The **JJMP3 | Computer** switch in the player bar moves playback between the player and this computer's speakers, at the same song and second.
+
+
+## The player's OS
+
+The player has an iPod-style menu on the OLED: **Now playing, Music, Playlists, Games, Settings** (Bluetooth, Wi-Fi, Mode, About).
+
+| Button | Pin | In menus | Now playing |
+|---|---|---|---|
+| < | D32 | up | previous (hold: rewind) |
+| P | D4 | open / select (hold: back) | play / pause (hold: back) |
+| > | D33 | down | next (hold: fast forward) |
+| + / - | D13 / D14 | volume | volume |
+
+All buttons go to GND (internal pull-ups); unwired ones are ignored, so they can be added one at a time. Until they are, the app's Player sidebar has the same five buttons under the screen mirror.
+
+- **Settings, Bluetooth:** pair headphones on the device itself (Find headphones, pick from the list).
+- **Settings, Wi-Fi:** in Wi-Fi mode, pick a scanned network; in either mode, *Type a name*. Text is entered with a character wheel: < > turn it, P types the middle character, and the wheel holds OK, DEL, SPC and the a / A / 1 sets. Hold P to cancel.
+- **Playlists:** made in the app and synced to `/playlists.tsv` on the card.
+- **Games:** Snake is built in; CHIP-8 programs (`.ch8`) in `/games` on the card appear too (add them from the app's Player page). CHIP-8's 64x32 screen is doubled to fill the OLED; keys: < 4, > 6, P 5, + 2, - 8, hold P to quit. Music keeps playing while you play.
 
 ## Wiring
 
@@ -16,7 +35,7 @@ Everything is on the right-hand header of the ESP32 DevKit (USB port at the bott
 | OLED | VCC / GND | 3V3 / GND |
 | SD module | CS / SCK / MOSI / MISO | D5 / D18 / D23 / D19 |
 | SD module | VCC / GND | 3V3 / GND |
-| Button | one leg / diagonal leg | D4 / GND |
+| Buttons | P / < / > / + / - to GND | D4 / D32 / D33 / D13 / D14 |
 
 ## Install and run the app
 

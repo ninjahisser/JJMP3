@@ -41,6 +41,70 @@ function ModeCard() {
   )
 }
 
+interface Game {
+  name: string
+  size: number
+}
+
+function Games() {
+  const toast = useStore((s) => s.toast)
+  const connected = useStore((s) => s.snap.device.connected)
+  const [games, setGames] = useState<Game[] | null>(null)
+  const refresh = async () => setGames((await call<Game[]>('games:list')) ?? [])
+  useEffect(() => {
+    if (connected) void refresh()
+  }, [connected])
+  return (
+    <div className="card">
+      <h3>
+        <Icon name="gamepad" /> Games
+      </h3>
+      <p className="lead">
+        Snake is built in. Add CHIP-8 games (<span className="mono">.ch8</span> files) and they show up under Games on the player.
+      </p>
+      <div className="picklist">
+        {games === null && <div className="note">Reading the card…</div>}
+        {games?.length === 0 && <div className="note">No CHIP-8 games on the card yet.</div>}
+        {games?.map((g) => (
+          <div className="pick" key={g.name}>
+            <Icon name="gamepad" />
+            <span className="nm">{g.name.replace(/\.ch8$/i, '')}</span>
+            <span className="mono muted">{(g.size / 1024).toFixed(1)} KB</span>
+            <Button
+              small
+              variant="danger"
+              onClick={async () => {
+                if (confirm(`Take ${g.name} off the player?`) && (await call('games:remove', g.name) !== undefined)) void refresh()
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+      </div>
+      <label className="btn ghost file-btn">
+        <Icon name="plus" size={17} />
+        Add a game
+        <input
+          type="file"
+          accept=".ch8"
+          multiple
+          hidden
+          onChange={async (e) => {
+            for (const file of Array.from(e.target.files || [])) {
+              const data = new Uint8Array(await file.arrayBuffer())
+              if ((await call('games:add', file.name, data)) !== undefined) toast(`${file.name} is on the player`)
+            }
+            e.target.value = ''
+            void refresh()
+          }}
+        />
+      </label>
+      <p className="note">Play: Games on the player. ‹ › and P are the game's keys 4, 6 and 5, – + are 8 and 2. Hold P to quit.</p>
+    </div>
+  )
+}
+
 function Headphones() {
   const st = useStore((s) => s.snap.device.status)
   const toast = useStore((s) => s.toast)
@@ -108,9 +172,16 @@ function Headphones() {
           </Button>
         )}
       </div>
+      {!bt?.name && !scanning && (
+        <ol className="steps">
+          <li>Put your headphones or speaker in <b>pairing mode</b> (usually: hold the power or Bluetooth button until a light blinks).</li>
+          <li>Click <b>Find headphones</b> and wait a few seconds.</li>
+          <li>Click <b>Connect</b> next to their name. The player restarts once and connects by itself from then on.</li>
+        </ol>
+      )}
       {scanning && (
         <div className="picklist">
-          {found.length === 0 && <div className="note">Put your headphones in pairing mode…</div>}
+          {found.length === 0 && <div className="note"><Dot kind="busy" /> Searching… make sure they're blinking in pairing mode. Phones and laptops don't show up, only audio devices.</div>}
           {found.map((d) => (
             <div className="pick" key={d.name}>
               <Icon name="bt" />
@@ -129,7 +200,7 @@ function Headphones() {
           ))}
         </div>
       )}
-      <p className="note">Connecting to a new pair restarts the player (a few seconds).</p>
+      <p className="note">You can also pair on the player itself: Settings, Bluetooth.</p>
     </div>
   )
 }
@@ -293,6 +364,7 @@ export function Player() {
           <div className="cards">
             <Headphones />
             <Wifi />
+            <Games />
             <About />
           </div>
         </>

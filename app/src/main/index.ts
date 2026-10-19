@@ -12,6 +12,7 @@ import { log } from './log'
 import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
 import { makeOledArt } from './artwork'
 import { Sync } from './sync'
+import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'jjmp3', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }])
@@ -42,7 +43,8 @@ function snapshot(): Snapshot {
     tracks: [...tracks, ...sync.deviceOnly()],
     playlists: library.playlists(),
     jobs: importer.snapshot(),
-    tools: { ...tools }
+    tools: { ...tools },
+    theme: library.setting<'light' | 'dark'>('theme', 'light')
   }
 }
 
@@ -121,6 +123,10 @@ function registerIpc(): void {
   const h = (channel: string, fn: (...args: any[]) => unknown) => ipcMain.handle(channel, (_e, ...args) => fn(...args))
 
   h('state', () => snapshot())
+  h('theme:set', (theme: 'light' | 'dark') => {
+    library.setSetting('theme', theme === 'dark' ? 'dark' : 'light')
+    paintWindow()
+  })
 
   h('import', (url: string, playlistId?: string) => {
     url = String(url || '').trim()
@@ -183,12 +189,30 @@ function registerIpc(): void {
   h('bt:connect', (name: string) => deviceCall('bt_connect', { name }))
   h('bt:forget', () => deviceCall('bt_forget'))
   h('mode:switch', () => deviceCall('mode_switch'))
+  h('btn', (k: string, hold = false) => {
+    if (!['left', 'play', 'right', 'up', 'down'].includes(k)) throw new Error('Unknown button')
+    return device.tryCall('btn', { k, hold })
+  })
+  h('games:list', () => listGames(device))
+  h('games:add', (name: string, data: Uint8Array) => addGame(device, name, data))
+  h('games:remove', (name: string) => removeGame(device, name))
   h('reboot', () => deviceCall('reboot'))
   h('sd', () => deviceCall('sd', {}, 20000))
 
   h('open:url', (url: string) => {
     if (/^https?:\/\//.test(url)) void shell.openExternal(url)
   })
+}
+
+const THEME = { light: { bg: '#f1ede4', fg: '#1b1a17' }, dark: { bg: '#1c1b18', fg: '#ede7db' } }
+const themeColors = () => THEME[library.setting<'light' | 'dark'>('theme', 'light')] ?? THEME.light
+
+/** Window background and the title-bar buttons follow the theme. */
+function paintWindow(): void {
+  if (!win) return
+  const c = themeColors()
+  win.setBackgroundColor(c.bg)
+  win.setTitleBarOverlay({ color: c.bg, symbolColor: c.fg, height: 40 })
 }
 
 function createWindow(): void {
@@ -200,9 +224,9 @@ function createWindow(): void {
     show: false,
     ...(process.env.JJMP3_DEV === '1' && { x: -2600, y: 40 }), // testing: render off-screen
     title: 'JJMP3',
-    backgroundColor: '#f1ede4',
+    backgroundColor: themeColors().bg,
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#f1ede4', symbolColor: '#1b1a17', height: 40 },
+    titleBarOverlay: { color: themeColors().bg, symbolColor: themeColors().fg, height: 40 },
     icon: join(__dirname, '../../resources/icon.png'),
     webPreferences: { preload: join(__dirname, '../preload/index.mjs'), sandbox: false, backgroundThrottling: process.env.JJMP3_DEV !== '1' }
   })

@@ -3,6 +3,7 @@ import { DialogHost, MenuHost, Toasts } from './components/ui'
 import { PlayerBar } from './components/PlayerBar'
 import { Sidebar } from './components/Sidebar'
 import { TopProgress } from './components/Activity'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Library } from './pages/Library'
 import { Playlists, PlaylistPage } from './pages/Playlists'
 import { Player } from './pages/Player'
@@ -35,16 +36,20 @@ export function App() {
         <Sidebar />
         <main>
           <div className="page" key={page.name === 'playlist' ? page.id : page.name}>
-            {page.name === 'library' && <Library />}
-            {page.name === 'playlists' && <Playlists />}
-            {page.name === 'playlist' && <PlaylistPage id={page.id} />}
-            {page.name === 'player' && <Player />}
+            <ErrorBoundary onReset={() => useStore.getState().go({ name: 'library' })}>
+              {page.name === 'library' && <Library />}
+              {page.name === 'playlists' && <Playlists />}
+              {page.name === 'playlist' && <PlaylistPage id={page.id} />}
+              {page.name === 'player' && <Player />}
+            </ErrorBoundary>
           </div>
         </main>
       </div>
       <PlayerBar />
       <MenuHost />
-      <DialogHost />
+      <ErrorBoundary onReset={() => useStore.getState().closeDialog()}>
+        <DialogHost />
+      </ErrorBoundary>
       <Toasts />
     </>
   )

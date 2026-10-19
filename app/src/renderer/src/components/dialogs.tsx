@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Playlist, Track } from '@shared/types'
 import { Button, Dialog } from './ui'
 import { call, coverUrl, fmt, fmtLong, plural, useStore } from '../store'
@@ -40,7 +40,8 @@ function NewPlaylist({ tracks }: { tracks: string[] }) {
 export const newPlaylistDialog = (tracks: string[] = []) => useStore.getState().openDialog(<NewPlaylist tracks={tracks} />)
 
 function PickSongs({ p }: { p: Playlist }) {
-  const options = useStore((s) => s.snap.tracks.filter((t) => !p.tracks.includes(t.id) && !t.deviceOnly))
+  const tracks = useStore((s) => s.snap.tracks)
+  const options = useMemo(() => tracks.filter((t) => !p.tracks.includes(t.id) && !t.deviceOnly), [tracks, p.tracks])
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const toggle = (id: string) => setPicked((s) => (s.has(id) ? new Set([...s].filter((x) => x !== id)) : new Set([...s, id])))
   const add = async () => {

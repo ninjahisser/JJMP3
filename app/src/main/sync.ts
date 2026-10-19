@@ -32,6 +32,7 @@ export class Sync {
   onLoaded: () => void = () => {}
   private removals = new Set<string>()
   private indexDirty = false
+  private playlistsOnCard = ''
   private running = false
   private again = false
 
@@ -67,6 +68,7 @@ export class Sync {
       // empty card
     }
     this.onDevice = parseIndex(text)
+    this.playlistsOnCard = ''
     this.loaded = true
     this.onLoaded()
     this.onChange()
@@ -132,6 +134,18 @@ export class Sync {
       this.progress.delete(t.id)
       this.onChange()
     }
+    await this.writePlaylists()
+  }
+
+  /** /playlists.tsv: id, name, comma-separated song ids (tab separated; only songs on the card). */
+  private async writePlaylists(): Promise<void> {
+    const text = this.library
+      .playlists()
+      .map((p) => [p.id, deviceText(p.name) || 'Playlist', p.tracks.filter((id) => this.onDevice.has(id)).join(',')].join('\t'))
+      .join('\n') + '\n'
+    if (text === this.playlistsOnCard) return
+    await this.device.put('/playlists.tsv', Buffer.from(text, 'latin1'))
+    this.playlistsOnCard = text
   }
 
   private async writeIndex(): Promise<void> {

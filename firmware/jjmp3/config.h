@@ -1,6 +1,6 @@
 #pragma once
 
-#define FW_VERSION   "1.0.0"
+#define FW_VERSION   "1.1.0"
 #define DEVICE_NAME  "JJMP3"
 #define HOSTNAME     "jjmp3"
 
@@ -28,14 +28,20 @@
 #define PIN_SD_CS    5
 #define SD_SPI_HZ    8000000
 
-// Controls
-#define PIN_BUTTON   4
+// Buttons (to GND, internal pull-ups). Unwired pins just read as 'not pressed'.
+#define PIN_BTN_LEFT   32   // <
+#define PIN_BTN_PLAY   4    // P: select / play-pause, hold = back
+#define PIN_BTN_RIGHT  33   // >
+#define PIN_BTN_VOLUP  13   // +
+#define PIN_BTN_VOLDN  14   // -
 
 // Storage layout on the SD card
 #define MUSIC_DIR    "/music"
 #define ART_DIR      "/art"
 #define INDEX_PATH   "/index.tsv"   // id \t title \t artist \t duration_s
 #define QUEUE_PATH   "/queue.txt"   // one track id per line
+#define PLAYLISTS_PATH "/playlists.tsv" // id \t name \t id,id,...
+#define GAMES_DIR    "/games"        // CHIP-8 programs (.ch8)
 
 // Audio: the desktop app converts everything to 44.1 kHz stereo CBR MP3
 #define SAMPLE_RATE  44100

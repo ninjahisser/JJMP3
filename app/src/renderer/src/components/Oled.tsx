@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Icon } from './Icon'
 import { useStore } from '../store'
 
 // The panel is two-colour: rows 0-15 glow yellow, the rest blue
@@ -6,7 +7,46 @@ const YELLOW = [255, 214, 64]
 const BLUE = [120, 206, 255]
 const OFF = [5, 6, 8]
 
-/** Live mirror of the player's 128x64 OLED (SSD1306 page layout). */
+// A button press asks for the next frame right away instead of waiting for the poll
+let refreshNow: (() => void) | null = null
+let fastUntil = 0
+
+/** The player's five buttons, for using its menus from here until the real ones are wired. */
+function DeviceButtons() {
+  const press = (k: string) => {
+    let held = false
+    const timer = setTimeout(() => {
+      held = true
+      void window.jjmp3.invoke('btn', k, true)
+      fastUntil = performance.now() + 2500
+      refreshNow?.()
+    }, 550)
+    const up = () => {
+      clearTimeout(timer)
+      window.removeEventListener('pointerup', up)
+      if (!held) void window.jjmp3.invoke('btn', k, false)
+      fastUntil = performance.now() + 2500
+      refreshNow?.()
+    }
+    window.addEventListener('pointerup', up)
+  }
+  const B = ({ k, icon, label, wide }: { k: string; icon?: string; label?: string; wide?: boolean }) => (
+    <button className={`dbtn ${wide ? 'wide' : ''}`} title={k === 'play' ? 'Select / play-pause (hold: back)' : k} onPointerDown={() => press(k)}>
+      {icon ? <Icon name={icon} size={15} /> : label}
+    </button>
+  )
+  return (
+    <div className="dbtns">
+      <B k="down" icon="minus" />
+      <B k="left" icon="left" />
+      <B k="play" label="P" wide />
+      <B k="right" icon="right" />
+      <B k="up" icon="plus" />
+    </div>
+  )
+}
+
+/** Live mirror of the player's 128x64 OLED (SSD1306 page layout), plus its buttons. */
 export function Oled() {
   const connected = useStore((s) => s.snap.device.connected)
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -35,19 +75,30 @@ export function Oled() {
             }
           ctx.putImageData(img, 0, 0)
         }
-        await new Promise((r) => setTimeout(r, document.hidden ? 2000 : 400))
+        const wait = document.hidden ? 2000 : performance.now() < fastUntil ? 90 : 400
+        await new Promise<void>((r) => {
+          const t = setTimeout(r, wait)
+          refreshNow = () => {
+            clearTimeout(t)
+            r()
+          }
+        })
       }
     }
     void loop()
     return () => {
       alive = false
+      refreshNow = null
     }
   }, [connected])
 
   return (
-    <div className="oled" title="Live view of the player's screen">
-      <canvas ref={canvas} width={128} height={64} hidden={!connected} />
-      {!connected && <div className="off">not connected</div>}
+    <div className="device-face">
+      <div className="oled" title="Live view of the player's screen">
+        <canvas ref={canvas} width={128} height={64} hidden={!connected} />
+        {!connected && <div className="off">not connected</div>}
+      </div>
+      {connected && <DeviceButtons />}
     </div>
   )
 }

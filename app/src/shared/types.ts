@@ -82,6 +82,7 @@ export interface Snapshot {
   playlists: Playlist[]
   jobs: Job[]
   tools: ToolsView
+  theme: 'light' | 'dark'
 }
 
 export const EVENT_CHANNEL = 'jjmp3:event'
