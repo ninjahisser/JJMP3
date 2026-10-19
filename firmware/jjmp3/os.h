@@ -241,7 +241,11 @@ struct BluetoothScreen : ListScreen {
   int count() override { return JJ_WIFI ? 2 : (BT::target[0] ? 3 : 2); }
   String label(int i) override {
     if (JJ_WIFI) return i == 0 ? String("Off in Wi-Fi mode") : String("Switch to music");
-    if (i == 0) return BT::connected() ? "On: " + String(BT::target) : BT::target[0] ? "Looking: " + String(BT::target) : String("No headphones yet");
+    if (i == 0) {
+      if (BT::connected()) return "On: " + String(BT::target);
+      if (!strcmp(BT::stateName(), "refused")) return "Re-pair " + String(BT::target);
+      return BT::target[0] ? "Looking: " + String(BT::target) : String("No headphones yet");
+    }
     if (i == 1) return BT::target[0] ? "Pair other ones" : "Find headphones";
     return "Forget " + String(BT::target);
   }

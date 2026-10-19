@@ -47,7 +47,7 @@ export function Sidebar() {
               ) : bt?.state === 'connected' ? (
                 <b>{bt.name}</b>
               ) : (
-                <span>{bt?.name ? `${bt.state} · ${bt.name}` : 'No headphones yet'}</span>
+                <span>{bt?.state === 'refused' ? <span className="err-text">Re-pair {bt.name}</span> : bt?.name ? `${bt.state} · ${bt.name}` : 'No headphones yet'}</span>
               )}
             </div>
             <div className="row">

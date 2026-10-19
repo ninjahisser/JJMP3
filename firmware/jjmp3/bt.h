@@ -38,6 +38,38 @@ static portMUX_TYPE foundLock = portMUX_INITIALIZER_UNLOCKED;
 // Remote control buttons on the headphones, handled in loop()
 static volatile uint8_t pendingKey = 0;
 
+// What the link has been doing, newest last (shown in the app when something's wrong)
+static char events[6][28];
+static int eventCount = 0;
+static portMUX_TYPE eventLock = portMUX_INITIALIZER_UNLOCKED;
+static volatile bool audioStarted = false;
+static volatile int refused = 0;  // connection attempts in a row that the headphones turned down
+
+static void note(const char *what) {
+  char line[28];
+  snprintf(line, sizeof(line), "%lus %s", (unsigned long)(millis() / 1000), what);
+  portENTER_CRITICAL(&eventLock);
+  if (eventCount == 6) {
+    memmove(events[0], events[1], sizeof(events[0]) * 5);
+    eventCount = 5;
+  }
+  strlcpy(events[eventCount++], line, sizeof(events[0]));
+  portEXIT_CRITICAL(&eventLock);
+}
+
+static void onConnection(esp_a2d_connection_state_t st, void *) {
+  static const char *names[] = {"disconnected", "connecting", "connected", "disconnecting"};
+  if (st != ESP_A2D_CONNECTION_STATE_CONNECTED) audioStarted = false;
+  if (st == ESP_A2D_CONNECTION_STATE_CONNECTED) refused = 0;
+  if (st == ESP_A2D_CONNECTION_STATE_DISCONNECTED) refused++;
+  note(st <= 3 ? names[st] : "link ?");
+}
+
+static void onAudio(esp_a2d_audio_state_t st, void *) {
+  audioStarted = st == ESP_A2D_AUDIO_STATE_STARTED;
+  note(audioStarted ? "audio started" : "audio stopped");
+}
+
 static bool onDeviceFound(const char *name, esp_bd_addr_t, int rssi) {
   if (!name || !name[0]) return false;
   portENTER_CRITICAL(&foundLock);
@@ -70,6 +102,12 @@ static void applyVolume() {
 static void start() {
   if (started) return;
   a2dp.set_local_name(DEVICE_NAME);
+  // Modern earbuds only pair with Secure Simple Pairing; without it the
+  // library falls back to PIN "1234", pairing fails and the link stays idle.
+  a2dp.set_ssp_enabled(true);
+  a2dp.set_on_connection_state_changed(onConnection);
+  a2dp.set_on_audio_state_changed(onAudio);
+  note(target[0] ? "looking for headphones" : "scanning");
   a2dp.set_reset_ble(true);  // classic BT only: hand the BLE controller memory back to the heap
   a2dp.set_auto_reconnect(true);
   a2dp.set_ssid_callback(onDeviceFound);
@@ -99,24 +137,43 @@ static void stopScan() {
   if (started && a2dp.discovering()) a2dp.cancel_discovery();
 }
 
+// Old pairing keys (say from before Secure Simple Pairing) make headphones refuse us; start clean
+static void removeBonds() {
+  if (!started) return;
+  int n = esp_bt_gap_get_bond_device_num();
+  if (n <= 0) return;
+  esp_bd_addr_t *list = (esp_bd_addr_t *)malloc(sizeof(esp_bd_addr_t) * n);
+  if (!list) return;
+  esp_bt_gap_get_bond_device_list(&n, list);
+  for (int i = 0; i < n; i++) esp_bt_gap_remove_bond_device(list[i]);
+  free(list);
+}
+
 // Pairing with a different device needs a clean start of the BT stack
 static void connectTo(const char *name) {
   prefs.putString("bt_name", name);
-  if (started) a2dp.clean_last_connection();
-  delay(100);
+  if (started) {
+    a2dp.clean_last_connection();
+    removeBonds();
+  }
+  delay(300);
   ESP.restart();
 }
 
 static void forget() {
   prefs.remove("bt_name");
-  if (started) a2dp.clean_last_connection();
-  delay(100);
+  if (started) {
+    a2dp.clean_last_connection();
+    removeBonds();
+  }
+  delay(300);
   ESP.restart();
 }
 
 static const char *stateName() {
   if (!started) return "off";
-  if (a2dp.is_connected()) return "connected";
+  if (a2dp.is_connected()) return audioStarted ? "connected" : "connected, no audio";
+  if (refused >= 3) return "refused";  // they keep turning us down: needs a fresh pairing
   if (a2dp.get_connection_state() == ESP_A2D_CONNECTION_STATE_CONNECTING) return "connecting";
   if (a2dp.discovering()) return "scanning";
   return "idle";

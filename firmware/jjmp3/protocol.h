@@ -46,6 +46,12 @@ static void status(JsonObject o) {
   JsonObject bt = o["bt"].to<JsonObject>();
   bt["state"] = BT::stateName();
   bt["name"] = BT::target;
+#if JJ_BT
+  JsonArray ev = bt["events"].to<JsonArray>();
+  portENTER_CRITICAL(&BT::eventLock);
+  for (int i = 0; i < BT::eventCount; i++) ev.add(String(BT::events[i]));
+  portEXIT_CRITICAL(&BT::eventLock);
+#endif
   JsonObject wifi = o["wifi"].to<JsonObject>();
   wifi["state"] = Net::stateName();
   wifi["ssid"] = Net::ssid;

@@ -126,7 +126,13 @@ function Headphones() {
   }, [scanning])
 
   const lead =
-    bt?.state === 'connected' ? (
+    bt?.state === 'refused' ? (
+      <span className="err-text">
+        <b>{bt.name}</b> keeps refusing the connection. Disconnect them from your phone or PC, put them in pairing mode, then click <b>Pair again</b> and pick them.
+      </span>
+    ) : bt?.state === 'connected, no audio' ? (
+      <>Connected to <b>{bt.name}</b>, waiting for the audio channel…</>
+    ) : bt?.state === 'connected' ? (
       <>Playing through <b>{bt.name}</b>.</>
     ) : bt?.name ? (
       <>Looking for <b>{bt.name}</b>. Turn it on and it connects by itself.</>
@@ -155,6 +161,8 @@ function Headphones() {
             <>
               <Dot kind="busy" /> Searching…
             </>
+          ) : bt?.state === 'refused' ? (
+            'Pair again'
           ) : bt?.name ? (
             'Use other headphones'
           ) : (
@@ -200,6 +208,9 @@ function Headphones() {
           ))}
         </div>
       )}
+      {bt?.name && bt.state !== 'connected' && bt.events?.length ? (
+        <p className="note mono">Link: {bt.events.slice(-4).join('  ->  ')}</p>
+      ) : null}
       <p className="note">You can also pair on the player itself: Settings, Bluetooth.</p>
     </div>
   )
