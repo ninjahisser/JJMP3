@@ -318,6 +318,8 @@ function About() {
             </Button>
           )}
         </dd>
+        <dt>Battery</dt>
+        <dd>{st.battery ? `${st.battery.pct}% · ${st.battery.v.toFixed(2)} V` : 'None wired (USB power)'}</dd>
         <dt>Free memory</dt>
         <dd className="mono">{st.heap ? `${Math.round(st.heap / 1024)} KB` : '?'}</dd>
         <dt>Connection</dt>

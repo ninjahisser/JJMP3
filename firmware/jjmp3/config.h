@@ -35,6 +35,10 @@
 #define PIN_BTN_VOLUP  13   // +
 #define PIN_BTN_VOLDN  14   // -
 
+// Battery: LiPo + -> 100k -> D34 -> 100k -> GND (ADC1 pin, works with Wi-Fi on)
+#define PIN_BATTERY      34
+#define BATTERY_DIVIDER  2.0f
+
 // Storage layout on the SD card
 #define MUSIC_DIR    "/music"
 #define ART_DIR      "/art"

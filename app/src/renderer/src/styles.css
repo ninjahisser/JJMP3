@@ -354,3 +354,8 @@ dialog:has(.add-preview) { width: min(640px, 92vw); }
 .steps { margin: 0 0 16px; padding-left: 20px; color: var(--ink-2); display: grid; gap: 6px; }
 .steps b { color: var(--ink); font-weight: 500; }
 .file-btn { cursor: pointer; }
+/* ---------- battery ---------- */
+.battery-row { display: inline-flex; align-items: center; gap: 8px; }
+.battery { width: 34px; height: 8px; border-radius: 2px; border: 1px solid var(--ink-3); position: relative; overflow: hidden; }
+.battery i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ok); }
+.battery.low i { background: var(--accent); }

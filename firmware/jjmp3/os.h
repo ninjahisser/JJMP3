@@ -359,9 +359,9 @@ static WifiScreen wifiScreen;
 
 struct AboutScreen : ListScreen {
   String title() override { return "About"; }
-  int count() override { return 6; }
+  int count() override { return 7; }
   String label(int i) override {
-    static const char *names[] = {"Firmware", "Mode", "Songs", "Memory", "Wi-Fi", "Headphones"};
+    static const char *names[] = {"Firmware", "Mode", "Songs", "Memory", "Wi-Fi", "Headphones", "Battery"};
     return names[i];
   }
   String detail(int i) override {
@@ -371,7 +371,8 @@ struct AboutScreen : ListScreen {
       case 2: return String(Library::count());
       case 3: return String(ESP.getFreeHeap() / 1024) + " KB";
       case 4: return Net::connected() ? Net::ip() : String("off");
-      default: return BT::connected() ? String("on") : String("off");
+      case 5: return BT::connected() ? String("on") : String("off");
+      default: return Battery::present ? String(Battery::percent) + "% " + String(Battery::volts, 2) + "V" : String("none");
     }
   }
   void select(int) override {}
@@ -455,6 +456,19 @@ static void handle(const KeyEvent &e) {
 }
 
 static void loop() {
+  bool wasWarned = Battery::warned;
+  if (Battery::loop()) {
+    // empty: say so, keep the place in the queue, and sleep until P is pressed
+    Player::pause();
+    prefs.putInt("qpos", Player::qpos);
+    UI::toast("Battery empty", 5000);
+    draw();
+    delay(2500);
+    UI::oled.clearDisplay();
+    UI::oled.display();
+    Battery::sleepUntilPressed();
+  }
+  if (Battery::warned && !wasWarned) UI::toast("Battery low", 3000);
   KeyEvent e;
   while (Input::pop(e)) {
     handle(e);

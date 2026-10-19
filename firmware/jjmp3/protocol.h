@@ -11,6 +11,7 @@
 #include "ui.h"
 #include "mode.h"
 #include "input.h"
+#include "battery.h"
 
 // JSON command protocol shared by USB serial and HTTP.
 // Request:  {"id":1,"cmd":"status", ...}
@@ -50,6 +51,11 @@ static void status(JsonObject o) {
   wifi["ssid"] = Net::ssid;
   wifi["ip"] = Net::ip();
   o["heap"] = ESP.getFreeHeap();
+  if (Battery::present) {
+    JsonObject b = o["battery"].to<JsonObject>();
+    b["pct"] = Battery::percent;
+    b["v"] = roundf(Battery::volts * 100) / 100;
+  }
 }
 
 // Handles every command except binary file transfers (transport specific)

@@ -25,6 +25,21 @@ All buttons go to GND (internal pull-ups); unwired ones are ignored, so they can
 - **Playlists:** made in the app and synced to `/playlists.tsv` on the card.
 - **Games:** Pibble Catch (catch the falling mulch with < >; three misses and it's over) and Snake are built in; CHIP-8 programs (`.ch8`) in `/games` on the card appear too (add them from the app's Player page). CHIP-8's 64x32 screen is doubled to fill the OLED; keys: < 4, > 6, P 5, + 2, - 8, hold P to quit. Music keeps playing while you play.
 
+## Battery (optional)
+
+A single-cell 3.7 V LiPo, measured through a 2:1 divider made of two 100 kOhm resistors:
+
+```
+LiPo +  --- 100k ---+--- 100k --- GND
+                    |
+                   D34   (optional: 100 nF from D34 to GND steadies the reading)
+```
+
+- Battery GND and ESP32 GND must be connected.
+- The player shows a battery icon in the yellow band (it blinks below 10 %), "Battery low" at 5 %, and sleeps when the cell is empty (below 3.3 V for 20 s). Press P to wake it. The level is also in Settings, About, and in the app's sidebar.
+- With nothing on D34 the indicator stays hidden.
+- To run from the battery, charge and protect it with a TP4056 module (the kind with a DW01 protection chip). Feed the ESP32's 3V3 pin through a low-dropout 3.3 V regulator (MCP1700-3302, HT7333 or similar): VIN goes through the board's AMS1117, which needs about 4.3 V and so cuts out early on a LiPo.
+
 ## Wiring
 
 Everything is on the right-hand header of the ESP32 DevKit (USB port at the bottom).
@@ -36,6 +51,7 @@ Everything is on the right-hand header of the ESP32 DevKit (USB port at the bott
 | SD module | CS / SCK / MOSI / MISO | D5 / D18 / D23 / D19 |
 | SD module | VCC / GND | 3V3 / GND |
 | Buttons | P / < / > / + / - to GND | D4 / D32 / D33 / D13 / D14 |
+| Battery sense (optional) | divider midpoint | D34 |
 
 ## Install and run the app
 

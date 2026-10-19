@@ -7,6 +7,7 @@
 #include "net.h"
 #include "player.h"
 #include "bt.h"
+#include "battery.h"
 
 // Drawing on the 128x64 two-colour OLED: rows 0-15 glow yellow (the status band),
 // rows 16-63 blue (the screen's content). What to show is decided by os.h.
@@ -103,20 +104,32 @@ static void iconVolume(int x, int y) {
 
 static bool receiving() { return rxTotal && millis() - rxAt < 2500; }
 
+// 12x7 battery: outline, nub, fill by level; blinks when nearly empty
+static void iconBattery(int x, int y) {
+  if (!Battery::present) return;
+  oled.drawRect(x, y, 11, 7, SSD1306_WHITE);
+  oled.fillRect(x + 11, y + 2, 1, 3, SSD1306_WHITE);
+  int fill = (Battery::percent * 9 + 50) / 100;
+  if (Battery::percent <= 10 && (millis() / 500) % 2) fill = 0;
+  if (fill > 0) oled.fillRect(x + 1, y + 1, fill, 5, SSD1306_WHITE);
+}
+
 /** Yellow band: status icons, and in the middle the title (or a transfer bar while receiving). */
 static void drawBand(const String &center) {
   iconPlayState(1, 4);
   if (BT::connected()) iconBT(12, 4);
   if (Net::connected()) oled.drawBitmap(23, 5, ICON_WIFI, 8, 5, SSD1306_WHITE);
   iconVolume(113, 4);
-  const int X = 36, W = 70;
+  iconBattery(99, 4);
+  const int X = 34, W = Battery::present ? 62 : 72;
   if (receiving()) {
     oled.drawRoundRect(X, 5, W, 6, 2, SSD1306_WHITE);
     int fill = (uint64_t)(W - 4) * rxDone / max<uint32_t>(1, rxTotal);
     if (fill > 0) oled.fillRect(X + 2, 7, fill, 2, SSD1306_WHITE);
     return;
   }
-  String t = center.length() > 11 ? center.substring(0, 10) + "." : center;
+  unsigned maxChars = W / 6;
+  String t = center.length() > maxChars ? center.substring(0, maxChars - 1) + "." : center;
   oled.setCursor(X + max(0, (W - (int)t.length() * 6) / 2), 4);
   oled.print(t);
 }

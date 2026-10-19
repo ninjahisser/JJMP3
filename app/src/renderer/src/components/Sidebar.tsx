@@ -58,6 +58,17 @@ export function Sidebar() {
                 <span>{w?.ssid ? <>{w.ssid} <span className="muted">· off while listening</span></> : 'Wi-Fi not set up'}</span>
               )}
             </div>
+            {st.battery && (
+              <div className="row">
+                <Icon name="battery" />
+                <span className="battery-row">
+                  <span className={`battery ${st.battery.pct <= 15 ? 'low' : ''}`}>
+                    <i style={{ width: `${st.battery.pct}%` }} />
+                  </span>
+                  <b>{st.battery.pct}%</b> <span className="muted mono">{st.battery.v.toFixed(2)} V</span>
+                </span>
+              </div>
+            )}
             <div className="row">
               <Icon name="music" />
               {sending ? (

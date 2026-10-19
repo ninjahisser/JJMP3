@@ -7,6 +7,7 @@
 //   OLED    SDA->D21  SCL->D22  VCC->3V3  GND->GND
 //   SD      CS->D5  SCK->D18  MOSI->D23  MISO->D19  VCC->3V3  GND->GND
 //   Buttons to GND: P->D4  <->D32  >->D33  +->D13  -->D14 (internal pull-ups)
+//   Battery  LiPo+ -> 100k -> D34 -> 100k -> GND
 
 #include <Preferences.h>
 #include <SPI.h>
@@ -28,6 +29,7 @@ void setup() {
   Serial.setRxBufferSize(XFER_CHUNK * 2 + 512);
   Serial.begin(SERIAL_BAUD);
   Input::begin();
+  Battery::begin();
   prefs.begin("jjmp3", false);
 
   UI::begin();
