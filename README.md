@@ -23,7 +23,7 @@ All buttons go to GND (internal pull-ups); unwired ones are ignored, so they can
 - **Settings, Bluetooth:** pair headphones on the device itself (Find headphones, pick from the list).
 - **Settings, Wi-Fi:** in Wi-Fi mode, pick a scanned network; in either mode, *Type a name*. Text is entered with a character wheel: < > turn it, P types the middle character, and the wheel holds OK, DEL, SPC and the a / A / 1 sets. Hold P to cancel.
 - **Playlists:** made in the app and synced to `/playlists.tsv` on the card.
-- **Games:** Snake is built in; CHIP-8 programs (`.ch8`) in `/games` on the card appear too (add them from the app's Player page). CHIP-8's 64x32 screen is doubled to fill the OLED; keys: < 4, > 6, P 5, + 2, - 8, hold P to quit. Music keeps playing while you play.
+- **Games:** Pibble Catch (catch the falling mulch with < >; three misses and it's over) and Snake are built in; CHIP-8 programs (`.ch8`) in `/games` on the card appear too (add them from the app's Player page). CHIP-8's 64x32 screen is doubled to fill the OLED; keys: < 4, > 6, P 5, + 2, - 8, hold P to quit. Music keeps playing while you play.
 
 ## Wiring
 

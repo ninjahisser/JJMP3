@@ -60,7 +60,7 @@ function Games() {
         <Icon name="gamepad" /> Games
       </h3>
       <p className="lead">
-        Snake is built in. Add CHIP-8 games (<span className="mono">.ch8</span> files) and they show up under Games on the player.
+        Pibble Catch and Snake are built in. Add CHIP-8 games (<span className="mono">.ch8</span> files) and they show up under Games on the player.
       </p>
       <div className="picklist">
         {games === null && <div className="note">Reading the card…</div>}

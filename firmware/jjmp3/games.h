@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <SD.h>
+#include <Preferences.h>
 #include "screen.h"
 
 // ---------- Snake (built in) ----------
@@ -91,6 +92,135 @@ struct SnakeScreen : Screen {
   }
 };
 static SnakeScreen snakeScreen;
+// ---------- Pibble Catch (built in) ----------
+// Mulch falls from the sky; you're the pibble at the bottom. Catch it with < >.
+// Three missed pieces and it's over. P pauses, hold P quits. Best score is kept.
+extern Preferences prefs;
+
+struct PibbleScreen : Screen {
+  // the pibble: a 16x12 pit bull face (ears, eyes, snout, smile), MSB first
+  static constexpr uint8_t PIBBLE[24] = {0x30, 0x0C, 0x78, 0x1E, 0x7F, 0xFE, 0xFF, 0xFF, 0xE7, 0xE7, 0xE7, 0xE7,
+                                         0xFF, 0xFF, 0xFC, 0x3F, 0x7C, 0x3E, 0x7F, 0xFE, 0x3B, 0xDC, 0x1F, 0xF8};
+  static const int PW = 16, PH = 12, PY = 64 - PH, MAX_MULCH = 5;
+  struct Mulch {
+    bool on;
+    float x, y, vy;
+  } mulch[MAX_MULCH];
+  float px = 56;
+  int score = 0, lives = 3, best = 0;
+  bool over = false, paused = false;
+  uint32_t lastTick = 0, nextDrop = 0, yumUntil = 0;
+
+  void reset() {
+    for (auto &m : mulch) m.on = false;
+    px = 56;
+    score = 0;
+    lives = 3;
+    over = paused = false;
+    lastTick = millis();
+    nextDrop = millis() + 600;
+    best = prefs.getInt("pibble_best", 0);
+  }
+
+  void enter() override { reset(); }
+  String title() override { return over ? "Game over" : "Score " + String(score); }
+  bool animating() override { return true; }
+
+  void key(const KeyEvent &e) override {
+    if (e.key == K_PLAY && e.act == A_HOLD) return OS::back();
+    if (e.key == K_PLAY && e.act == A_PRESS) {
+      if (over) reset();
+      else paused = !paused;
+    }
+    // a press nudges; holding the button glides (see tick)
+    if (!over && !paused && e.act == A_PRESS) {
+      if (e.key == K_LEFT) px -= 6;
+      if (e.key == K_RIGHT) px += 6;
+    }
+    px = constrain(px, 0, 128 - PW);
+  }
+
+  void drop() {
+    for (auto &m : mulch)
+      if (!m.on) {
+        m.on = true;
+        m.x = random(2, 128 - 7);
+        m.y = UI::BAND;
+        m.vy = 0.42f + min(score, 60) * 0.03f + random(0, 25) / 100.0f;  // px per tick: gentle start, faster as you go
+        return;
+      }
+  }
+
+  void tick() override {
+    uint32_t now = millis();
+    if (over || paused) {
+      lastTick = now;
+      return;
+    }
+    if (now - lastTick < 20) return;  // 50 steps a second
+    lastTick = now;
+    float speed = 2.2f;
+    if (Input::isDown(K_LEFT)) px -= speed;
+    if (Input::isDown(K_RIGHT)) px += speed;
+    px = constrain(px, 0, 128 - PW);
+
+    if (now >= nextDrop) {
+      drop();
+      nextDrop = now + max(380, 1500 - score * 25) + random(0, 300);
+    }
+    for (auto &m : mulch) {
+      if (!m.on) continue;
+      m.y += m.vy;
+      bool overPibble = m.x + 5 >= px && m.x <= px + PW;
+      if (m.y + 4 >= PY && m.y < PY + 4 && overPibble) {  // caught
+        m.on = false;
+        score++;
+        yumUntil = now + 350;
+      } else if (m.y > 64) {  // hit the ground
+        m.on = false;
+        if (--lives <= 0) {
+          over = true;
+          if (score > best) {
+            best = score;
+            prefs.putInt("pibble_best", best);
+          }
+        }
+      }
+    }
+    UI::invalidate();
+  }
+
+  static void drawMulch(int x, int y) {
+    UI::oled.drawFastHLine(x + 1, y, 2, SSD1306_WHITE);
+    UI::oled.drawFastHLine(x, y + 1, 4, SSD1306_WHITE);
+    UI::oled.drawFastHLine(x + 1, y + 2, 4, SSD1306_WHITE);
+    UI::oled.drawFastHLine(x + 2, y + 3, 2, SSD1306_WHITE);
+  }
+
+  void draw() override {
+    if (over) {
+      UI::centerText("Score " + String(score), 20, 2);
+      UI::centerText(score >= best && score > 0 ? "New best!" : "Best " + String(best), 40);
+      UI::centerText("P again  hold P quit", 54);
+      return;
+    }
+    for (int i = 0; i < lives; i++) {  // lives as little hearts, top right
+      int x = 120 - i * 8, y = UI::BAND + 2;
+      UI::oled.fillCircle(x, y + 1, 1, SSD1306_WHITE);
+      UI::oled.fillCircle(x + 3, y + 1, 1, SSD1306_WHITE);
+      UI::oled.fillTriangle(x - 1, y + 2, x + 4, y + 2, x + 1, y + 5, SSD1306_WHITE);
+    }
+    for (auto &m : mulch)
+      if (m.on) drawMulch((int)m.x, (int)m.y);
+    UI::oled.drawBitmap((int)px, PY, PIBBLE, PW, PH, SSD1306_WHITE);
+    if (millis() < yumUntil) {
+      UI::oled.setCursor(constrain((int)px - 2, 0, 104), PY - 10);
+      UI::oled.print("yum");
+    }
+    if (paused) UI::centerText("Paused", 30);
+  }
+};
+static PibbleScreen pibbleScreen;
 
 // ---------- CHIP-8 (games from the SD card) ----------
 // A classic 64x32 virtual console; doubled it fills the 128x64 screen exactly.

@@ -173,16 +173,19 @@ struct GamesScreen : ListScreen {
     ListScreen::enter();
   }
   String title() override { return "Games"; }
-  int count() override { return files.size() + 1; }
+  static const int BUILT_IN = 2;
+  int count() override { return files.size() + BUILT_IN; }
   String label(int i) override {
-    if (i == 0) return "Snake";
-    String n = files[i - 1];
+    if (i == 0) return "Pibble Catch";
+    if (i == 1) return "Snake";
+    String n = files[i - BUILT_IN];
     return n.substring(0, n.length() - 4);
   }
-  String detail(int i) override { return i == 0 ? String("") : String("8"); }
+  String detail(int i) override { return i < BUILT_IN ? String("") : String("8"); }
   void select(int i) override {
-    if (i == 0) return OS::push(&snakeScreen);
-    chip8Screen.load(String(GAMES_DIR) + "/" + files[i - 1]);
+    if (i == 0) return OS::push(&pibbleScreen);
+    if (i == 1) return OS::push(&snakeScreen);
+    chip8Screen.load(String(GAMES_DIR) + "/" + files[i - BUILT_IN]);
     OS::push(&chip8Screen);
   }
 };
@@ -442,7 +445,7 @@ static void begin() {
 static void handle(const KeyEvent &e) {
   Screen *s = top();
   bool volumeKey = e.key == K_UP || e.key == K_DOWN;
-  if (volumeKey && !s->fullscreen() && s != &snakeScreen) {
+  if (volumeKey && !s->fullscreen()) {  // CHIP-8 (fullscreen) uses + - as game keys
     Player::setVolume(Player::volume + (e.key == K_UP ? 5 : -5));
     BT::applyVolume();
     UI::toast("Volume " + String(Player::volume) + "%", 700);
