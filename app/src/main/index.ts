@@ -10,7 +10,9 @@ import { Importer, type Item } from './importer'
 import { Library } from './library'
 import { log } from './log'
 import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
-import { makeOledArt } from './artwork'
+import { makeOledArt, oledPicture } from './artwork'
+import { writeFileSync } from 'node:fs'
+import { TMP_DIR } from './paths'
 import { Sync } from './sync'
 import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
@@ -32,6 +34,10 @@ const device = new Device(
   (h) => library.setSetting('wifiHost', h)
 )
 const sync = new Sync(library, device)
+device.onConnect.push(() => {
+  const t = Math.floor(Date.now() / 1000)
+  void device.call('time_set', { t, tz: -new Date().getTimezoneOffset() }).catch(() => {})
+})
 const importer = new Importer(library, () => sync.kick(true))
 let win: BrowserWindow | null = null
 
@@ -189,6 +195,14 @@ function registerIpc(): void {
   h('bt:connect', (name: string) => deviceCall('bt_connect', { name }))
   h('bt:forget', () => deviceCall('bt_forget'))
   h('mode:switch', () => deviceCall('mode_switch'))
+  h('user:set', (name: string) => deviceCall('user_set', { name: String(name || '').slice(0, 20) }))
+  h('zen:picture', async (name: string, data: Uint8Array) => {
+    await ensureTools()
+    const src = join(TMP_DIR, `zen-${Date.now()}-${String(name).replace(/[^A-Za-z0-9.]/g, '_')}`)
+    writeFileSync(src, Buffer.from(data))
+    await device.put('/zen.bin', await oledPicture(src, 48))
+  })
+  h('zen:reset', () => deviceCall('rm', { path: '/zen.bin' }).catch(() => ({ ok: true })))
   h('btn', (k: string, hold = false) => {
     if (!['left', 'play', 'right', 'up', 'down'].includes(k)) throw new Error('Unknown button')
     return device.tryCall('btn', { k, hold })

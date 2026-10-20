@@ -46,6 +46,66 @@ interface Game {
   size: number
 }
 
+function You() {
+  const st = useStore((s) => s.snap.device.status)
+  const toast = useStore((s) => s.toast)
+  const [name, setName] = useState(st.user ?? '')
+  const [dirty, setDirty] = useState(false)
+  useEffect(() => {
+    if (!dirty) setName(st.user ?? '')
+  }, [st.user, dirty])
+  const save = async () => {
+    if ((await call('user:set', name.trim())) !== undefined) {
+      setDirty(false)
+      toast(name.trim() ? `Hi ${name.trim()}` : 'Name cleared')
+    }
+  }
+  return (
+    <div className="card">
+      <h3>
+        <Icon name="edit" /> Your name
+      </h3>
+      <p className="lead">The player says it on its start screen (I ♥ U …) and in Washington Zen. Its clock follows this computer whenever they connect.</p>
+      <div className="inline-form">
+        <input className="field" placeholder="Your name" maxLength={20} value={name} onChange={(e) => (setName(e.target.value), setDirty(true))} onKeyDown={(e) => e.key === 'Enter' && void save()} />
+        <Button onClick={() => void save()} disabled={!dirty}>Save</Button>
+      </div>
+    </div>
+  )
+}
+
+function Zen() {
+  const toast = useStore((s) => s.toast)
+  return (
+    <div className="card">
+      <h3>
+        <Icon name="moon" /> Washington Zen
+      </h3>
+      <p className="lead">The focus timer on the player. During focus your music plays and the pibble sleeps and talks in his sleep; on breaks he wakes up.</p>
+      <div className="actions">
+        <label className="btn ghost file-btn">
+          <Icon name="plus" size={17} />
+          Use a photo of your pibble
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const ok = (await call('zen:picture', file.name, new Uint8Array(await file.arrayBuffer()))) !== undefined
+              if (ok) toast('Your pibble is on the player')
+              e.target.value = ''
+            }}
+          />
+        </label>
+        <Button variant="ghost" onClick={async () => { if ((await call('zen:reset')) !== undefined) toast('Back to the drawn pibble') }}>Use the drawn one</Button>
+      </div>
+      <p className="note">The photo becomes a 48 × 48 black-and-white picture, like the cover art.</p>
+    </div>
+  )
+}
+
 function Games() {
   const toast = useStore((s) => s.toast)
   const connected = useStore((s) => s.snap.device.connected)
@@ -377,6 +437,8 @@ export function Player() {
           <div className="cards">
             <Headphones />
             <Wifi />
+            <You />
+            <Zen />
             <Games />
             <About />
           </div>

@@ -71,6 +71,7 @@ static bool loop() {
       server.begin();
       serverUp = true;
     }
+    configTime(0, 0, "pool.ntp.org", "time.google.com");  // UTC; the zone comes from the app
     MDNS.end();
     if (MDNS.begin(HOSTNAME)) MDNS.addService("http", "tcp", 80);
   }

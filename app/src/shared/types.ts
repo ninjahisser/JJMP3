@@ -59,6 +59,7 @@ export interface DeviceStatus {
   bt?: { state: string; name: string; events?: string[] }
   wifi?: { state: string; ssid: string; ip: string }
   battery?: { pct: number; v: number } // only when a battery is wired
+  user?: string
 }
 
 export interface DeviceView {

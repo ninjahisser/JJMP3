@@ -12,6 +12,7 @@
 #include "mode.h"
 #include "input.h"
 #include "battery.h"
+#include "profile.h"
 
 // JSON command protocol shared by USB serial and HTTP.
 // Request:  {"id":1,"cmd":"status", ...}
@@ -57,6 +58,7 @@ static void status(JsonObject o) {
   wifi["ssid"] = Net::ssid;
   wifi["ip"] = Net::ip();
   o["heap"] = ESP.getFreeHeap();
+  o["user"] = Profile::user;
   if (Battery::present) {
     JsonObject b = o["battery"].to<JsonObject>();
     b["pct"] = Battery::percent;
@@ -132,6 +134,11 @@ static void handle(JsonDocument &req, JsonObject res) {
     String path = req["path"] | "";
     Player::releaseFile(path);
     res["ok"] = path.length() && SD.remove(path);
+  } else if (cmd == "user_set") {
+    Profile::setUser(req["name"] | "");
+    UI::invalidate();
+  } else if (cmd == "time_set") {
+    Profile::setTime(req["t"] | 0, req["tz"] | 0);
   } else if (cmd == "btn") {
     // the desktop app's buttons: same as pressing the real ones
     String k = req["k"] | "";

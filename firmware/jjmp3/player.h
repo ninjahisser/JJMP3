@@ -39,6 +39,14 @@ static RepeatMode repeat = REPEAT_ALL;
 static bool shuffle = false;
 static String lastError;
 
+// Decoding runs in its own task (see decodeTask) so screen updates, USB traffic and menus in
+// loop() can never starve the audio. This lock guards the file and the decoder between them.
+static SemaphoreHandle_t lock = nullptr;
+struct Guard {
+  Guard() { if (lock) xSemaphoreTakeRecursive(lock, portMAX_DELAY); }
+  ~Guard() { if (lock) xSemaphoreGiveRecursive(lock); }
+};
+
 static void onPcm(MP3FrameInfo &info, short *pcm, size_t samples, void *) {
   if (info.samprate != SAMPLE_RATE) lastError = "Unsupported sample rate";
   ring.pushSamples(pcm, samples, info.nChans);
@@ -80,12 +88,14 @@ static void loadQueue() {
 }
 
 static void closeFile() {
+  Guard g;
   if (file) file.close();
   eof = true;
   mp3.end();  // frees ~30 KB until the next track starts
 }
 
 static bool loadTrack(int index) {
+  Guard g;
   closeFile();
   ring.clear();
   framesPlayed = 0;
@@ -182,6 +192,7 @@ static void prev() {
 }
 
 static void seek(uint32_t sec) {
+  Guard g;
   if (!file || current.dur == 0) return;
   sec = min(sec, current.dur);
   uint32_t offset = (uint64_t)fileSize * sec / current.dur;
@@ -206,13 +217,37 @@ static void setVolume(int v) {
 
 // Stop using a file that is about to be overwritten or deleted
 static void releaseFile(const String &path) {
+  Guard g;
   if (file && Library::musicPath(current.id) == path) {
     closeFile();
     state = STOPPED;
   }
 }
 
+static void decodeTask(void *) {
+  static uint8_t buf[256];  // small bites: one decoded frame at most, so the ring never overflows
+  for (;;) {
+    bool fed = false;
+    if (state == PLAYING && ring.space() >= 1152 + 64) {
+      Guard g;
+      if (state == PLAYING && file && !eof) {
+        if (!mp3 && !mp3.begin()) {
+          lastError = "Out of memory";
+          state = PAUSED;
+        } else {
+          int n = file.read(buf, sizeof(buf));
+          if (n <= 0) eof = true;
+          else mp3.write(buf, n);
+          fed = n > 0;
+        }
+      }
+    }
+    if (!fed) vTaskDelay(pdMS_TO_TICKS(3));
+  }
+}
+
 static void begin() {
+  lock = xSemaphoreCreateRecursiveMutex();
   ring.begin(RING_FRAMES);
   mp3.setDataCallback(onPcm);
   volume = prefs.getUChar("vol", 60);
@@ -221,25 +256,13 @@ static void begin() {
   loadQueue();
   if (!queue.empty()) loadTrack(qpos);  // show it paused, ready to go
   state = file ? PAUSED : STOPPED;
+  // same core as loop(), higher priority: it runs whenever the ring has room
+  xTaskCreatePinnedToCore(decodeTask, "decode", 3584, nullptr, 2, nullptr, 1);
 }
 
-// Keep the PCM ring topped up; advance at end of track
+// Advance at the end of a track (decoding itself happens in decodeTask)
 static void loop() {
   if (state != PLAYING || !file) return;
-  if (!mp3 && !mp3.begin()) {
-    lastError = "Out of memory";
-    state = PAUSED;
-    return;
-  }
-  static uint8_t buf[512];
-  for (int i = 0; i < 8 && !eof && ring.space() >= 2 * 1152 + 1152; i++) {
-    int n = file.read(buf, sizeof(buf));
-    if (n <= 0) {
-      eof = true;
-      break;
-    }
-    mp3.write(buf, n);
-  }
   if (eof && ring.used() == 0) {
     if (repeat == REPEAT_ONE) playIndex(qpos);
     else next();

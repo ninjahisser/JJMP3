@@ -12,6 +12,8 @@
 #include "screen.h"
 #include "keyboard.h"
 #include "games.h"
+#include "zen.h"
+#include "profile.h"
 #if JJ_WIFI
 #include <WiFi.h>
 #endif
@@ -385,17 +387,21 @@ static AboutScreen aboutScreen;
 
 struct SettingsScreen : ListScreen {
   String title() override { return "Settings"; }
-  int count() override { return 4; }
+  int count() override { return 5; }
   String label(int i) override {
-    static const char *names[] = {"Bluetooth", "Wi-Fi", "Mode", "About"};
+    static const char *names[] = {"Bluetooth", "Wi-Fi", "Name", "Mode", "About"};
     return names[i];
   }
-  String detail(int i) override { return i == 2 ? (JJ_WIFI ? "Wi-Fi" : "Music") : String(">"); }
+  String detail(int i) override {
+    if (i == 2) return Profile::user.length() ? Profile::user.substring(0, 8) : String("-");
+    return i == 3 ? (JJ_WIFI ? "Wi-Fi" : "Music") : String(">");
+  }
   void select(int i) override {
     if (i == 0) OS::push(&bluetoothScreen);
     if (i == 1) OS::push(&wifiScreen);
-    if (i == 2) switchModeAsk();
-    if (i == 3) OS::push(&aboutScreen);
+    if (i == 2) keyboardScreen.open("Your name", Profile::user, false, [](const String &v) { Profile::setUser(v); });
+    if (i == 3) switchModeAsk();
+    if (i == 4) OS::push(&aboutScreen);
   }
 };
 static SettingsScreen settingsScreen;
@@ -404,10 +410,13 @@ static SettingsScreen settingsScreen;
 struct HomeScreen : ListScreen {
   bool hasNow() { return JJ_BT && Player::current.id.length(); }
   int first() { return hasNow() ? 0 : 1; }
-  String title() override { return JJ_WIFI ? "Wi-Fi mode" : "JJMP3"; }
-  int count() override { return 5 - first(); }
+  String title() override {
+    if (Profile::timeKnown()) return JJ_WIFI ? Profile::hhmm() + " Wi-Fi" : Profile::hhmm();
+    return JJ_WIFI ? "Wi-Fi mode" : "JJMP3";
+  }
+  int count() override { return 6 - first(); }
   String label(int i) override {
-    static const char *names[] = {"Now playing", "Music", "Playlists", "Games", "Settings"};
+    static const char *names[] = {"Now playing", "Music", "Playlists", "Washington Zen", "Games", "Settings"};
     return names[i + first()];
   }
   String detail(int i) override { return i + first() == 1 ? String(Library::count()) : String(">"); }
@@ -416,7 +425,8 @@ struct HomeScreen : ListScreen {
       case 0: OS::openNowPlaying(); break;
       case 1: OS::push(&musicScreen); break;
       case 2: OS::push(&playlistsScreen); break;
-      case 3: OS::push(&gamesScreen); break;
+      case 3: OS::push(&zenScreen); break;
+      case 4: OS::push(&gamesScreen); break;
       default: OS::push(&settingsScreen); break;
     }
   }
@@ -426,11 +436,18 @@ static HomeScreen homeScreen;
 // ---------- the loop ----------
 namespace OS {
 
+static uint32_t splashUntil = 0;
+
 static void draw() {
   if (!UI::ok) return;
   UI::oled.clearDisplay();
   UI::oled.setTextSize(1);
   UI::oled.setTextColor(SSD1306_WHITE);
+  if (millis() < splashUntil) {
+    UI::drawSplash();
+    UI::oled.display();
+    return;
+  }
   Screen *s = top();
   if (s->fullscreen()) s->draw();
   else {
@@ -445,6 +462,8 @@ static void begin() {
   depth = 0;
   push(&homeScreen);
   UI::redrawHook = draw;
+  splashUntil = millis() + 2800;  // I <3 U, then the menu
+  draw();
 }
 
 static void handle(const KeyEvent &e) {
@@ -475,6 +494,11 @@ static void loop() {
   if (Battery::warned && !wasWarned) UI::toast("Battery low", 3000);
   KeyEvent e;
   while (Input::pop(e)) {
+    if (millis() < splashUntil) {  // any button skips the splash
+      splashUntil = 0;
+      UI::invalidate();
+      continue;
+    }
     handle(e);
     UI::invalidate();
   }
@@ -482,8 +506,9 @@ static void loop() {
   s->tick();
   if (!UI::ok) return;
   uint32_t now = millis();
-  bool busy = s->animating() || now < UI::toastUntil || UI::receiving() || (Player::state == PLAYING && s == &nowPlayingScreen);
-  uint32_t interval = s->fullscreen() ? 33 : busy ? 120 : 1000;
+  bool busy = now < splashUntil + 200 || s->animating() || now < UI::toastUntil || UI::receiving() || (Player::state == PLAYING && s == &nowPlayingScreen);
+  bool playingNow = Player::state == PLAYING && s == &nowPlayingScreen;
+  uint32_t interval = s->fullscreen() ? 33 : playingNow ? 200 : busy ? 120 : 1000;
   if (!UI::dirty && now - UI::lastDraw < interval) return;
   if (s->fullscreen() && !UI::dirty) return;  // games redraw when they change
   UI::lastDraw = now;

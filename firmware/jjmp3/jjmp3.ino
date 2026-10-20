@@ -19,6 +19,7 @@
 #include "net.h"
 #include "ui.h"
 #include "input.h"
+#include "profile.h"
 #include "os.h"
 #include "protocol.h"
 
@@ -31,6 +32,7 @@ void setup() {
   Input::begin();
   Battery::begin();
   prefs.begin("jjmp3", false);
+  Profile::begin();
 
   UI::begin();
 

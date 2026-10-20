@@ -8,6 +8,7 @@
 #include "player.h"
 #include "bt.h"
 #include "battery.h"
+#include "profile.h"
 
 // Drawing on the 128x64 two-colour OLED: rows 0-15 glow yellow (the status band),
 // rows 16-63 blue (the screen's content). What to show is decided by os.h.
@@ -35,7 +36,7 @@ static void centerText(const String &s, int y, int size = 1) {
 
 static void begin() {
   Wire.begin(PIN_SDA, PIN_SCL);
-  Wire.setClock(400000);
+  Wire.setClock(800000);  // SSD1306 copes; halves the time a full frame takes
   ok = oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   if (!ok) return;
   oled.setTextColor(SSD1306_WHITE);
@@ -45,6 +46,28 @@ static void begin() {
   centerText("pocket player", 30);
   centerText("v" FW_VERSION, 44);
   oled.display();
+}
+
+static void heart(int x, int y, int r = 3) {
+  oled.fillCircle(x + r, y + r, r, SSD1306_WHITE);
+  oled.fillCircle(x + 3 * r, y + r, r, SSD1306_WHITE);
+  oled.fillTriangle(x, y + r + 1, x + 4 * r, y + r + 1, x + 2 * r, y + 4 * r, SSD1306_WHITE);
+}
+
+/** "I <heart> U" across the yellow band, the owner's name in the blue area. */
+static void drawSplash() {
+  oled.setTextSize(2);
+  oled.setCursor(40, 1);
+  oled.print("I");
+  heart(56, 2, 3);
+  oled.setCursor(76, 1);
+  oled.print("U");
+  String name = Profile::user;
+  if (name.length() && name.length() <= 10) centerText(name, 28, 2);
+  else if (name.length()) centerText(name, 32);
+  else centerText("set your name", 32);
+  oled.setTextSize(1);
+  centerText("JJMP3", 54);
 }
 
 static void toast(const String &text, uint32_t ms = 1800) {
