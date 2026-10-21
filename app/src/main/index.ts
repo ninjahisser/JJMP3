@@ -10,9 +10,7 @@ import { Importer, type Item } from './importer'
 import { Library } from './library'
 import { log } from './log'
 import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
-import { makeOledArt, oledPicture } from './artwork'
-import { writeFileSync } from 'node:fs'
-import { TMP_DIR } from './paths'
+import { makeOledArt } from './artwork'
 import { Sync } from './sync'
 import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
@@ -21,7 +19,7 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'jjmp3', privileges: { standard:
 
 // Every copy (installed, bin\, dev) must share one lock and one data folder: two instances
 // writing library.json at once lose songs. The lock lives in userData, so pin both.
-app.setName('JJMP3')
+app.setName('Z0Ɛ')
 app.setPath('userData', DATA_DIR)
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -177,7 +175,7 @@ function registerIpc(): void {
     return deviceCall(cmd, params)
   })
   h('screen', async () => {
-    const r = await device.tryCall('screen')
+    const r = await device.poll('screen')
     if (!r?.b64) return null
     const buf = Buffer.from(r.b64, 'base64')
     return buf.length === 1024 ? new Uint8Array(buf) : null
@@ -196,13 +194,6 @@ function registerIpc(): void {
   h('bt:forget', () => deviceCall('bt_forget'))
   h('mode:switch', () => deviceCall('mode_switch'))
   h('user:set', (name: string) => deviceCall('user_set', { name: String(name || '').slice(0, 20) }))
-  h('zen:picture', async (name: string, data: Uint8Array) => {
-    await ensureTools()
-    const src = join(TMP_DIR, `zen-${Date.now()}-${String(name).replace(/[^A-Za-z0-9.]/g, '_')}`)
-    writeFileSync(src, Buffer.from(data))
-    await device.put('/zen.bin', await oledPicture(src, 48))
-  })
-  h('zen:reset', () => deviceCall('rm', { path: '/zen.bin' }).catch(() => ({ ok: true })))
   h('btn', (k: string, hold = false) => {
     if (!['left', 'play', 'right', 'up', 'down'].includes(k)) throw new Error('Unknown button')
     return device.tryCall('btn', { k, hold })

@@ -181,6 +181,26 @@ static const char *stateName() {
 
 static bool connected() { return started && a2dp.is_connected(); }
 
+// A one-line, human explanation of what the link is doing right now, for the
+// on-device Bluetooth screen (the app shows the raw event log instead).
+static const char *hint() {
+  if (!target[0]) return "No headphones set yet";
+  if (a2dp.is_connected()) return audioStarted ? "Playing through headphones" : "Linked, waiting for audio";
+  if (refused >= 3) return "They keep refusing";
+  if (a2dp.get_connection_state() == ESP_A2D_CONNECTION_STATE_CONNECTING) return "Connecting now";
+  if (a2dp.discovering()) return "Searching nearby";
+  return "Looking for headphones";
+}
+
+// The newest event line ("12s connecting"), for the on-device screen.
+static const char *lastEvent() {
+  static char out[28] = "";
+  portENTER_CRITICAL(&eventLock);
+  if (eventCount) strlcpy(out, events[eventCount - 1], sizeof(out));
+  portEXIT_CRITICAL(&eventLock);
+  return out;
+}
+
 static void loop() {
   uint8_t key = pendingKey;
   if (!key) return;
@@ -216,6 +236,8 @@ static void connectTo(const char *name) { prefs.putString("bt_name", name); }
 static void forget() { prefs.remove("bt_name"); }
 static const char *stateName() { return "off"; }
 static bool connected() { return false; }
+static const char *hint() { return "Off in Wi-Fi mode"; }
+static const char *lastEvent() { return ""; }
 static void loop() {}
 }  // namespace BT
 

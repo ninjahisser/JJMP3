@@ -2,7 +2,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <SD.h>
-#include <base64.h>
 #include "config.h"
 #include "library.h"
 #include "player.h"
@@ -27,6 +26,31 @@ static void mkdirs(const String &path) {
 static void sdInfo(JsonObject o) {
   o["total"] = SD.totalBytes();
   o["used"] = SD.usedBytes();
+}
+
+// The 1024-byte OLED frame, base64-encoded. The core's base64::encode() mallocs
+// ~1.4 KB every call and returns "-FAIL-" when the heap is short (Bluetooth mode
+// leaves very little RAM), which is what made the app's screen mirror blank.
+// Encode into a reusable static buffer instead, so repeated polls never allocate.
+static const char *screenB64() {
+  static const char B64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  static char out[1400];  // 1024 bytes -> 1368 chars, plus NUL
+  const uint8_t *in = UI::buffer();
+  size_t n = 0;
+  uint32_t v = 0;
+  int bits = 0;
+  for (int i = 0; i < 1024; i++) {
+    v = (v << 8) | in[i];
+    bits += 8;
+    while (bits >= 6) {
+      bits -= 6;
+      out[n++] = B64[(v >> bits) & 0x3F];
+    }
+  }
+  if (bits > 0) out[n++] = B64[(v << (6 - bits)) & 0x3F];
+  while (n & 3) out[n++] = '=';
+  out[n] = 0;
+  return out;
 }
 
 static void status(JsonObject o) {
@@ -150,7 +174,7 @@ static void handle(JsonDocument &req, JsonObject res) {
       Input::inject((Key)key, req["hold"] | false);
     }
   } else if (cmd == "screen") {
-    res["b64"] = base64::encode(UI::buffer(), 1024);
+    res["b64"] = screenB64();
   } else if (cmd == "wifi_set") {
     Net::setCredentials(req["ssid"] | "", req["pass"] | "");
     if (JJ_WIFI) UI::toast("Joining Wi-Fi...");

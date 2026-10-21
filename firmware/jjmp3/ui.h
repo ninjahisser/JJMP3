@@ -27,6 +27,8 @@ static const int BAND = 16;  // height of the yellow band
 static const int ROW_H = 12; // list rows in the blue area: 4 visible
 static const uint8_t ICON_WIFI[] PROGMEM = {0x7C, 0x82, 0x38, 0x44, 0x10};
 
+static void drawSplash();
+
 static void centerText(const String &s, int y, int size = 1) {
   oled.setTextSize(size);
   oled.setCursor(max(0, (128 - (int)s.length() * 6 * size) / 2), y);
@@ -42,9 +44,10 @@ static void begin() {
   oled.setTextColor(SSD1306_WHITE);
   oled.setTextWrap(false);
   oled.clearDisplay();
-  centerText("JJMP3", 4);
-  centerText("pocket player", 30);
-  centerText("v" FW_VERSION, 44);
+  // Draw the boot screen (I <3 U + name) here, not a placeholder frame: the OS
+  // redraws the same splash right after, and two different frames in a row
+  // looked like a jarring popup flashing at power-on.
+  drawSplash();
   oled.display();
 }
 
@@ -67,7 +70,7 @@ static void drawSplash() {
   else if (name.length()) centerText(name, 32);
   else centerText("set your name", 32);
   oled.setTextSize(1);
-  centerText("JJMP3", 54);
+  centerText("Z0Ɛ", 54);
 }
 
 static void toast(const String &text, uint32_t ms = 1800) {
@@ -135,6 +138,12 @@ static void iconBattery(int x, int y) {
   int fill = (Battery::percent * 9 + 50) / 100;
   if (Battery::percent <= 10 && (millis() / 500) % 2) fill = 0;
   if (fill > 0) oled.fillRect(x + 1, y + 1, fill, 5, SSD1306_WHITE);
+  // show percentage when BT connected/playing for quick view
+  if (BT::connected()) {
+    char p[4]; sprintf(p, "%d", Battery::percent);
+    oled.setCursor(x - 18, y + 1);
+    oled.print(p);
+  }
 }
 
 /** Yellow band: status icons, and in the middle the title (or a transfer bar while receiving). */

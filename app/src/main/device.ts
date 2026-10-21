@@ -288,6 +288,17 @@ export class Device {
     return this.call(cmd, params, 3000).catch(() => null)
   }
 
+  /**
+   * A UI poll (the OLED mirror). Unlike tryCall it waits its turn behind the
+   * status poll instead of being dropped, but with a short timeout so it never
+   * hogs the single serial link: a stale frame beats a blank mirror. Skipped
+   * only while a file upload is in flight, where the link is busy for seconds.
+   */
+  async poll(cmd: string, params: Record<string, unknown> = {}, timeout = 2500): Promise<Reply | null> {
+    if (!this.link) return null
+    return this.call(cmd, params, timeout).catch(() => null)
+  }
+
   put(path: string, data: Buffer, progress?: Progress): Promise<void> {
     return this.guard((l) => l.put(path, data, progress))
   }
@@ -346,8 +357,10 @@ export class Device {
 
   private async run(): Promise<void> {
     let lastWifiTry = 0
+    let misses = 0
     for (;;) {
       if (!this.link) {
+        misses = 0
         let found = await this.tryUsb()
         if (!found && Date.now() - lastWifiTry > 8000) {
           lastWifiTry = Date.now()
@@ -367,13 +380,24 @@ export class Device {
       }
       if (!this.mutex.busy) {
         try {
-          const st = await this.mutex.run(() => this.need().request('status', {}, 3000))
+          // Short timeout: status is a tiny reply, so if it takes this long the
+          // link is bad. Keeping it short also means the OLED mirror's screen
+          // poll (queued behind this on the one serial link) rarely waits long
+          // enough to time out and drop a frame.
+          const st = await this.mutex.run(() => this.need().request('status', {}, 2000))
           this.status = st as DeviceStatus
+          misses = 0
           const ip = this.status.wifi?.ip
           if (ip && ip !== this.wifiHost()) this.setWifiHost(ip)
           this.onChange()
         } catch (e) {
-          if (e instanceof LinkError) this.lose(e.message)
+          // One missed poll is not a disconnection: the device may just be busy
+          // (SD scan, flash write, a big screen frame). Only give up after a
+          // few in a row, so a single hiccup doesn't make the app flap.
+          if (e instanceof LinkError) {
+            if (e.message === 'player disconnected') this.lose(e.message)
+            else if (++misses >= 5) this.lose(e.message)
+          }
         }
       }
       await sleep(1000)

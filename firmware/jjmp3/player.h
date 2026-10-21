@@ -47,9 +47,18 @@ struct Guard {
   ~Guard() { if (lock) xSemaphoreGiveRecursive(lock); }
 };
 
+// Called by the decoder, which runs inside mp3.write() while decodeTask holds
+// the decoder lock. It must therefore NEVER block: if it waited for ring room,
+// loop() (core 1) would block on that same lock and the whole device would
+// freeze. So push what fits and drop the rest of this burst; the decode loop
+// sees the shortfall and feeds again shortly. Worst case a rare audible click,
+// never a hang.
+static volatile bool ringOverflow = false;
 static void onPcm(MP3FrameInfo &info, short *pcm, size_t samples, void *) {
   if (info.samprate != SAMPLE_RATE) lastError = "Unsupported sample rate";
-  ring.pushSamples(pcm, samples, info.nChans);
+  uint32_t want = info.nChans == 2 ? samples / 2 : samples;  // frames wanted
+  uint32_t put = ring.pushSamples(pcm, samples, info.nChans);
+  if (put < want) ringOverflow = true;
 }
 
 // Called from the Bluetooth task: fill `len` stereo frames
@@ -74,9 +83,10 @@ static void saveQueue() {
 
 static void loadQueue() {
   queue.clear();
+  queue.reserve(Library::count() + 1);  // one allocation for the whole queue, not a realloc chain
   File f = SD.open(QUEUE_PATH, FILE_READ);
   if (f) {
-    while (f.available()) {
+    while (f.available() && queue.size() < 500) {
       String id = f.readStringUntil('\n');
       id.trim();
       if (id.length()) queue.push_back(id);
@@ -91,7 +101,12 @@ static void closeFile() {
   Guard g;
   if (file) file.close();
   eof = true;
-  mp3.end();  // frees ~30 KB until the next track starts
+  // Do NOT mp3.end() here: tearing the decoder down and rebuilding it costs
+  // ~25 KB of heap churn (decoder + frame + PCM buffers) and, with Bluetooth
+  // up, fails intermittently ("allocation failed", then a stall). The decoder
+  // is allocated once in begin() and reused; helix re-syncs on the new file's
+  // first MP3 frame by itself. seek() re-inits it because a mid-file restart
+  // can leave stale bit-reservoir state.
 }
 
 static bool loadTrack(int index) {
@@ -157,6 +172,10 @@ static bool playIndex(int index, int dir = 1) {
 
 static void play() {
   if (!JJ_BT) return;
+  if (ESP.getFreeHeap() < 8000) {
+    lastError = "Low memory";
+    return;
+  }
   if (state == PAUSED && file) {
     state = PLAYING;
     return;
@@ -198,7 +217,7 @@ static void seek(uint32_t sec) {
   uint32_t offset = (uint64_t)fileSize * sec / current.dur;
   file.seek(offset);
   eof = false;
-  mp3.end();
+  mp3.begin();  // reset the stream: clears stale bit-reservoir state for the new position
   ring.clear();
   framesPlayed = sec * SAMPLE_RATE;
 }
@@ -228,18 +247,31 @@ static void decodeTask(void *) {
   static uint8_t buf[256];  // small bites: one decoded frame at most, so the ring never overflows
   for (;;) {
     bool fed = false;
-    if (state == PLAYING && ring.space() >= 1152 + 64) {
-      Guard g;
-      if (state == PLAYING && file && !eof) {
-        if (!mp3 && !mp3.begin()) {
-          lastError = "Out of memory";
-          state = PAUSED;
-        } else {
-          int n = file.read(buf, sizeof(buf));
-          if (n <= 0) eof = true;
-          else mp3.write(buf, n);
-          fed = n > 0;
+    // Wait for room for the largest burst mp3.write() can emit in one call
+    // (helix decodes its whole 2 KB input buffer at once: ~4 MP3 frames,
+    // ~104 ms of PCM). Below this, skip the write so onPcm never has to drop.
+    if (state == PLAYING) {
+      if (xSemaphoreTakeRecursive(lock, pdMS_TO_TICKS(10)) == pdTRUE) {
+        if (state == PLAYING && file && !eof && ring.space() >= RING_HIGH_WATER) {
+          if (!mp3 && !mp3.begin()) {
+            lastError = "Out of memory";
+            state = PAUSED;
+          } else {
+            int n = file.read(buf, sizeof(buf));
+            if (n <= 0) eof = true;
+            else {
+              // Don't crash if write does something unexpected
+              try {
+                mp3.write(buf, n);
+              } catch (...) {
+                lastError = "Decode error";
+                state = PAUSED;
+              }
+            }
+            fed = n > 0;
+          }
         }
+        xSemaphoreGiveRecursive(lock);
       }
     }
     if (!fed) vTaskDelay(pdMS_TO_TICKS(3));

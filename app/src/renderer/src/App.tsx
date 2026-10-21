@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { Library } from './pages/Library'
 import { Playlists, PlaylistPage } from './pages/Playlists'
 import { Player } from './pages/Player'
+import { Games } from './pages/Games'
 import { useStore } from './store'
 import { controls } from './playback'
 
@@ -37,10 +38,12 @@ export function App() {
         <main>
           <div className="page" key={page.name === 'playlist' ? page.id : page.name}>
             <ErrorBoundary onReset={() => useStore.getState().go({ name: 'library' })}>
-              {page.name === 'library' && <Library />}
-              {page.name === 'playlists' && <Playlists />}
-              {page.name === 'playlist' && <PlaylistPage id={page.id} />}
-              {page.name === 'player' && <Player />}
+      {page.name === 'library' && <Library />}
+      {page.name === 'playlists' && <Playlists />}
+      {page.name === 'playlist' && <Playlist id={(page as any).id} />}
+      {page.name === 'add' && <Add />}
+      {page.name === 'games' && <Games />}
+      {page.name === 'player' && <Player />}
             </ErrorBoundary>
           </div>
         </main>

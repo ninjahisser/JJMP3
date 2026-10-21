@@ -85,6 +85,7 @@ static bool find(const String &id, Track &out) {
 
 static void allIds(std::vector<String> &ids) {
   ids.clear();
+  ids.reserve(cachedCount + 1);  // one allocation for the whole list, not a realloc chain
   forEach([&](uint32_t, const Track &t) { ids.push_back(t.id); return true; });
 }
 

@@ -28,7 +28,7 @@ export function Sidebar() {
     <aside>
       <div className="brand">
         <h1>JJMP3</h1>
-        <span className="mono">pocket player</span>
+        <span className="mono">Z0Ɛ</span>
       </div>
       <Oled />
       <div className="conn">

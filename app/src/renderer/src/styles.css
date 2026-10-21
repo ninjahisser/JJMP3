@@ -4,8 +4,8 @@
 @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter.ttf") format("truetype"); font-weight: 100 900; font-style: normal; }
 @font-face { font-family: "JetBrains Mono"; src: url("./assets/fonts/JetBrainsMono.ttf") format("truetype"); font-weight: 100 800; font-style: normal; }
 :root {
-  --paper: #f1ede4;
-  --paper-2: #e9e4d8;
+  --paper: #cfe9cf;
+  --paper-2: #b9d7b9;
   --sheet: #f8f5ef;
   --ink: #1b1a17;
   --ink-2: #55514a;

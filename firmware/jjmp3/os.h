@@ -175,11 +175,12 @@ struct GamesScreen : ListScreen {
     ListScreen::enter();
   }
   String title() override { return "Games"; }
-  static const int BUILT_IN = 2;
+  static const int BUILT_IN = 3;
   int count() override { return files.size() + BUILT_IN; }
   String label(int i) override {
     if (i == 0) return "Pibble Catch";
     if (i == 1) return "Snake";
+    if (i == 2) return "Washington Zen";
     String n = files[i - BUILT_IN];
     return n.substring(0, n.length() - 4);
   }
@@ -187,6 +188,7 @@ struct GamesScreen : ListScreen {
   void select(int i) override {
     if (i == 0) return OS::push(&pibbleScreen);
     if (i == 1) return OS::push(&snakeScreen);
+    if (i == 2) return OS::push(&zenScreen);
     chip8Screen.load(String(GAMES_DIR) + "/" + files[i - BUILT_IN]);
     OS::push(&chip8Screen);
   }
@@ -240,6 +242,7 @@ static BtScanScreen btScanScreen;
 
 struct BluetoothScreen : ListScreen {
   String title() override { return "Bluetooth"; }
+  bool animating() override { return !JJ_WIFI && BT::target[0]; }  // the line changes as the link comes up
   int count() override { return JJ_WIFI ? 2 : (BT::target[0] ? 3 : 2); }
   String label(int i) override {
     if (JJ_WIFI) return i == 0 ? String("Off in Wi-Fi mode") : String("Switch to music");
@@ -250,6 +253,12 @@ struct BluetoothScreen : ListScreen {
     }
     if (i == 1) return BT::target[0] ? "Pair other ones" : "Find headphones";
     return "Forget " + String(BT::target);
+  }
+  void draw() override {
+    ListScreen::draw();
+    if (JJ_WIFI || !BT::target[0]) return;
+    // A live line under the list, so waiting through a pairing is not silent.
+    UI::centerText(BT::hint(), 56);
   }
   void select(int i) override {
     if (JJ_WIFI) {
@@ -411,12 +420,16 @@ struct HomeScreen : ListScreen {
   bool hasNow() { return JJ_BT && Player::current.id.length(); }
   int first() { return hasNow() ? 0 : 1; }
   String title() override {
-    if (Profile::timeKnown()) return JJ_WIFI ? Profile::hhmm() + " Wi-Fi" : Profile::hhmm();
-    return JJ_WIFI ? "Wi-Fi mode" : "JJMP3";
+    if (Profile::timeKnown()) {
+      String t = Profile::hhmm();
+      if (JJ_WIFI) return t + " Wi-Fi";
+      return t;
+    }
+    return JJ_WIFI ? "Wi-Fi mode" : "Z0Ɛ";
   }
-  int count() override { return 6 - first(); }
+  int count() override { return 5 - first(); }
   String label(int i) override {
-    static const char *names[] = {"Now playing", "Music", "Playlists", "Washington Zen", "Games", "Settings"};
+    static const char *names[] = {"Now playing", "Music", "Playlists", "Games", "Settings"};
     return names[i + first()];
   }
   String detail(int i) override { return i + first() == 1 ? String(Library::count()) : String(">"); }
@@ -425,8 +438,7 @@ struct HomeScreen : ListScreen {
       case 0: OS::openNowPlaying(); break;
       case 1: OS::push(&musicScreen); break;
       case 2: OS::push(&playlistsScreen); break;
-      case 3: OS::push(&zenScreen); break;
-      case 4: OS::push(&gamesScreen); break;
+      case 3: OS::push(&gamesScreen); break;
       default: OS::push(&settingsScreen); break;
     }
   }

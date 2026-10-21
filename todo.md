@@ -1,4 +1,6 @@
 # Todo
+First of all, I made opencode make changes but I like none of these, so fix them.
+
 Rebrand it to the Z0Ɛ instead of JJSMP3.
 
 show the time of the world.

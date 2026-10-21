@@ -211,4 +211,4 @@ struct ZenScreen : Screen {
     }
   }
 };
-static ZenScreen zenScreen;
+ZenScreen zenScreen;

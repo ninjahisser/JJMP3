@@ -4,6 +4,11 @@
 #include <Preferences.h>
 #include "screen.h"
 
+// Washington Zen is listed under Games (see GamesScreen); forward-declared
+// because zen.h is included after games.h in os.h.
+struct ZenScreen;
+extern ZenScreen zenScreen;
+
 // ---------- Snake (built in) ----------
 // The board is the blue area in 4 px cells: 32 x 12. < > turn, P pauses, hold P quits.
 struct SnakeScreen : Screen {
@@ -273,7 +278,7 @@ struct Chip8Screen : Screen {
       error = "Can't open game";
       return false;
     }
-    f.read(mem + 0x200, min<size_t>(f.size(), 4096 - 0x200));
+    f.read(mem + 0x200, min<size_t>(f.size(), 0x1000));
     f.close();
     memset(V, 0, 16);
     memset(fb, 0, sizeof(fb));

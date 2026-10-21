@@ -11,7 +11,11 @@ struct KeyboardScreen : Screen {
   int set = 0, pos = 4;
   bool secret = false;
 
-  static constexpr const char *SETS[3] = {"abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789.-_@!#$%&*+=?/:;,'\"()<>[]{}~^`|\\"};
+  static constexpr const char *SETS[4] = {"abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                                          "0123456789.-_@!#$%&*+=?/:;,'\"()<>[]{}~^`|\\",
+                                          // Latin-1 accents, so names like Zoe with an accent can be typed
+                                          "àáâäãåçèéêëìíîïñòóôöõùúûüýÿÀÁÂÄÃÅÇÈÉÊËÌÍÎÏÑÒÓÔÖÕÙÚÛÜÝ"};
+  static const int NSETS = 4;
   static const int SPECIALS = 4;  // OK, DEL, SPC, set switch
 
   void open(const String &p, const String &initial, bool hidden, std::function<void(const String &)> f) {
@@ -32,7 +36,7 @@ struct KeyboardScreen : Screen {
       case 0: return "OK";
       case 1: return "DEL";
       case 2: return "SPC";
-      case 3: return set == 0 ? "ABC" : set == 1 ? "123" : "abc";
+      case 3: return set == 0 ? "ABC" : set == 1 ? "abc" : set == 2 ? "123" : "aé";
       default: return String(SETS[set][i - SPECIALS]);
     }
   }
@@ -52,7 +56,7 @@ struct KeyboardScreen : Screen {
       } else if (pos == 2) {
         if (value.length() < 63) value += ' ';
       } else if (pos == 3) {
-        set = (set + 1) % 3;
+        set = (set + 1) % NSETS;
         pos = 3;
       } else if (value.length() < 63) {
         value += SETS[set][pos - SPECIALS];

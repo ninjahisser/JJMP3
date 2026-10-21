@@ -1,8 +1,8 @@
 #pragma once
 
 #define FW_VERSION   "1.1.0"
-#define DEVICE_NAME  "JJMP3"
-#define HOSTNAME     "jjmp3"
+#define DEVICE_NAME  "Z0Ɛ"
+#define HOSTNAME     "z0e"
 
 #define SERIAL_BAUD  921600
 
@@ -39,6 +39,11 @@
 #define PIN_BATTERY      34
 #define BATTERY_DIVIDER  2.0f
 
+// External speaker via I2S / pins (for extended dock with jumper speaker)
+#define PIN_I2S_BCLK 26
+#define PIN_I2S_LRC  25
+#define PIN_I2S_DOUT 27
+
 // Storage layout on the SD card
 #define MUSIC_DIR    "/music"
 #define ART_DIR      "/art"
@@ -49,7 +54,21 @@
 
 // Audio: the desktop app converts everything to 44.1 kHz stereo CBR MP3
 #define SAMPLE_RATE  44100
-#define RING_FRAMES  4096           // PCM buffer, ~93 ms (power of two)
+#define RING_FRAMES  4096           // PCM buffer, ~93 ms (power of two). The decoder is gated
+                                    // so a full mp3.write() burst always fits (see
+                                    // RING_HIGH_WATER), so the ring only has to cover jitter
+                                    // between the A2DP pulls and one decode burst, not a whole
+                                    // burst on top of a slack buffer. Bluetooth mode leaves only
+                                    // ~30 KB of heap after the radio reserves its own, and
+                                    // libhelix needs ~25 KB for the decoder, so every KB the
+                                    // ring gives up buys headroom the decoder actually needs
+                                    // (an 8192 ring made mp3.begin() fail with "allocation
+                                    // failed" / "Out of memory").
+// Feed the decoder only when at least this much room is free, so the PCM mp3.write()
+// produces still fits and onPcm never has to drop. Measured: one write() emits exactly
+// one MP3 frame = 1152 stereo frames, and the A2DP task drains the ring concurrently,
+// so this only needs to cover that frame plus a little slack.
+#define RING_HIGH_WATER  1600
 
 // Serial file transfer
 #define XFER_CHUNK   2048

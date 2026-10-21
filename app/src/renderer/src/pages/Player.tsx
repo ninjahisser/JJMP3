@@ -21,11 +21,11 @@ function ModeCard() {
         <h3>
           <Icon name={wifi ? 'wifi' : 'music'} /> {wifi ? 'Wi-Fi mode' : 'Music mode'}
         </h3>
-        <p className="lead">
-          {wifi
-            ? 'Adding music and control work without a cable. Bluetooth audio is off.'
-            : 'Bluetooth audio is on. Wi-Fi is off, because this chip has room for only one of the two.'}
-        </p>
+      <p className="lead">
+        {wifi
+          ? 'Adding music and control work without a cable.'
+          : 'Bluetooth audio is on.'}
+      </p>
       </div>
       <Button
         variant={wifi ? undefined : 'ghost'}
@@ -65,43 +65,11 @@ function You() {
       <h3>
         <Icon name="edit" /> Your name
       </h3>
-      <p className="lead">The player says it on its start screen (I ♥ U …) and in Washington Zen. Its clock follows this computer whenever they connect.</p>
+      <p className="lead">The player says it on its start screen (I ♥ U …). Its clock follows this computer whenever they connect.</p>
       <div className="inline-form">
         <input className="field" placeholder="Your name" maxLength={20} value={name} onChange={(e) => (setName(e.target.value), setDirty(true))} onKeyDown={(e) => e.key === 'Enter' && void save()} />
         <Button onClick={() => void save()} disabled={!dirty}>Save</Button>
       </div>
-    </div>
-  )
-}
-
-function Zen() {
-  const toast = useStore((s) => s.toast)
-  return (
-    <div className="card">
-      <h3>
-        <Icon name="moon" /> Washington Zen
-      </h3>
-      <p className="lead">The focus timer on the player. During focus your music plays and the pibble sleeps and talks in his sleep; on breaks he wakes up.</p>
-      <div className="actions">
-        <label className="btn ghost file-btn">
-          <Icon name="plus" size={17} />
-          Use a photo of your pibble
-          <input
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={async (e) => {
-              const file = e.target.files?.[0]
-              if (!file) return
-              const ok = (await call('zen:picture', file.name, new Uint8Array(await file.arrayBuffer()))) !== undefined
-              if (ok) toast('Your pibble is on the player')
-              e.target.value = ''
-            }}
-          />
-        </label>
-        <Button variant="ghost" onClick={async () => { if ((await call('zen:reset')) !== undefined) toast('Back to the drawn pibble') }}>Use the drawn one</Button>
-      </div>
-      <p className="note">The photo becomes a 48 × 48 black-and-white picture, like the cover art.</p>
     </div>
   )
 }
@@ -119,9 +87,7 @@ function Games() {
       <h3>
         <Icon name="gamepad" /> Games
       </h3>
-      <p className="lead">
-        Pibble Catch and Snake are built in. Add CHIP-8 games (<span className="mono">.ch8</span> files) and they show up under Games on the player.
-      </p>
+      <p className="lead">It can play CHIP-8 games.</p>
       <div className="picklist">
         {games === null && <div className="note">Reading the card…</div>}
         {games?.length === 0 && <div className="note">No CHIP-8 games on the card yet.</div>}
@@ -160,7 +126,7 @@ function Games() {
           }}
         />
       </label>
-      <p className="note">Play: Games on the player. ‹ › and P are the game's keys 4, 6 and 5, – + are 8 and 2. Hold P to quit.</p>
+      <p className="note">Play: Games on the player.</p>
     </div>
   )
 }
@@ -438,7 +404,6 @@ export function Player() {
             <Headphones />
             <Wifi />
             <You />
-            <Zen />
             <Games />
             <About />
           </div>
