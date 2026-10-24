@@ -9,6 +9,9 @@ const USB_IDS = new Set(['10c4:ea60', '1a86:7523', '1a86:55d4', '303a:1001'])
 
 export class LinkError extends Error {}
 
+/** The firmware's name: Z0Ɛ now, JJMP3 on older builds. */
+const isPlayer = (name: unknown) => name === 'Z0Ɛ' || name === 'JJMP3'
+
 type Reply = Record<string, any>
 type Progress = (done: number, total: number) => void
 
@@ -77,7 +80,7 @@ class SerialLink implements Link {
     for (;;) {
       const nl = this.buf.indexOf(10)
       if (nl >= 0) {
-        const line = this.buf.subarray(0, nl).toString('latin1')
+        const line = this.buf.subarray(0, nl).toString('utf8')
         this.buf = this.buf.subarray(nl + 1)
         return line
       }
@@ -324,7 +327,7 @@ export class Device {
       }
       try {
         const hello = await link.request('hello', {}, 1500)
-        if (hello.name === 'JJMP3') return [link, hello]
+        if (isPlayer(hello.name)) return [link, hello]
       } catch {
         // not a JJMP3, or still booting
       }
@@ -338,7 +341,7 @@ export class Device {
       const link = new HttpLink(host)
       try {
         const hello = await link.request('hello', {}, 1500)
-        if (hello.name === 'JJMP3') return [link, hello]
+        if (isPlayer(hello.name)) return [link, hello]
       } catch {
         // not there
       }

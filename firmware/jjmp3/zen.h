@@ -155,11 +155,11 @@ struct ZenScreen : Screen {
 
   // speech bubble on the right, word-wrapped to 13 characters a line
   void drawBubble(const String &text) {
-    String lines[3];
+    String lines[4];
     int n = 0;
     String word, line;
     String t = text + " ";
-    for (unsigned i = 0; i < t.length() && n < 3; i++) {
+    for (unsigned i = 0; i < t.length() && n < 4; i++) {
       if (t[i] != ' ') {
         word += t[i];
         continue;
@@ -172,12 +172,12 @@ struct ZenScreen : Screen {
       }
       word = "";
     }
-    if (n < 3 && line.length()) lines[n++] = line;
-    int h = n * 10 + 6, y = 17 + (36 - h) / 2;
+    if (n < 4 && line.length()) lines[n++] = line;
+    int h = n * 9 + 5, y = 17 + (46 - h) / 2;
     UI::oled.drawRoundRect(46, y, 82, h, 4, SSD1306_WHITE);
     UI::oled.fillTriangle(46, y + h / 2 - 3, 46, y + h / 2 + 3, 41, y + h / 2 + 4, SSD1306_WHITE);
     for (int i = 0; i < n; i++) {
-      UI::oled.setCursor(50, y + 4 + i * 10);
+      UI::oled.setCursor(50, y + 3 + i * 9);
       UI::oled.print(lines[i]);
     }
   }
