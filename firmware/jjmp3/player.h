@@ -274,7 +274,7 @@ static void decodeTask(void *) {
         xSemaphoreGiveRecursive(lock);
       }
     }
-    if (!fed) vTaskDelay(pdMS_TO_TICKS(3));
+    vTaskDelay(fed ? 1 : pdMS_TO_TICKS(4));  // always yield: the main loop (USB, screen, buttons) must run too
   }
 }
 
@@ -288,8 +288,8 @@ static void begin() {
   loadQueue();
   if (!queue.empty()) loadTrack(qpos);  // show it paused, ready to go
   state = file ? PAUSED : STOPPED;
-  // same core as loop(), higher priority: it runs whenever the ring has room
-  xTaskCreatePinnedToCore(decodeTask, "decode", 3584, nullptr, 2, nullptr, 1);
+  // same core and priority as loop(): they take turns
+  xTaskCreatePinnedToCore(decodeTask, "decode", 4096, nullptr, 1, nullptr, 1);
 }
 
 // Advance at the end of a track (decoding itself happens in decodeTask)
