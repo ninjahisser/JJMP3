@@ -1,7 +1,7 @@
 // Turns YouTube / Spotify links into player-ready tracks.
 // YouTube: audio comes from yt-dlp. Spotify: metadata and artwork come from Spotify's public
 // embed pages and the audio is matched on YouTube (search + closest duration).
-// Everything becomes 44.1 kHz stereo 192 kbps CBR MP3, the only format the player decodes.
+// Everything becomes 44.1 kHz stereo 128 kbps CBR MP3, the only format the player decodes.
 import { createHash, randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -268,10 +268,10 @@ export class Importer {
 
       set({ state: 'converting', progress: 0.85 })
       const out = join(MEDIA_DIR, `${id}.mp3`)
-      const conv = await run(tools.ffmpeg!, ['-y', '-loglevel', 'error', '-i', join(tmp, audio), '-vn', '-ac', '2', '-ar', '44100', '-b:a', '192k',
+      const conv = await run(tools.ffmpeg!, ['-y', '-loglevel', 'error', '-i', join(tmp, audio), '-vn', '-ac', '2', '-ar', '44100', '-b:a', '128k',
         '-map_metadata', '-1', '-id3v2_version', '0', '-write_xing', '0', out])
       if (conv.code) throw new Error('conversion failed: ' + conv.stderr.trim().split('\n').pop())
-      const duration = Math.round(statSync(out).size / 24000) // CBR 192 kbps, no tags
+      const duration = Math.round(statSync(out).size / 16000) // CBR 128 kbps, no tags
 
       set({ state: 'artwork', progress: 0.95 })
       let cover = item.cover || null
