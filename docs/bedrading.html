@@ -9,105 +9,75 @@
   body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #1a202c; background: #fff; }
   .page { width: 281mm; height: 194mm; page-break-after: always; position: relative; overflow: hidden; }
   .page:last-child { page-break-after: auto; }
-  h1 { margin: 0 0 1mm; font-size: 20pt; font-weight: 600; }
-  .sub { margin: 0 0 3mm; color: #4a5568; font-size: 10pt; }
+  h1 { margin: 0 0 1mm; font-size: 19pt; font-weight: 600; }
+  .sub { margin: 0 0 2mm; color: #4a5568; font-size: 9.5pt; }
   svg { width: 100%; height: auto; display: block; }
-  .legend { display: flex; flex-wrap: wrap; gap: 4mm 8mm; font-size: 9pt; margin-top: 2mm; }
+  .legend { display: flex; flex-wrap: wrap; gap: 2mm 7mm; font-size: 8.5pt; margin-top: 1mm; }
   .legend span { display: inline-flex; align-items: center; gap: 2mm; }
   .legend i { display: inline-block; width: 9mm; height: 1.6mm; border-radius: 1mm; }
-  table { border-collapse: collapse; width: 100%; font-size: 8.6pt; }
-  th, td { border-bottom: 0.25mm solid #cbd5e0; padding: 0.9mm 2mm; text-align: left; vertical-align: top; }
+  table { border-collapse: collapse; width: 100%; font-size: 8pt; }
+  th, td { border-bottom: 0.25mm solid #cbd5e0; padding: 0.55mm 1.6mm; text-align: left; vertical-align: top; }
   th { background: #edf2f7; font-weight: 600; }
-  .cols { display: grid; grid-template-columns: 1.55fr 1fr; gap: 6mm; }
-  ul { margin: 0; padding-left: 4.5mm; font-size: 9pt; line-height: 1.45; }
-  h2 { font-size: 11.5pt; margin: 0 0 1.5mm; }
-  .warn { background: #fffaf0; border-left: 1.2mm solid #dd6b20; padding: 2mm 3mm; margin-bottom: 3mm; font-size: 9pt; line-height: 1.45; }
-  .tag { display: inline-block; width: 3mm; height: 3mm; border-radius: 50%; margin-right: 1.5mm; vertical-align: -0.4mm; }
+  td.n { width: 8mm; font-weight: 700; text-align: center; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  h2 { font-size: 10.5pt; margin: 2mm 0 1mm; }
+  ul { margin: 0; padding-left: 4.5mm; font-size: 8.8pt; line-height: 1.4; }
+  .warn { background: #fffaf0; border-left: 1.2mm solid #dd6b20; padding: 1.6mm 3mm; margin: 2mm 0; font-size: 8.8pt; line-height: 1.4; }
+  .dot { display: inline-block; width: 2.6mm; height: 2.6mm; border-radius: 50%; margin-right: 1.2mm; vertical-align: -0.3mm; }
 </style>
 </head>
 <body>
 
-<!-- ===================== PAGINA 1: SIGNALEN ===================== -->
 <section class="page">
-  <h1>JJMP3 &ndash; bedrading (1/3): signalen</h1>
-  <p class="sub">ESP32-devkit met de USB-poort onderaan. Linkerkant: knoppen, versterker en spanningsmeting. Rechterkant: OLED, SD-kaart en de P-knop. 3V3, 5V en GND zijn vlaggen: alles met dezelfde naam is aan elkaar verbonden.</p>
-  <svg id="p1" viewBox="0 0 1400 760"></svg>
+  <h1>JJMP3 – bedrading (1/4): alle draden</h1>
+  <p class="sub">Elke draad is apart getekend en genummerd (zie pagina 4 voor de lijst). Onderaan lopen de voedingsrails: 3V3, 5V en GND. Een lijn die een andere kruist zonder stip is <b>niet</b> verbonden; alleen bij een stip.</p>
+  <svg id="p1" viewBox="0 0 1400 800"></svg>
   <div class="legend">
-    <span><i style="background:#2b6cb0"></i>I&sup2;C (OLED)</span>
+    <span><i style="background:#2b6cb0"></i>I²C (OLED)</span>
     <span><i style="background:#2f855a"></i>SPI (SD-kaart)</span>
-    <span><i style="background:#805ad5"></i>I&sup2;S (versterker)</span>
+    <span><i style="background:#805ad5"></i>I²S (versterker)</span>
     <span><i style="background:#dd6b20"></i>Knoppen</span>
     <span><i style="background:#d69e2e"></i>Batterijmeting</span>
-    <span><i style="background:#c53030"></i>Voeding (3V3 / 5V)</span>
+    <span><i style="background:#c53030"></i>5V</span>
+    <span><i style="background:#d53f8c"></i>3V3</span>
     <span><i style="background:#1a202c"></i>GND</span>
   </div>
 </section>
 
-<!-- ===================== PAGINA 2: VOEDING ===================== -->
 <section class="page">
-  <h1>JJMP3 &ndash; bedrading (2/3): voeding en batterij</h1>
-  <p class="sub">Laden via USB, een LiPo van 3,7 V, een 5 V-booster voor ESP32 en versterker, en een spanningsdeler zodat de ESP32 het batterijniveau kan meten.</p>
-  <svg id="p2" viewBox="0 0 1400 790"></svg>
+  <h1>JJMP3 – bedrading (2/4): voeding, aan/uit-schakelaar en batterij</h1>
+  <p class="sub">USB laadt de LiPo altijd, ook als de schakelaar uit staat. De schakelaar zit tussen de lader en de 5 V-booster: uit = de ESP32, het scherm en de versterker hebben geen stroom.</p>
+  <svg id="p2" viewBox="0 0 1400 820"></svg>
   <div class="legend">
-    <span><i style="background:#c53030"></i>Plus / voeding</span>
+    <span><i style="background:#c53030"></i>Plus</span>
     <span><i style="background:#1a202c"></i>GND / min</span>
     <span><i style="background:#d69e2e"></i>Meetdraad naar D34</span>
   </div>
 </section>
 
-<!-- ===================== PAGINA 3: TABEL ===================== -->
 <section class="page">
-  <h1>JJMP3 &ndash; bedrading (3/3): pinnenlijst en opmerkingen</h1>
-  <p class="sub">Alle knoppen schakelen naar GND; de ESP32 gebruikt de ingebouwde pull-ups, dus geen weerstanden nodig bij de knoppen.</p>
+  <h1>JJMP3 – bedrading (3/4): drukknoppen en schakelaar van dichtbij</h1>
+  <p class="sub">Een 6×6 mm drukknop heeft vier pootjes. De twee pootjes aan dezelfde kant zijn altijd met elkaar verbonden; bij indrukken verbindt de knop de linker- met de rechterkant. Gebruik daarom twee pootjes die <b>diagonaal</b> tegenover elkaar staan.</p>
+  <svg id="p3" viewBox="0 0 1400 800"></svg>
+</section>
+
+<section class="page">
+  <h1>JJMP3 – bedrading (4/4): draadlijst en onderdelen</h1>
   <div class="cols">
-    <div>
-      <table>
-        <thead><tr><th>ESP32-pin</th><th>Gaat naar</th><th>Waarvoor</th></tr></thead>
-        <tbody>
-          <tr><td><span class="tag" style="background:#2b6cb0"></span>D21</td><td>OLED SDA</td><td>I&sup2;C data</td></tr>
-          <tr><td><span class="tag" style="background:#2b6cb0"></span>D22</td><td>OLED SCL</td><td>I&sup2;C klok</td></tr>
-          <tr><td><span class="tag" style="background:#2f855a"></span>D5</td><td>SD-module CS</td><td>chip select</td></tr>
-          <tr><td><span class="tag" style="background:#2f855a"></span>D18</td><td>SD-module SCK</td><td>SPI klok</td></tr>
-          <tr><td><span class="tag" style="background:#2f855a"></span>D23</td><td>SD-module MOSI</td><td>SPI data naar de kaart</td></tr>
-          <tr><td><span class="tag" style="background:#2f855a"></span>D19</td><td>SD-module MISO</td><td>SPI data van de kaart</td></tr>
-          <tr><td><span class="tag" style="background:#dd6b20"></span>D4</td><td>knop P</td><td>kiezen / play-pauze, lang indrukken = terug</td></tr>
-          <tr><td><span class="tag" style="background:#dd6b20"></span>D32</td><td>knop &lt;</td><td>links / vorige</td></tr>
-          <tr><td><span class="tag" style="background:#dd6b20"></span>D33</td><td>knop &gt;</td><td>rechts / volgende</td></tr>
-          <tr><td><span class="tag" style="background:#dd6b20"></span>D13</td><td>knop +</td><td>volume omhoog</td></tr>
-          <tr><td><span class="tag" style="background:#dd6b20"></span>D14</td><td>knop &minus;</td><td>volume omlaag</td></tr>
-          <tr><td><span class="tag" style="background:#805ad5"></span>D26</td><td>versterker BCLK</td><td>I&sup2;S bitklok</td></tr>
-          <tr><td><span class="tag" style="background:#805ad5"></span>D25</td><td>versterker LRC</td><td>I&sup2;S woordselectie</td></tr>
-          <tr><td><span class="tag" style="background:#805ad5"></span>D27</td><td>versterker DIN</td><td>I&sup2;S audiodata</td></tr>
-          <tr><td><span class="tag" style="background:#d69e2e"></span>D34</td><td>spanningsdeler (2 &times; 100 k&Omega;)</td><td>batterijniveau</td></tr>
-          <tr><td><span class="tag" style="background:#c53030"></span>3V3</td><td>OLED VCC, SD-module VCC</td><td>3,3 V voeding</td></tr>
-          <tr><td><span class="tag" style="background:#c53030"></span>VIN (5V)</td><td>uitgang van de 5 V-booster</td><td>voeding van de ESP32</td></tr>
-          <tr><td><span class="tag" style="background:#1a202c"></span>GND</td><td>alles</td><td>gemeenschappelijke massa</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div>
+    <div><h2>Pagina 1: signalen en voeding op het bord</h2><table id="t1"></table></div>
+    <div><h2>Pagina 2: voeding en batterij</h2><table id="t2"></table>
       <div class="warn"><b>Let op</b><br>
-        &bull; Gebruik de USB-poort van de ESP32 <b>niet</b> tegelijk met de 5 V-booster op de VIN-pin. Haal de booster los van VIN als je via USB flasht of de computer-app gebruikt.<br>
-        &bull; De I&sup2;S-versterker is hier wel getekend, maar de <b>firmware voor de luidspreker is nog niet geschreven</b>. De pinnen D25, D26 en D27 zijn gereserveerd.
+        • Gebruik de USB-poort van de ESP32 niet tegelijk met de 5 V-booster op VIN. Haal draad 6 (pagina 2) los als je flasht of de computer-app gebruikt.<br>
+        • De I²S-versterker is getekend, maar de firmware voor de luidspreker is nog niet geschreven. D25, D26 en D27 zijn gereserveerd.<br>
+        • Zet de LiPo pas aan als alles klopt en controleer de polariteit (rood = plus).
       </div>
       <h2>Onderdelen</h2>
       <ul>
-        <li>ESP32-devkit (30 pins)</li>
-        <li>OLED 128&times;64, twee kleuren, I&sup2;C</li>
-        <li>SD-kaartmodule (SPI)</li>
-        <li>5 drukknoppen</li>
-        <li>MAX98357 I&sup2;S-versterker en een luidspreker (4&ndash;8 &Omega;, tot 3 W)</li>
-        <li>LiPo 3,7 V</li>
-        <li>TP4056-laadmodule met beveiliging (DW01)</li>
-        <li>Step-up converter naar 5 V (2 A)</li>
-        <li>2 &times; 100 k&Omega; weerstanden</li>
-      </ul>
-      <h2 style="margin-top:3mm">Tips</h2>
-      <ul>
-        <li>Verbind alle GND-punten met elkaar: batterij, TP4056, booster, versterker, ESP32.</li>
-        <li>Optioneel: 100 nF tussen D34 en GND voor een rustigere meting.</li>
-        <li>Zet de batterij pas aan als alles klopt; controleer de polariteit (rood = plus).</li>
-        <li>Behuizing: M3 heat-set inserts met M3-bouten van 8 mm.</li>
+        <li>ESP32-devkit (30 pins), OLED 128×64 (I²C), SD-kaartmodule (SPI)</li>
+        <li>5 drukknoppen 6×6 mm (4 pootjes), 1 mini schuifschakelaar (3 pootjes, SPDT)</li>
+        <li>MAX98357 I²S-versterker en luidspreker 4–8 Ω</li>
+        <li>LiPo 3,7 V, TP4056-laadmodule met beveiliging (DW01), step-up naar 5 V (2 A)</li>
+        <li>2 × 100 kΩ, optioneel 100 nF (D34 naar GND)</li>
       </ul>
     </div>
   </div>
@@ -115,7 +85,7 @@
 
 <script>
 const NS = 'http://www.w3.org/2000/svg';
-const C = { i2c: '#2b6cb0', spi: '#2f855a', i2s: '#805ad5', btn: '#dd6b20', sense: '#d69e2e', pwr: '#c53030', gnd: '#1a202c' };
+const C = { i2c: '#2b6cb0', spi: '#2f855a', i2s: '#805ad5', btn: '#dd6b20', sense: '#d69e2e', v5: '#c53030', v33: '#d53f8c', gnd: '#1a202c' };
 
 function S(tag, attrs, text) {
   const e = document.createElementNS(NS, tag);
@@ -123,8 +93,9 @@ function S(tag, attrs, text) {
   if (text !== undefined) e.textContent = text;
   return e;
 }
+
 class Canvas {
-  constructor(id) { this.svg = document.getElementById(id); }
+  constructor(id) { this.svg = document.getElementById(id); this.list = []; }
   add(e) { this.svg.appendChild(e); return e; }
   box(x, y, w, h, title, o = {}) {
     this.add(S('rect', { x, y, width: w, height: h, rx: o.rx ?? 10, fill: o.fill || '#f7fafc', stroke: o.stroke || '#2d3748', 'stroke-width': 2 }));
@@ -133,204 +104,298 @@ class Canvas {
   text(x, y, s, o = {}) {
     return this.add(S('text', { x, y, 'text-anchor': o.anchor || 'start', 'font-size': o.size || 13, 'font-weight': o.weight || 400, fill: o.fill || '#1a202c', 'font-family': 'Segoe UI, Arial, sans-serif' }, s));
   }
-  wire(pts, color, w = 3.2) {
+  line(pts, color, w = 3.2) {
     this.add(S('polyline', { points: pts.map(p => p.join(',')).join(' '), fill: 'none', stroke: color, 'stroke-width': w, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
   }
-  bez(x1, y1, x2, y2, color, w = 3.2) {
-    const mx = (x1 + x2) / 2;
-    this.add(S('path', { d: `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`, fill: 'none', stroke: color, 'stroke-width': w, 'stroke-linecap': 'round' }));
+  /** a numbered wire; records it for the wire list */
+  wire(n, color, pts, from, to, o = {}) {
+    if (o.bez) {
+      const a = pts[0], b = pts[pts.length - 1], mx = (a[0] + b[0]) / 2;
+      this.add(S('path', { d: `M${a[0]} ${a[1]} C${mx} ${a[1]} ${mx} ${b[1]} ${b[0]} ${b[1]}`, fill: 'none', stroke: color, 'stroke-width': 3.2, 'stroke-linecap': 'round' }));
+      o.badge = o.badge || [mx, (a[1] + b[1]) / 2];
+    } else {
+      this.line(pts, color);
+    }
+    if (o.dots) o.dots.forEach(d => this.dot(d[0], d[1], color));
+    let bp = o.badge;
+    if (!bp) { // middle of the longest segment
+      let best = -1;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const l = Math.abs(pts[i + 1][0] - pts[i][0]) + Math.abs(pts[i + 1][1] - pts[i][1]);
+        if (l > best) { best = l; bp = [(pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2]; }
+      }
+    }
+    this.badge(bp[0], bp[1], n, color);
+    this.list.push({ n, color, from, to });
   }
-  dot(x, y, color = '#1a202c', r = 4.5) { this.add(S('circle', { cx: x, cy: y, r, fill: color })); }
+  badge(x, y, n, color) {
+    this.add(S('circle', { cx: x, cy: y, r: 11, fill: '#fff', stroke: color, 'stroke-width': 2.2 }));
+    this.text(x, y + 4, String(n), { anchor: 'middle', size: 11.5, weight: 700, fill: color });
+  }
+  dot(x, y, color = '#1a202c', r = 4.8) { this.add(S('circle', { cx: x, cy: y, r, fill: color })); }
   pin(x, y, color = '#1a202c') { this.add(S('circle', { cx: x, cy: y, r: 5, fill: '#fff', stroke: color, 'stroke-width': 2.5 })); }
-  gnd(x, y) { // ground symbol hanging from (x,y)
-    this.wire([[x, y], [x, y + 9]], C.gnd, 2.6);
-    this.wire([[x - 11, y + 9], [x + 11, y + 9]], C.gnd, 2.6);
-    this.wire([[x - 7, y + 15], [x + 7, y + 15]], C.gnd, 2.6);
-    this.wire([[x - 3, y + 21], [x + 3, y + 21]], C.gnd, 2.6);
-  }
-  flag(x, y, label, color, dir = 'left') { // net flag; wire attaches at (x,y), flag extends to dir
-    const w = Math.max(40, label.length * 9 + 14), h = 22;
-    const fx = dir === 'left' ? x - w : x;
-    this.add(S('rect', { x: fx, y: y - h / 2, width: w, height: h, rx: 6, fill: '#fff', stroke: color, 'stroke-width': 2.2 }));
-    this.text(fx + w / 2, y + 5, label, { anchor: 'middle', weight: 600, size: 13, fill: color });
+  rail(x1, x2, y, color, label, right = false) {
+    this.add(S('rect', { x: x1, y: y - 4, width: x2 - x1, height: 8, rx: 4, fill: color }));
+    if (right) this.text(x2 + 32, y + 5, label, { size: 12.5, weight: 700, fill: color });
+    else this.text(x1, y - 10, label, { size: 12.5, weight: 700, fill: color });
   }
   resistor(x, y, w, label) {
     this.add(S('rect', { x, y: y - 11, width: w, height: 22, rx: 3, fill: '#fff', stroke: C.gnd, 'stroke-width': 2.4 }));
     this.text(x + w / 2, y + 5, label, { anchor: 'middle', size: 12.5, weight: 600 });
   }
-  button(x, y, label) { // two contacts and a bar, horizontal, contacts at x and x+44
+  /** push button seen from the side: two contacts and a bar; label below */
+  button(x, y, label) {
     this.pin(x, y); this.pin(x + 44, y);
-    this.wire([[x + 6, y - 10], [x + 38, y - 10]], C.gnd, 3);
-    this.wire([[x + 22, y - 10], [x + 22, y - 3]], C.gnd, 2.6);
-    this.text(x + 22, y + 26, label, { anchor: 'middle', weight: 700, size: 20 });
+    this.line([[x + 6, y - 10], [x + 38, y - 10]], C.gnd, 3);
+    this.line([[x + 22, y - 10], [x + 22, y - 3]], C.gnd, 2.6);
+    this.text(x + 22, y + 26, label, { anchor: 'middle', weight: 700, size: 18 });
   }
-  speaker(x, y, w, h) {
+  speaker(x, y, h) {
     this.add(S('rect', { x, y, width: 26, height: h, rx: 3, fill: '#edf2f7', stroke: C.gnd, 'stroke-width': 2.4 }));
-    this.add(S('polygon', { points: `${x + 26},${y + 8} ${x + w},${y - 10} ${x + w},${y + h + 10} ${x + 26},${y + h - 8}`, fill: '#edf2f7', stroke: C.gnd, 'stroke-width': 2.4 }));
+    this.add(S('polygon', { points: `${x + 26},${y + 8} ${x + 58},${y - 10} ${x + 58},${y + h + 10} ${x + 26},${y + h - 8}`, fill: '#edf2f7', stroke: C.gnd, 'stroke-width': 2.4 }));
   }
 }
 
-/* ================= PAGINA 1 ================= */
+const lists = {};
+
+/* =============================== PAGINA 1 =============================== */
 (function () {
   const c = new Canvas('p1');
-  // ESP32 body
-  c.box(560, 110, 240, 480, 'ESP32-devkit', { fill: '#ebf8ff', size: 17 });
+  c.rail(850, 1010, 640, C.v33, '3V3-rail (uit de ESP32)', true);
+  c.rail(40, 500, 685, C.v5, '5V-rail (uit de booster, pagina 2)', true);
+  c.rail(40, 1360, 722, C.gnd, 'GND-rail');
+  const G = 722, V5 = 685, V3 = 640;
+
+  // ESP32
+  c.box(560, 100, 240, 490, 'ESP32-devkit', { fill: '#ebf8ff', size: 17 });
   c.add(S('rect', { x: 645, y: 568, width: 70, height: 22, rx: 3, fill: '#bee3f8', stroke: '#2d3748', 'stroke-width': 2 }));
   c.text(680, 584, 'USB', { anchor: 'middle', size: 12, weight: 600 });
   const L = [['D34', 190], ['D32', 224], ['D33', 258], ['D25', 292], ['D26', 326], ['D27', 360], ['D14', 394], ['D13', 428], ['GND', 462], ['VIN', 496]];
   const R = [['D23', 190], ['D22', 224], ['D21', 258], ['D19', 292], ['D18', 326], ['D5', 360], ['D4', 394], ['GND', 428], ['3V3', 462]];
-  L.forEach(([n, y]) => { c.text(574, y + 5, n, { size: 14, weight: 600 }); });
-  R.forEach(([n, y]) => { c.text(786, y + 5, n, { anchor: 'end', size: 14, weight: 600 }); });
-  const Ly = Object.fromEntries(L.map(([n, y]) => [n, y]));
+  L.forEach(([n, y]) => { c.text(574, y + 5, n, { size: 14, weight: 600 }); c.pin(560, y); });
+  R.forEach(([n, y]) => { c.text(786, y + 5, n, { anchor: 'end', size: 14, weight: 600 }); c.pin(800, y); });
 
   // --- linkerkant ---
-  // batterijmeting (verwijzing naar pagina 2)
-  c.wire([[560, 190], [450, 190]], C.sense);
   c.add(S('rect', { x: 250, y: 176, width: 200, height: 28, rx: 6, fill: '#fffbeb', stroke: C.sense, 'stroke-width': 2.2 }));
   c.text(350, 195, 'spanningsdeler (pagina 2)', { anchor: 'middle', size: 12.5, weight: 600, fill: '#8a6d1a' });
-  c.pin(560, 190, C.sense);
+  c.wire(8, C.sense, [[560, 190], [450, 190]], 'D34', 'spanningsdeler (pagina 2)', { badge: [505, 190] });
 
-  // knoppen links
-  const leftBtn = (name, y, label) => {
-    c.pin(560, y, C.btn);
-    c.wire([[560, y], [444, y]], C.btn);
-    c.button(400, y, label);
-    c.wire([[400, y], [362, y]], C.gnd);
-    c.gnd(362, y);
-  };
-  leftBtn('D32', Ly.D32, '<');
-  leftBtn('D33', Ly.D33, '>');
-  leftBtn('D14', Ly.D14, '−');
-  leftBtn('D13', Ly.D13, '+');
+  c.button(330, 224, '<'); c.button(330, 258, '>');
+  c.wire(1, C.btn, [[560, 224], [374, 224]], 'D32', 'knop <, pootje A', { badge: [470, 224] });
+  c.wire(2, C.btn, [[560, 258], [374, 258]], 'D33', 'knop >, pootje A', { badge: [470, 258] });
+  c.wire(16, C.gnd, [[330, 224], [130, 224], [130, G]], 'knop <, pootje B', 'GND-rail', { dots: [[130, G]], badge: [230, 224] });
+  c.wire(17, C.gnd, [[330, 258], [150, 258], [150, G]], 'knop >, pootje B', 'GND-rail', { dots: [[150, G]], badge: [240, 258] });
 
   // versterker
   c.box(210, 270, 190, 120, '', { fill: '#faf5ff' });
   c.text(222, 290, 'MAX98357 (I²S)', { size: 13.5, weight: 600 });
-  [['LRC', 'D25', 292], ['BCLK', 'D26', 326], ['DIN', 'D27', 360]].forEach(([p, e, y]) => {
+  [['LRC', 292, 3, 'D25'], ['BCLK', 326, 4, 'D26'], ['DIN', 360, 5, 'D27']].forEach(([p, y, n, e]) => {
     c.text(390, y + 5, p, { anchor: 'end', size: 13, weight: 600 });
     c.pin(400, y, C.i2s);
-    c.wire([[400, y], [560, y]], C.i2s);
-    c.pin(560, y, C.i2s);
+    c.wire(n, C.i2s, [[400, y], [560, y]], e, 'versterker ' + p, { badge: [480, y] });
   });
-  // let op: rechte lijnen omdat de pinnen op dezelfde hoogte staan
-  // voeding en luidspreker van de versterker
-  c.text(222, 322, 'VIN', { size: 12.5, weight: 600 });
-  c.pin(210, 318, C.pwr); c.wire([[210, 318], [170, 318]], C.pwr); c.flag(170, 318, '5V', C.pwr, 'left');
-  c.text(222, 344, 'GND', { size: 12.5, weight: 600 });
-  c.pin(210, 340, C.gnd); c.wire([[210, 340], [190, 340]], C.gnd); c.gnd(190, 340);
-  c.text(222, 366, 'SPK +', { size: 12.5, weight: 600 });
-  c.pin(210, 362, C.pwr); c.wire([[210, 362], [118, 362]], C.pwr);
-  c.text(222, 384, 'SPK −', { size: 12.5, weight: 600 });
-  c.pin(210, 380, C.gnd); c.wire([[210, 380], [118, 380]], C.gnd);
-  c.speaker(60, 356, 58, 30);
-  c.text(40, 420, 'Luidspreker', { size: 13, weight: 600 });
-  c.text(40, 436, '4–8 Ω, tot 3 W', { size: 11.5 });
+  c.text(222, 322, 'VIN', { size: 12.5, weight: 600 }); c.pin(210, 318, C.v5);
+  c.text(222, 344, 'GND', { size: 12.5, weight: 600 }); c.pin(210, 340, C.gnd);
+  c.text(222, 366, 'SPK +', { size: 12.5, weight: 600 }); c.pin(210, 362, C.v5);
+  c.text(222, 384, 'SPK −', { size: 12.5, weight: 600 }); c.pin(210, 380, C.gnd);
+  c.wire(18, C.v5, [[210, 318], [190, 318], [190, V5]], 'versterker VIN', '5V-rail', { dots: [[190, V5]], badge: [190, 500] });
+  c.wire(19, C.gnd, [[210, 340], [170, 340], [170, G]], 'versterker GND', 'GND-rail', { dots: [[170, G]], badge: [170, 560] });
+  c.speaker(46, 352, 36);
+  c.text(46, 420, 'Luidspreker', { size: 13, weight: 600 }); c.text(46, 436, '4–8 Ω, tot 3 W', { size: 11.5 });
+  c.pin(104, 362, C.v5); c.pin(104, 380, C.gnd);
+  c.wire(20, C.v5, [[210, 362], [104, 362]], 'versterker SPK +', 'luidspreker +', { badge: [118, 362] });
+  c.wire(21, C.gnd, [[210, 380], [104, 380]], 'versterker SPK −', 'luidspreker −', { badge: [118, 380] });
 
-  // ESP32 stroom links
-  c.pin(560, 462, C.gnd); c.wire([[560, 462], [520, 462]], C.gnd); c.gnd(520, 462);
-  c.pin(560, 496, C.pwr); c.wire([[560, 496], [520, 496]], C.pwr); c.flag(520, 496, '5V', C.pwr, 'left');
-  c.text(500, 526, 'uit de 5 V-booster', { anchor: 'end', size: 11.5 });
+  // knoppen − en +
+  c.button(330, 540, '−'); c.button(330, 600, '+');
+  c.wire(6, C.btn, [[560, 394], [520, 394], [520, 540], [374, 540]], 'D14', 'knop −, pootje A', { badge: [520, 470] });
+  c.wire(7, C.btn, [[560, 428], [540, 428], [540, 600], [374, 600]], 'D13', 'knop +, pootje A', { badge: [540, 560] });
+  c.wire(22, C.gnd, [[330, 540], [290, 540], [290, G]], 'knop −, pootje B', 'GND-rail', { dots: [[290, G]], badge: [290, 640] });
+  c.wire(23, C.gnd, [[330, 600], [310, 600], [310, G]], 'knop +, pootje B', 'GND-rail', { dots: [[310, G]], badge: [310, 660] });
+
+  // ESP32 voeding links
+  c.wire(24, C.gnd, [[560, 462], [480, 462], [480, G]], 'ESP32 GND (links)', 'GND-rail', { dots: [[480, G]], badge: [480, 620] });
+  c.wire(25, C.v5, [[560, 496], [460, 496], [460, V5]], 'ESP32 VIN', '5V-rail', { dots: [[460, V5]], badge: [460, 590] });
 
   // --- rechterkant ---
-  c.box(960, 190, 230, 104, 'OLED 128×64 (I²C)', { fill: '#ebf8ff', size: 14 });
-  c.pin(960, 224, C.i2c); c.bez(800, 224, 960, 224, C.i2c); c.pin(800, 224, C.i2c); c.text(972, 229, 'SCL', { size: 13, weight: 600 });
-  c.pin(960, 258, C.i2c); c.bez(800, 258, 960, 258, C.i2c); c.pin(800, 258, C.i2c); c.text(972, 263, 'SDA', { size: 13, weight: 600 });
-  c.pin(960, 208, C.pwr); c.wire([[960, 208], [925, 208]], C.pwr); c.flag(925, 208, '3V3', C.pwr, 'left'); c.text(972, 211, 'VCC', { size: 12 });
-  c.pin(960, 278, C.gnd); c.wire([[960, 278], [930, 278]], C.gnd); c.gnd(930, 278); c.text(972, 282, 'GND', { size: 12 });
+  c.box(960, 170, 230, 130, 'OLED 128×64 (I²C)', { fill: '#ebf8ff', size: 14 });
+  c.text(972, 205, 'VCC', { size: 12 }); c.pin(960, 200, C.v33);
+  c.text(972, 229, 'SCL', { size: 13, weight: 600 }); c.pin(960, 224, C.i2c);
+  c.text(972, 263, 'SDA', { size: 13, weight: 600 }); c.pin(960, 258, C.i2c);
+  c.text(972, 285, 'GND', { size: 12 }); c.pin(960, 280, C.gnd);
+  c.wire(9, C.i2c, [[800, 224], [960, 224]], 'D22', 'OLED SCL', { badge: [830, 224] });
+  c.wire(10, C.i2c, [[800, 258], [960, 258]], 'D21', 'OLED SDA', { badge: [830, 258] });
+  c.wire(26, C.v33, [[960, 200], [940, 200], [940, V3]], 'OLED VCC', '3V3-rail', { dots: [[940, V3]], badge: [940, 560] });
+  c.wire(27, C.gnd, [[960, 280], [920, 280], [920, G]], 'OLED GND', 'GND-rail', { dots: [[920, G]], badge: [920, 600] });
 
-  c.box(960, 316, 230, 150, 'SD-kaartmodule (SPI)', { fill: '#f0fff4', size: 14 });
-  [['MOSI', 'D23', 190, 344], ['MISO', 'D19', 292, 368], ['SCK', 'D18', 326, 392], ['CS', 'D5', 360, 416]].forEach(([p, e, ey, y]) => {
-    c.pin(800, ey, C.spi); c.bez(800, ey, 960, y, C.spi); c.pin(960, y, C.spi); c.text(972, y + 5, p, { size: 13, weight: 600 });
+  c.box(960, 312, 230, 160, 'SD-kaartmodule (SPI)', { fill: '#f0fff4', size: 14 });
+  [['MOSI', 'D23', 190, 345, 11], ['MISO', 'D19', 292, 372, 12], ['SCK', 'D18', 326, 399, 13], ['CS', 'D5', 360, 426, 14]].forEach(([p, e, ey, y, n]) => {
+    c.text(972, y + 5, p, { size: 13, weight: 600 }); c.pin(960, y, C.spi);
+    c.wire(n, C.spi, [[800, ey], [960, y]], e, 'SD-module ' + p, { bez: true });
   });
-  c.pin(960, 440, C.pwr); c.wire([[960, 440], [925, 440]], C.pwr); c.flag(925, 440, '3V3', C.pwr, 'left'); c.text(972, 444, 'VCC', { size: 12 });
-  c.pin(960, 458, C.gnd); c.wire([[960, 458], [930, 458]], C.gnd); c.gnd(930, 458); c.text(972, 462, 'GND', { size: 12 });
+  c.text(972, 453, 'VCC', { size: 12 }); c.pin(960, 448, C.v33);
+  c.text(972, 469, 'GND', { size: 12 }); c.pin(960, 464, C.gnd);
+  c.wire(28, C.v33, [[960, 448], [900, 448], [900, V3]], 'SD-module VCC', '3V3-rail', { dots: [[900, V3]], badge: [900, 580] });
+  c.wire(29, C.gnd, [[960, 464], [880, 464], [880, G]], 'SD-module GND', 'GND-rail', { dots: [[880, G]], badge: [880, 620] });
 
   // knop P
-  c.pin(800, 394, C.btn); c.wire([[800, 394], [820, 394], [820, 530], [930, 530]], C.btn);
   c.button(930, 530, 'P');
-  c.wire([[974, 530], [1010, 530]], C.gnd); c.gnd(1010, 530);
-  c.text(1030, 535, 'kiezen / play-pauze, lang = terug', { size: 12 });
+  c.wire(15, C.btn, [[800, 394], [830, 394], [830, 530], [930, 530]], 'D4', 'knop P, pootje A', { badge: [830, 480] });
+  c.wire(30, C.gnd, [[974, 530], [1020, 530], [1020, G]], 'knop P, pootje B', 'GND-rail', { dots: [[1020, G]], badge: [1020, 600] });
+  c.text(1050, 536, 'kiezen / play-pauze, lang = terug', { size: 12 });
 
-  // stroom rechts
-  c.pin(800, 428, C.gnd); c.wire([[800, 428], [840, 428]], C.gnd); c.gnd(840, 428);
-  c.pin(800, 462, C.pwr); c.wire([[800, 462], [840, 462]], C.pwr); c.flag(840, 462, '3V3', C.pwr, 'right');
+  // ESP32 voeding rechts
+  c.wire(31, C.gnd, [[800, 428], [860, 428], [860, G]], 'ESP32 GND (rechts)', 'GND-rail', { dots: [[860, G]], badge: [860, 690] });
+  c.wire(32, C.v33, [[800, 462], [850, 462], [850, V3]], 'ESP32 3V3', '3V3-rail', { dots: [[850, V3]], badge: [850, 560] });
+  lists.p1 = c.list;
 })();
 
-/* ================= PAGINA 2 ================= */
+/* =============================== PAGINA 2 =============================== */
 (function () {
   const c = new Canvas('p2');
-  // USB
-  c.box(50, 270, 150, 160, 'USB-voeding', { fill: '#f7fafc', size: 14 });
-  c.text(125, 330, '5 V van de', { anchor: 'middle', size: 12.5 });
-  c.text(125, 348, 'computer / lader', { anchor: 'middle', size: 12.5 });
-  c.pin(200, 300, C.pwr); c.pin(200, 400, C.gnd);
-  c.text(190, 304, '+', { anchor: 'end', weight: 600 }); c.text(190, 404, '−', { anchor: 'end', weight: 600 });
+  c.box(40, 250, 170, 160, 'USB-voeding', { fill: '#f7fafc', size: 14 });
+  c.text(125, 320, '5 V van de', { anchor: 'middle', size: 12.5 }); c.text(125, 338, 'computer / lader', { anchor: 'middle', size: 12.5 });
+  c.pin(210, 300, C.v5); c.text(198, 305, '+', { anchor: 'end', weight: 700 });
+  c.pin(210, 400, C.gnd); c.text(198, 405, '−', { anchor: 'end', weight: 700 });
 
-  // TP4056
-  c.box(300, 250, 240, 230, 'TP4056 laadmodule', { fill: '#fffaf0', size: 14 });
-  c.text(420, 244, '(met DW01-beveiliging)', { anchor: 'middle', size: 11.5, fill: '#4a5568' });
-  c.pin(300, 300, C.pwr); c.text(312, 305, 'IN+', { size: 13, weight: 600 });
+  c.box(300, 250, 230, 230, 'TP4056 laadmodule', { fill: '#fffaf0', size: 14 });
+  c.text(415, 240, '(met DW01-beveiliging)', { anchor: 'middle', size: 11.5, fill: '#4a5568' });
+  c.pin(300, 300, C.v5); c.text(312, 305, 'IN+', { size: 13, weight: 600 });
   c.pin(300, 400, C.gnd); c.text(312, 405, 'IN−', { size: 13, weight: 600 });
-  c.pin(540, 300, C.pwr); c.text(528, 305, 'OUT+', { anchor: 'end', size: 13, weight: 600 });
-  c.pin(540, 400, C.gnd); c.text(528, 405, 'OUT−', { anchor: 'end', size: 13, weight: 600 });
-  c.pin(360, 480, C.pwr); c.text(360, 466, 'B+', { anchor: 'middle', size: 13, weight: 600 });
-  c.pin(480, 480, C.gnd); c.text(480, 466, 'B−', { anchor: 'middle', size: 13, weight: 600 });
-  c.wire([[200, 300], [300, 300]], C.pwr);
-  c.wire([[200, 400], [300, 400]], C.gnd);
+  c.pin(530, 300, C.v5); c.text(518, 305, 'OUT+', { anchor: 'end', size: 13, weight: 600 });
+  c.pin(530, 400, C.gnd); c.text(518, 405, 'OUT−', { anchor: 'end', size: 13, weight: 600 });
+  c.pin(360, 480, C.v5); c.text(360, 466, 'B+', { anchor: 'middle', size: 13, weight: 600 });
+  c.pin(470, 480, C.gnd); c.text(470, 466, 'B−', { anchor: 'middle', size: 13, weight: 600 });
 
-  // LiPo
-  c.box(320, 560, 200, 90, 'LiPo 3,7 V', { fill: '#fff5f5', size: 14 });
-  c.pin(360, 560, C.pwr); c.text(360, 604, '+', { anchor: 'middle', weight: 700, size: 18, fill: C.pwr });
-  c.pin(480, 560, C.gnd); c.text(480, 604, '−', { anchor: 'middle', weight: 700, size: 18 });
-  c.wire([[360, 480], [360, 560]], C.pwr);
-  c.wire([[480, 480], [480, 560]], C.gnd);
+  // schakelaar
+  c.box(590, 262, 140, 70, '', { fill: '#fff5f5' });
+  c.text(660, 282, 'AAN / UIT', { anchor: 'middle', size: 13.5, weight: 700 });
+  c.text(660, 300, 'schuifschakelaar', { anchor: 'middle', size: 11.5 });
+  c.add(S('rect', { x: 635, y: 308, width: 50, height: 14, rx: 7, fill: '#e2e8f0', stroke: C.gnd, 'stroke-width': 2 }));
+  c.add(S('rect', { x: 640, y: 311, width: 20, height: 8, rx: 4, fill: C.v5 }));
+  [[610, 'zijkant A'], [660, 'midden'], [710, 'zijkant B']].forEach(([x, l]) => { c.pin(x, 332, C.v5); c.text(x, 352, l, { anchor: 'middle', size: 11 }); });
+  c.text(610, 370, '(leeg laten)', { anchor: 'middle', size: 10.5, fill: '#718096' });
 
   // booster
-  c.box(680, 250, 230, 230, 'Step-up naar 5 V', { fill: '#f0fff4', size: 14 });
-  c.text(795, 244, '(2 A, vast 5 V)', { anchor: 'middle', size: 11.5, fill: '#4a5568' });
-  c.pin(680, 300, C.pwr); c.text(692, 305, 'IN+', { size: 13, weight: 600 });
-  c.pin(680, 400, C.gnd); c.text(692, 405, 'IN−', { size: 13, weight: 600 });
-  c.pin(910, 300, C.pwr); c.text(898, 305, 'OUT 5 V', { anchor: 'end', size: 13, weight: 600 });
-  c.pin(910, 400, C.gnd); c.text(898, 405, 'GND', { anchor: 'end', size: 13, weight: 600 });
-  c.wire([[540, 300], [680, 300]], C.pwr);
-  c.wire([[540, 400], [680, 400]], C.gnd);
+  c.box(800, 250, 200, 230, 'Step-up naar 5 V', { fill: '#f0fff4', size: 14 });
+  c.text(900, 240, '(2 A, vast 5 V)', { anchor: 'middle', size: 11.5, fill: '#4a5568' });
+  c.pin(800, 300, C.v5); c.text(812, 305, 'IN+', { size: 13, weight: 600 });
+  c.pin(800, 400, C.gnd); c.text(812, 405, 'IN−', { size: 13, weight: 600 });
+  c.pin(1000, 300, C.v5); c.text(988, 305, 'OUT 5 V', { anchor: 'end', size: 13, weight: 600 });
+  c.pin(1000, 400, C.gnd); c.text(988, 405, 'OUT GND', { anchor: 'end', size: 13, weight: 600 });
 
-  // verbruikers
-  c.box(1090, 230, 270, 110, 'ESP32-devkit', { fill: '#ebf8ff', size: 14 });
-  c.pin(1090, 268, C.pwr); c.text(1102, 273, 'VIN (5V-pin)', { size: 13, weight: 600 });
-  c.pin(1090, 306, C.gnd); c.text(1102, 311, 'GND', { size: 13, weight: 600 });
-  c.box(1090, 370, 270, 110, 'MAX98357 versterker', { fill: '#faf5ff', size: 14 });
-  c.pin(1090, 408, C.pwr); c.text(1102, 413, 'VIN', { size: 13, weight: 600 });
-  c.pin(1090, 446, C.gnd); c.text(1102, 451, 'GND', { size: 13, weight: 600 });
-  c.wire([[910, 300], [1000, 300], [1000, 268], [1090, 268]], C.pwr);
-  c.wire([[1000, 300], [1000, 408], [1090, 408]], C.pwr); c.dot(1000, 300, C.pwr);
-  c.wire([[910, 400], [1040, 400], [1040, 306], [1090, 306]], C.gnd);
-  c.wire([[1040, 400], [1040, 446], [1090, 446]], C.gnd); c.dot(1040, 400, C.gnd);
+  c.box(1130, 230, 230, 110, 'ESP32-devkit', { fill: '#ebf8ff', size: 14 });
+  c.pin(1130, 268, C.v5); c.text(1142, 273, 'VIN (5V-pin)', { size: 13, weight: 600 });
+  c.pin(1130, 306, C.gnd); c.text(1142, 311, 'GND', { size: 13, weight: 600 });
+  c.box(1130, 370, 230, 110, 'MAX98357 versterker', { fill: '#faf5ff', size: 14 });
+  c.pin(1130, 408, C.v5); c.text(1142, 413, 'VIN', { size: 13, weight: 600 });
+  c.pin(1130, 446, C.gnd); c.text(1142, 451, 'GND', { size: 13, weight: 600 });
+
+  c.box(310, 570, 220, 90, 'LiPo 3,7 V', { fill: '#fff5f5', size: 14 });
+  c.pin(360, 570, C.v5); c.text(360, 614, '+', { anchor: 'middle', weight: 700, size: 18, fill: C.v5 });
+  c.pin(470, 570, C.gnd); c.text(470, 614, '−', { anchor: 'middle', weight: 700, size: 18 });
+
+  c.wire(1, C.v5, [[210, 300], [300, 300]], 'USB +', 'TP4056 IN+');
+  c.wire(2, C.gnd, [[210, 400], [300, 400]], 'USB −', 'TP4056 IN−');
+  c.wire(3, C.v5, [[530, 300], [560, 300], [560, 390], [660, 390], [660, 332]], 'TP4056 OUT+', 'schakelaar, middenpootje', { badge: [610, 390] });
+  c.wire(4, C.v5, [[710, 332], [710, 350], [760, 350], [760, 300], [800, 300]], 'schakelaar, zijpootje B', 'booster IN+', { badge: [760, 325] });
+  c.wire(5, C.gnd, [[530, 400], [800, 400]], 'TP4056 OUT−', 'booster IN−', { badge: [780, 400] });
+  c.wire(6, C.v5, [[1000, 300], [1070, 300], [1070, 268], [1130, 268]], 'booster OUT 5 V', 'ESP32 VIN', { badge: [1100, 268] });
+  c.wire(7, C.v5, [[1070, 300], [1070, 408], [1130, 408]], 'booster OUT 5 V', 'versterker VIN', { dots: [[1070, 300]], badge: [1100, 408] });
+  c.wire(8, C.gnd, [[1000, 400], [1030, 400], [1030, 306], [1130, 306]], 'booster OUT GND', 'ESP32 GND', { badge: [1100, 306] });
+  c.wire(9, C.gnd, [[1030, 400], [1030, 446], [1130, 446]], 'booster OUT GND', 'versterker GND', { dots: [[1030, 400]], badge: [1100, 446] });
+  c.wire(10, C.v5, [[360, 480], [360, 570]], 'TP4056 B+', 'LiPo +', { badge: [360, 540] });
+  c.wire(11, C.gnd, [[470, 480], [470, 570]], 'TP4056 B−', 'LiPo −', { badge: [470, 540] });
 
   // batterijmeting
-  c.wire([[360, 520], [250, 520], [250, 700]], C.pwr);
-  c.dot(360, 520, C.pwr);
-  c.wire([[250, 700], [300, 700]], C.pwr);
-  c.resistor(300, 700, 90, '100 kΩ'); c.text(345, 735, 'R1', { anchor: 'middle', size: 12.5, weight: 600 });
-  c.wire([[390, 700], [470, 700]], C.sense);
-  c.dot(470, 700, C.sense);
-  c.resistor(520, 700, 90, '100 kΩ'); c.text(565, 735, 'R2', { anchor: 'middle', size: 12.5, weight: 600 });
-  c.wire([[470, 700], [520, 700]], C.sense);
-  c.wire([[610, 700], [650, 700]], C.gnd); c.gnd(650, 700);
-  c.wire([[470, 700], [470, 650], [760, 650]], C.sense);
-  c.box(760, 628, 190, 46, '', { fill: '#fffbeb', stroke: C.sense });
-  c.text(855, 656, 'naar ESP32 pin D34', { anchor: 'middle', size: 13, weight: 600, fill: '#8a6d1a' });
-  c.text(760, 704, 'Batterijmeting', { size: 14, weight: 600 });
-  c.text(760, 724, 'LiPo+ → 100 kΩ → meetpunt → 100 kΩ → GND', { size: 12 });
-  c.text(760, 742, 'Optioneel: 100 nF van D34 naar GND. De GND van de batterij', { size: 12 });
-  c.text(760, 758, 'moet met de GND van de ESP32 verbonden zijn.', { size: 12 });
+  c.wire(12, C.v5, [[360, 520], [250, 520], [250, 740], [300, 740]], 'LiPo + (bij B+)', 'weerstand R1', { dots: [[360, 520]], badge: [250, 630] });
+  c.resistor(300, 740, 90, '100 kΩ'); c.text(345, 775, 'R1', { anchor: 'middle', size: 12.5, weight: 600 });
+  c.wire(13, C.sense, [[390, 740], [520, 740]], 'R1', 'meetpunt, dan R2', { dots: [[470, 740]], badge: [430, 740] });
+  c.resistor(520, 740, 90, '100 kΩ'); c.text(565, 775, 'R2', { anchor: 'middle', size: 12.5, weight: 600 });
+  c.wire(14, C.gnd, [[610, 740], [660, 740], [660, 760]], 'R2', 'GND', { badge: [640, 740] });
+  c.line([[650, 760], [670, 760]], C.gnd, 2.6); c.line([[654, 766], [666, 766]], C.gnd, 2.6); c.line([[658, 772], [662, 772]], C.gnd, 2.6);
+  c.wire(15, C.sense, [[470, 740], [470, 690], [780, 690]], 'meetpunt', 'ESP32 pin D34', { badge: [640, 690] });
+  c.add(S('rect', { x: 780, y: 668, width: 190, height: 44, rx: 8, fill: '#fffbeb', stroke: C.sense, 'stroke-width': 2.2 }));
+  c.text(875, 695, 'naar ESP32 pin D34', { anchor: 'middle', size: 13, weight: 600, fill: '#8a6d1a' });
+  c.text(760, 745, 'Optioneel: 100 nF van D34 naar GND', { size: 12 });
+  c.text(760, 763, 'De GND van de batterij hoort bij alle andere GND’s.', { size: 12 });
 
-  // opmerking
-  c.add(S('rect', { x: 950, y: 520, width: 410, height: 86, rx: 8, fill: '#fffaf0', stroke: '#dd6b20', 'stroke-width': 2 }));
-  c.text(965, 546, 'Let op', { weight: 700, size: 14 });
-  c.text(965, 566, 'USB op de ESP32 en de booster op VIN nooit', { size: 12.5 });
-  c.text(965, 584, 'tegelijk aansluiten. Haal VIN los bij het flashen.', { size: 12.5 });
+  c.add(S('rect', { x: 1000, y: 530, width: 360, height: 150, rx: 8, fill: '#fffaf0', stroke: '#dd6b20', 'stroke-width': 2 }));
+  c.text(1015, 556, 'Hoe werkt de schakelaar', { weight: 700, size: 14 });
+  ['Schakelaar open: geen stroom naar booster,', 'ESP32, scherm en versterker = uit.', 'Het laden via USB blijft gewoon werken.', 'Schuif je hem dicht, dan gaat alles aan.', '(Draad 3 en 4 lopen via de schakelaar.)'].forEach((t, i) => c.text(1015, 580 + i * 18, t, { size: 12.3 }));
+  lists.p2 = c.list;
 })();
+
+/* =============================== PAGINA 3 =============================== */
+(function () {
+  const c = new Canvas('p3');
+  function pushButton(cx, cy, pinLabel, name, color) {
+    c.add(S('rect', { x: cx - 50, y: cy - 50, width: 100, height: 100, rx: 8, fill: '#e2e8f0', stroke: C.gnd, 'stroke-width': 2.6 }));
+    c.add(S('circle', { cx, cy, r: 26, fill: '#a0aec0', stroke: C.gnd, 'stroke-width': 2.4 }));
+    c.text(cx, cy + 8, name, { anchor: 'middle', size: 24, weight: 700, fill: '#fff' });
+    const legs = { A1: [cx - 50, cy - 28], A2: [cx - 50, cy + 28], B1: [cx + 50, cy - 28], B2: [cx + 50, cy + 28] };
+    Object.entries(legs).forEach(([k, [x, y]]) => {
+      const dir = k.startsWith('A') ? -1 : 1;
+      c.line([[x, y], [x + dir * 22, y]], C.gnd, 5);
+      c.pin(x + dir * 22, y, C.gnd);
+    });
+    [[legs.A1, legs.A2, -30], [legs.B1, legs.B2, 30]].forEach(([p, q, o]) => c.add(S('path', { d: `M${p[0]} ${p[1]} L${p[0] + o / 3} ${p[1]} L${q[0] + o / 3} ${q[1]} L${q[0]} ${q[1]}`, fill: 'none', stroke: '#718096', 'stroke-width': 2, 'stroke-dasharray': '4 4' })));
+    const a = [legs.A1[0] - 22, legs.A1[1]], b = [legs.B2[0] + 22, legs.B2[1]];
+    c.line([a, [a[0] - 30, a[1]], [a[0] - 30, cy - 120]], color, 3.4);
+    c.text(a[0] - 30, cy - 130, pinLabel, { anchor: 'middle', size: 15, weight: 700, fill: color });
+    c.line([b, [b[0] + 30, b[1]], [b[0] + 30, cy + 110]], C.gnd, 3.4);
+    c.text(b[0] + 30, cy + 130, 'GND', { anchor: 'middle', size: 15, weight: 700 });
+    c.text(cx - 50, cy - 56, 'A', { anchor: 'middle', size: 12, weight: 700, fill: '#718096' });
+    c.text(cx + 50, cy - 56, 'B', { anchor: 'middle', size: 12, weight: 700, fill: '#718096' });
+  }
+  const xs = [150, 410, 670, 930, 1190];
+  [['D32', '<'], ['D33', '>'], ['D14', '−'], ['D13', '+'], ['D4', 'P']].forEach(([pn, nm], i) => {
+    pushButton(xs[i], 190, pn, nm, C.btn);
+    c.text(xs[i], 360, 'knop ' + nm, { anchor: 'middle', size: 14, weight: 700 });
+  });
+  c.text(20, 400, 'Elke knop: pootje A (linksboven) naar de ESP32-pin, pootje B (rechtsonder) naar GND. Die twee staan diagonaal, dus het werkt altijd.', { size: 13.5 });
+  c.text(20, 420, 'De stippellijn laat zien dat de twee pootjes aan dezelfde kant in de knop al met elkaar verbonden zijn.', { size: 13 });
+
+  c.box(20, 450, 640, 340, 'Aan/uit-schakelaar (mini schuifschakelaar, 3 pootjes)', { fill: '#fff5f5', size: 15 });
+  c.add(S('rect', { x: 230, y: 520, width: 220, height: 80, rx: 8, fill: '#e2e8f0', stroke: C.gnd, 'stroke-width': 2.6 }));
+  c.add(S('rect', { x: 280, y: 545, width: 120, height: 30, rx: 15, fill: '#fff', stroke: C.gnd, 'stroke-width': 2.2 }));
+  c.add(S('rect', { x: 286, y: 550, width: 50, height: 20, rx: 10, fill: C.v5 }));
+  [[270, 'zijkant A', '#718096'], [340, 'midden', C.v5], [410, 'zijkant B', C.v5]].forEach(([x, l, col]) => {
+    c.line([[x, 600], [x, 640]], C.gnd, 5); c.pin(x, 640, C.gnd);
+    c.text(x, 668, l, { anchor: 'middle', size: 12.5, weight: 600, fill: col });
+  });
+  c.line([[340, 640], [340, 720]], C.v5, 3.4); c.text(340, 742, 'van TP4056 OUT+ (draad 3)', { anchor: 'middle', size: 12.5, weight: 600, fill: C.v5 });
+  c.line([[410, 640], [490, 640], [490, 720]], C.v5, 3.4); c.text(490, 762, 'naar booster IN+ (draad 4)', { anchor: 'middle', size: 12.5, weight: 600, fill: C.v5 });
+  c.text(270, 700, 'niet aansluiten', { anchor: 'middle', size: 11.5, fill: '#718096' });
+  c.text(40, 490, 'Schuif naar één kant: verbinding midden en B = aan. Andere kant: open = uit.', { size: 12.5 });
+  c.text(40, 508, 'Werkt het andersom, draai hem om; er gaat niets stuk.', { size: 12.5 });
+
+  c.box(700, 450, 680, 340, 'Overzicht ESP32-pinnen', { fill: '#ebf8ff', size: 15 });
+  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D33', 'knop >'], ['D13', 'knop +'], ['D14', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['D21', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
+  rows.forEach(([p, w], i) => {
+    const col = i < 8 ? 0 : 1, row = i < 8 ? i : i - 8;
+    c.text(730 + col * 330, 505 + row * 32, p, { size: 14, weight: 700 });
+    c.text(790 + col * 330, 505 + row * 32, '→ ' + w, { size: 14 });
+  });
+  c.text(1060, 505 + 7 * 32, '3V3 → OLED en SD-module', { size: 14, weight: 700 });
+  c.text(1060, 505 + 8 * 32, 'VIN ← 5 V van de booster', { size: 14, weight: 700 });
+})();
+
+/* =============================== TABELLEN =============================== */
+function table(id, list) {
+  const t = document.getElementById(id);
+  t.innerHTML = '<thead><tr><th>#</th><th>Van</th><th>Naar</th><th>Kleur</th></tr></thead>';
+  const names = { [C.i2c]: 'blauw', [C.spi]: 'groen', [C.i2s]: 'paars', [C.btn]: 'oranje', [C.sense]: 'geel', [C.v5]: 'rood', [C.v33]: 'roze', [C.gnd]: 'zwart' };
+  const body = document.createElement('tbody');
+  [...list].sort((a, b) => a.n - b.n).forEach(w => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="n">${w.n}</td><td>${w.from}</td><td>${w.to}</td><td><span class="dot" style="background:${w.color}"></span>${names[w.color] || ''}</td>`;
+    body.appendChild(tr);
+  });
+  t.appendChild(body);
+}
+table('t1', lists.p1);
+table('t2', lists.p2);
 </script>
 </body>
 </html>
