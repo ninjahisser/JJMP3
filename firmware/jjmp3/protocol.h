@@ -82,6 +82,7 @@ static void status(JsonObject o) {
   wifi["ssid"] = Net::ssid;
   wifi["ip"] = Net::ip();
   o["heap"] = ESP.getFreeHeap();
+  o["minheap"] = ESP.getMinFreeHeap();
   o["user"] = Profile::user;
   JsonObject perf = o["perf"].to<JsonObject>();
   perf["rd"] = Player::perfRead;

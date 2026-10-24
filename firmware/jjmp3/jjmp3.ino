@@ -24,6 +24,8 @@
 #include "os.h"
 #include "protocol.h"
 
+SET_LOOP_TASK_STACK_SIZE(5 * 1024);  // default 8 KB, taken from the heap the Bluetooth stack needs
+
 Preferences prefs;
 static bool sdOk = false;
 
@@ -41,7 +43,7 @@ void setup() {
   std::set_terminate(onTerminate);
   // Generous RX ring: at 921600 baud a slow loop() pass (SD scan, flash write, OLED)
   // would otherwise drop bytes mid-command and the app would see no reply.
-  Serial.setRxBufferSize(XFER_CHUNK * 4 + 512);
+  Serial.setRxBufferSize(XFER_CHUNK * 2 + 256);
   Serial.begin(SERIAL_BAUD);
   Input::begin();
   Battery::begin();

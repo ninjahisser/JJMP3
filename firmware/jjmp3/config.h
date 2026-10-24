@@ -71,4 +71,4 @@
 #define RING_HIGH_WATER  1260   // one decoded MP3 frame is 1152 stereo frames; on the 2048 ring this keeps ~18 ms or more buffered
 
 // Serial file transfer
-#define XFER_CHUNK   2048
+#define XFER_CHUNK   1024
