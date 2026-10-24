@@ -176,6 +176,26 @@ static void handle(JsonDocument &req, JsonObject res) {
     UI::invalidate();
   } else if (cmd == "time_set") {
     Profile::setTime(req["t"] | 0, req["tz"] | 0);
+  } else if (cmd == "pintest") {
+    // wire a jumper from D19 to the pin under test: drives it high and low, reports what D19 sees
+    int out = req["out"] | -1;
+    if (out != 5 && out != 18 && out != 23 && out != 13 && out != 14 && out != 25 && out != 26 && out != 27) {
+      res["ok"] = false;
+      res["error"] = "pick 5, 18, 23, 13, 14, 25, 26 or 27";
+    } else {
+      pinMode(19, INPUT);
+      pinMode(out, OUTPUT);
+      digitalWrite(out, HIGH);
+      delay(5);
+      int high = digitalRead(19);
+      digitalWrite(out, LOW);
+      delay(5);
+      int low = digitalRead(19);
+      pinMode(out, INPUT);
+      res["high"] = high;
+      res["low"] = low;
+      res["follows"] = high == 1 && low == 0;
+    }
   } else if (cmd == "btn") {
     // the desktop app's buttons: same as pressing the real ones
     String k = req["k"] | "";

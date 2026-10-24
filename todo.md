@@ -1,48 +1,51 @@
 # Todo
-First of all, I made opencode make changes but I like none of these, so fix them.
 
-Rebrand it to the Z0Ɛ instead of JJSMP3.
+Legend: ✅ checked by you and it works · 🔍 done, waiting for your review · ⬜ not done yet (reason in italics)
 
-show the time of the world.
+🔍 First of all, I made opencode make changes but I like none of these, so fix them. *Fixed what was broken: the playlist pages crashed, the Games tab was a placeholder. Tell me which other changes you want undone.*
 
-show battery percentage when playing on bluetooth.
+🔍 Rebrand it to the Z0Ɛ instead of JJSMP3. *App title, window and OLED splash use Z0Ɛ (the OLED font has no Ɛ, so it is drawn as a mirrored E). Folder, repo and installer are still called JJMP3.*
 
-save all music on the mp3 and if they have a videoclip or something, let me choose that as artwork or like a gif loop of the album that plays on the cover viewer on the display.
+🔍 show the time of the world. *Home > World time: 11 cities, with summer time. Needs the app to have set the clock once.*
 
-I can't add some CHIP-8 games because it says limit is 3.5kb. but they are saved on the SD card so fix this. and the dinorun game on the device plays a bit strange.
+🔍 show battery percentage when playing on bluetooth. *Bottom right of Now Playing, when a battery is wired.*
 
-add some audiovisualisation.
+⬜ save all music on the mp3 and if they have a videoclip or something, let me choose that as artwork or like a gif loop of the album that plays on the cover viewer on the display. *Big feature, not started.*
 
-Add a sidescrolling game where you have to save Seth from Steffe by fighting Steffe's goons in Kinepolis as Zoé. Steffe constantly makes little animated text like "*snort*" "*fart*" "*burp*", Seth is kidnapped by him because steffe wants to "m-preg him". but Zoé must defeat him to save her lover Seth.
+⬜ I can't add some CHIP-8 games because it says limit is 3.5kb. but they are saved on the SD card so fix this. *CHIP-8 has 3.5 KB of program memory by design; bigger games are SCHIP/XO-CHIP and need more RAM than the ESP32 has left with Bluetooth on.* and the dinorun game on the device plays a bit strange. *Needs the SD card and the game file to look at.*
 
-Add audio even if its simple to all the games and UI.
+🔍 add some audiovisualisation. *Home > Visualiser: loudness bars of what is playing.*
 
-Allow searching for songs when adding them.
+🔍 Add a sidescrolling game where you have to save Seth from Steffe by fighting Steffe's goons in Kinepolis as Zoé. Steffe constantly makes little animated text like "*snort*" "*fart*" "*burp*", Seth is kidnapped by him because steffe wants to "m-preg him". but Zoé must defeat him to save her lover Seth. *Games > Save Seth.*
 
-Games should be on the pc frontend app its own tab like library, player, playlists.
+⬜ Add audio even if its simple to all the games and UI. *Needs the speaker amplifier (ordered?) and the I2S audio code.*
 
-Allow me to enter a spotify account and select what music I want to import.
+🔍 Allow searching for songs when adding them. *Type a name in Add songs.*
 
-add theme support to the frontend, by default now its like this mokka-brown but it should be a nice calm green.
+🔍 Games should be on the pc frontend app its own tab like library, player, playlists.
 
-the icon for the app should be a heart.
+⬜ Allow me to enter a spotify account and select what music I want to import. *Needs a Spotify developer app (client id) to log in; not started.*
 
-on the device I should be able to add music to playlists and rename playlists etc like pc
+🔍 add theme support to the frontend, by default now its like this mokka-brown but it should be a nice calm green. *Green is the default; Paper (the old brown) and Slate are the colour dots in the sidebar.*
 
-When clicking anywhere on the frontend that isn't a clickable thing so clicking on the background, the logo (pixelated heart) should appear. with some nice spritework and particles. simple clean.
+🔍 the icon for the app should be a heart.
 
-music playing should sync with the device, so playing a song, timeline etc is always the same and controls control both on both devices.
+⬜ on the device I should be able to add music to playlists and rename playlists etc like pc. *Not started.*
 
-make it so you can check for updates on the frontend and it can update the device too.
+🔍 When clicking anywhere on the frontend that isn't a clickable thing so clicking on the background, the logo (pixelated heart) should appear. with some nice spritework and particles. simple clean.
 
-there is bloat: now next to the title in the frontend it says "pocket player, that is bloat remove that", "Bluetooth audio is on. Wi-Fi is off, because this chip has room for only one of the two." is bloat, "Pibble Catch and Snake are built in. Add CHIP-8 games (.ch8 files) and they show up under games on the player." is bloat, it should say it can play CHIP-8 games tho., Play: Games on the player. ‹ › and P are the game's keys 4, 6 and 5, – + are 8 and 2. Hold P to quit. is also bloat. in add music "Songs, albums and playlists work. You'll see what's in it before anything downloads." is bloat.
+⬜ music playing should sync with the device, so playing a song, timeline etc is always the same and controls control both on both devices. *The app shows the player's state and the output switch hands over; full two-way sync is not done.*
 
-when adding music after entering a link it loads, but show a progress bar.
+⬜ make it so you can check for updates on the frontend and it can update the device too. *Not started.*
 
-when adding music and it shows a playlist, make it so I can select individual songs to add like a checkbox.
+🔍 there is bloat: now next to the title in the frontend it says "pocket player, that is bloat remove that", "Bluetooth audio is on. Wi-Fi is off, because this chip has room for only one of the two." is bloat, "Pibble Catch and Snake are built in. Add CHIP-8 games (.ch8 files) and they show up under games on the player." is bloat, it should say it can play CHIP-8 games tho., Play: Games on the player. ‹ › and P are the game's keys 4, 6 and 5, – + are 8 and 2. Hold P to quit. is also bloat. in add music "Songs, albums and playlists work. You'll see what's in it before anything downloads." is bloat.
 
-I will make an extended dock that has a speaker and two pins using jumper cables to connect the speaker to the device, so add pins for that basically 2 pins to use the speaker.
+🔍 when adding music after entering a link it loads, but show a progress bar.
 
-when I hover over teh app in the taskbar it should havce those controls like spotify does.
+🔍 when adding music and it shows a playlist, make it so I can select individual songs to add like a checkbox.
 
-add karaoke mode in a tab. the device should also show the lyrics of the song.
+🔍 I will make an extended dock that has a speaker and two pins using jumper cables to connect the speaker to the device, so add pins for that basically 2 pins to use the speaker. *Pins D26 (BCLK), D25 (LRC) and D27 (DIN) go to an I2S amplifier, in the wiring PDF. The amplifier code is not written yet.*
+
+🔍 when I hover over teh app in the taskbar it should havce those controls like spotify does.
+
+🔍 add karaoke mode in a tab. *Karaoke tab with synced lyrics.* the device should also show the lyrics of the song. *Not done: needs the SD card.*

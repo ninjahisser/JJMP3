@@ -397,3 +397,12 @@ dialog:has(.add-preview) { width: min(640px, 92vw); }
 .swatch.slate { background: linear-gradient(135deg, #edf0f4 50%, #4b586a 50%); }
 
 .heart-layer { position: fixed; inset: 0; pointer-events: none; z-index: 90; }
+
+/* ---------- karaoke ---------- */
+.karaoke-head { display: flex; align-items: center; gap: 18px; }
+.karaoke-title { font: 400 44px/1 var(--serif); margin: 4px 0 6px; }
+.lyrics { padding: 30vh 0; display: grid; gap: 18px; }
+.lyric { font: 400 30px/1.25 var(--serif); color: var(--ink-3); transition: color .25s, transform .25s, font-size .25s; transform-origin: left center; }
+.lyric.past { color: var(--ink-3); opacity: .55; }
+.lyric.now { color: var(--ink); font-size: 40px; transform: translateX(6px); }
+.plain-lyrics { white-space: pre-wrap; font: 400 20px/1.6 var(--serif); color: var(--ink-2); }

@@ -13,6 +13,7 @@ import { log } from './log'
 import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
 import { makeOledArt } from './artwork'
 import { Sync } from './sync'
+import { getLyrics } from './lyrics'
 import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
 
@@ -132,6 +133,11 @@ function registerIpc(): void {
   h('theme:set', (theme: 'light' | 'dark') => {
     library.setSetting('theme', theme === 'dark' ? 'dark' : 'light')
     paintWindow()
+  })
+  h('lyrics:get', (id: string) => {
+    const t = library.get(id)
+    if (!t) throw new Error('No such song')
+    return getLyrics(t)
   })
   h('media:state', (playing: boolean) => setThumbButtons(!!playing))
   h('palette:set', (palette: string) => {

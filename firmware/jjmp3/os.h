@@ -12,6 +12,7 @@
 #include "screen.h"
 #include "keyboard.h"
 #include "games.h"
+#include "saveseth.h"
 #include "zen.h"
 #include "profile.h"
 #if JJ_WIFI
@@ -175,12 +176,13 @@ struct GamesScreen : ListScreen {
     ListScreen::enter();
   }
   String title() override { return "Games"; }
-  static const int BUILT_IN = 3;
+  static const int BUILT_IN = 4;
   int count() override { return files.size() + BUILT_IN; }
   String label(int i) override {
     if (i == 0) return "Pibble Catch";
     if (i == 1) return "Snake";
-    if (i == 2) return "Washington Zen";
+    if (i == 2) return "Save Seth";
+    if (i == 3) return "Washington Zen";
     String n = files[i - BUILT_IN];
     return n.substring(0, n.length() - 4);
   }
@@ -188,7 +190,8 @@ struct GamesScreen : ListScreen {
   void select(int i) override {
     if (i == 0) return OS::push(&pibbleScreen);
     if (i == 1) return OS::push(&snakeScreen);
-    if (i == 2) return OS::push(&zenScreen);
+    if (i == 2) return OS::push(&saveSethScreen);
+    if (i == 3) return OS::push(&zenScreen);
     chip8Screen.load(String(GAMES_DIR) + "/" + files[i - BUILT_IN]);
     OS::push(&chip8Screen);
   }

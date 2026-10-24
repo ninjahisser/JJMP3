@@ -8,6 +8,7 @@ import { Library } from './pages/Library'
 import { Playlists, PlaylistPage } from './pages/Playlists'
 import { Player } from './pages/Player'
 import { Games } from './pages/Games'
+import { Karaoke } from './pages/Karaoke'
 import { HeartBurst } from './components/HeartBurst'
 import { useStore } from './store'
 import { controls, useNowPlaying } from './playback'
@@ -59,6 +60,7 @@ export function App() {
               {page.name === 'playlists' && <Playlists />}
               {page.name === 'playlist' && <PlaylistPage id={page.id} />}
               {page.name === 'games' && <Games />}
+              {page.name === 'karaoke' && <Karaoke />}
               {page.name === 'player' && <Player />}
             </ErrorBoundary>
           </div>

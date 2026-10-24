@@ -53,7 +53,24 @@ void setup() {
   UI::begin();
 
   SPI.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, PIN_SD_CS);
-  sdOk = SD.begin(PIN_SD_CS, SPI, SD_SPI_HZ);
+  // Wires on a breadboard often can't carry a fast SPI clock: try fast first, then slower and slower
+  static const uint32_t SD_SPEEDS[] = {SD_SPI_HZ, 4000000, 1000000, 400000};
+  for (uint32_t hz : SD_SPEEDS) {
+    sdOk = SD.begin(PIN_SD_CS, SPI, hz);
+    Serial.printf("# sd at %lu Hz: %s\n", (unsigned long)hz, sdOk ? "ok" : "no card");
+    if (sdOk) break;
+    SD.end();
+    delay(50);
+  }
+  if (!sdOk) {
+    // idle level of MISO tells wiring from card: floating pulls differently than a card holding it
+    pinMode(PIN_SD_MISO, INPUT_PULLUP);
+    int up = digitalRead(PIN_SD_MISO);
+    pinMode(PIN_SD_MISO, INPUT_PULLDOWN);
+    int down = digitalRead(PIN_SD_MISO);
+    Serial.printf("# sd miso probe: pullup=%d pulldown=%d (%s)\n", up, down, up == down ? "driven by the card/module" : "floating: MISO not connected");
+    SPI.begin(PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, PIN_SD_CS);
+  }
   if (sdOk) {
     SD.mkdir(MUSIC_DIR);
     SD.mkdir(ART_DIR);
