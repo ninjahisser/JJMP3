@@ -54,7 +54,7 @@
 
 // Audio: the desktop app converts everything to 44.1 kHz stereo CBR MP3
 #define SAMPLE_RATE  44100
-#define RING_FRAMES  4096           // PCM buffer, ~93 ms (power of two). The decoder is gated
+#define RING_FRAMES  2048           // PCM buffer, ~46 ms (power of two). Memory is tight with Bluetooth on; the decoder task refills it every ms.
                                     // so a full mp3.write() burst always fits (see
                                     // RING_HIGH_WATER), so the ring only has to cover jitter
                                     // between the A2DP pulls and one decode burst, not a whole
@@ -68,7 +68,7 @@
 // produces still fits and onPcm never has to drop. Measured: one write() emits exactly
 // one MP3 frame = 1152 stereo frames, and the A2DP task drains the ring concurrently,
 // so this only needs to cover that frame plus a little slack.
-#define RING_HIGH_WATER  1600
+#define RING_HIGH_WATER  1260   // one decoded MP3 frame is 1152 stereo frames; on the 2048 ring this keeps ~18 ms or more buffered
 
 // Serial file transfer
 #define XFER_CHUNK   2048

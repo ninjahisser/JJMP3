@@ -116,6 +116,8 @@ static void start() {
   Serial.printf("# heap before bt %lu\n", (unsigned long)ESP.getFreeHeap());
   a2dp.start();
   started = true;
+  // Classic Bluetooth defaults to a low transmit power; a weak link makes the stack slow its audio below real time
+  esp_bredr_tx_power_set(ESP_PWR_LVL_P9, ESP_PWR_LVL_P9);
   Serial.printf("# heap after bt %lu\n", (unsigned long)ESP.getFreeHeap());
   applyVolume();
 }

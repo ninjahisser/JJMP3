@@ -83,6 +83,18 @@ static void status(JsonObject o) {
   wifi["ip"] = Net::ip();
   o["heap"] = ESP.getFreeHeap();
   o["user"] = Profile::user;
+  JsonObject perf = o["perf"].to<JsonObject>();
+  perf["rd"] = Player::perfRead;
+  perf["dec"] = Player::perfDecode;
+  perf["bytes"] = Player::perfBytes;
+  perf["miss"] = Player::perfLockMiss;
+  perf["gate"] = Player::perfGate;
+  perf["iter"] = Player::perfIter;
+  perf["lockus"] = Player::perfLockWait;
+  perf["cpu"] = ESP.getCpuFreqMHz();
+  perf["pulls"] = Player::perfPulls;
+  perf["pullfr"] = Player::perfPullFrames;
+  perf["pullmax"] = Player::perfPullMax;
   if (Battery::present) {
     JsonObject b = o["battery"].to<JsonObject>();
     b["pct"] = Battery::percent;

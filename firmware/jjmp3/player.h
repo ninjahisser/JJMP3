@@ -38,6 +38,7 @@ static uint8_t volume = 60;  // 0..100
 static RepeatMode repeat = REPEAT_ALL;
 static bool shuffle = false;
 static String lastError;
+static volatile uint32_t perfRead = 0, perfDecode = 0, perfBytes = 0, perfLockMiss = 0, perfGate = 0, perfIter = 0, perfLockWait = 0, perfPulls = 0, perfPullFrames = 0, perfPullMax = 0;  // microseconds / bytes since boot, for diagnosing slow playback
 
 // Decoding runs in its own task (see decodeTask) so screen updates, USB traffic and menus in
 // loop() can never starve the audio. This lock guards the file and the decoder between them.
@@ -64,6 +65,7 @@ static void onPcm(MP3FrameInfo &info, short *pcm, size_t samples, void *) {
 // Called from the Bluetooth task: fill `len` stereo frames
 static int32_t fillFrames(uint32_t *out, int32_t len) {
   uint32_t n = 0;
+  perfPulls++; perfPullFrames += len; if ((uint32_t)len > perfPullMax) perfPullMax = len;
   if (state == PLAYING) n = ring.pop(out, len);
   if (n < (uint32_t)len) memset(out + n, 0, (len - n) * sizeof(uint32_t));
   framesPlayed += n;
@@ -251,18 +253,29 @@ static void decodeTask(void *) {
     // (helix decodes its whole 2 KB input buffer at once: ~4 MP3 frames,
     // ~104 ms of PCM). Below this, skip the write so onPcm never has to drop.
     if (state == PLAYING) {
-      if (xSemaphoreTakeRecursive(lock, pdMS_TO_TICKS(10)) == pdTRUE) {
+      perfIter++;
+      uint32_t tl = micros();
+      bool got = xSemaphoreTakeRecursive(lock, pdMS_TO_TICKS(10)) == pdTRUE;
+      perfLockWait += micros() - tl;
+      if (!got) perfLockMiss++;
+      if (got) {
+        if (!(ring.space() >= RING_HIGH_WATER)) perfGate++;
         if (state == PLAYING && file && !eof && ring.space() >= RING_HIGH_WATER) {
           if (!mp3 && !mp3.begin()) {
             lastError = "Out of memory";
             state = PAUSED;
           } else {
+            uint32_t t0 = micros();
             int n = file.read(buf, sizeof(buf));
+            perfRead += micros() - t0;
             if (n <= 0) eof = true;
             else {
               // Don't crash if write does something unexpected
               try {
+                uint32_t t1 = micros();
                 mp3.write(buf, n);
+                perfDecode += micros() - t1;
+                perfBytes += n;
               } catch (...) {
                 lastError = "Decode error";
                 state = PAUSED;
@@ -288,8 +301,8 @@ static void begin() {
   loadQueue();
   if (!queue.empty()) loadTrack(qpos);  // show it paused, ready to go
   state = file ? PAUSED : STOPPED;
-  // same core and priority as loop(): they take turns
-  xTaskCreatePinnedToCore(decodeTask, "decode", 4096, nullptr, 1, nullptr, 1);
+  // higher priority than loop() so audio never waits for the screen; it yields every pass
+  xTaskCreatePinnedToCore(decodeTask, "decode", 4096, nullptr, 3, nullptr, 1);
 }
 
 // Advance at the end of a track (decoding itself happens in decodeTask)
