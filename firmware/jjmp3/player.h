@@ -63,10 +63,34 @@ static void onPcm(MP3FrameInfo &info, short *pcm, size_t samples, void *) {
 }
 
 // Called from the Bluetooth task: fill `len` stereo frames
+// Loudness history for the visualiser: one value per ~46 ms, 0..255
+static volatile uint8_t level[32];
+static volatile uint8_t levelPos = 0;
+static uint32_t levelSum = 0, levelCount = 0;
+
+static void pushLevel(uint32_t frames, uint32_t sumAbs) {
+  levelSum += sumAbs;
+  levelCount += frames;
+  if (levelCount >= 2048) {
+    uint32_t avg = levelSum / levelCount;  // 0..32767
+    level[levelPos] = (uint8_t)min<uint32_t>(255, avg / 24);
+    levelPos = (levelPos + 1) & 31;
+    levelSum = levelCount = 0;
+  }
+}
+
 static int32_t fillFrames(uint32_t *out, int32_t len) {
   uint32_t n = 0;
   perfPulls++; perfPullFrames += len; if ((uint32_t)len > perfPullMax) perfPullMax = len;
-  if (state == PLAYING) n = ring.pop(out, len);
+  if (state == PLAYING) {
+    n = ring.pop(out, len);
+    uint32_t sum = 0;
+    for (uint32_t i = 0; i < n; i++) {
+      int16_t l = (int16_t)(out[i] & 0xFFFF), r = (int16_t)(out[i] >> 16);
+      sum += (abs((int)l) + abs((int)r)) >> 1;
+    }
+    pushLevel(n, sum);
+  }
   if (n < (uint32_t)len) memset(out + n, 0, (len - n) * sizeof(uint32_t));
   framesPlayed += n;
   return len;

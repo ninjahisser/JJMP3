@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { ReactNode } from 'react'
 import type { Snapshot, Track } from '@shared/types'
 
-export type Page = { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'player' }
+export type Page = { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'player' }
 
 export interface Toast {
   id: number
@@ -43,7 +43,8 @@ const empty: Snapshot = {
   playlists: [],
   jobs: [],
   tools: { ffmpeg: null, ytdlp: null },
-  theme: 'light'
+  theme: 'light',
+  palette: 'green'
 }
 
 let toastId = 0
@@ -83,16 +84,20 @@ export async function call<T = any>(channel: string, ...args: unknown[]): Promis
   }
 }
 
-export const applyTheme = (theme: 'light' | 'dark') => (document.documentElement.dataset.theme = theme)
+export const applyTheme = (theme: 'light' | 'dark', palette?: string) => {
+  document.documentElement.dataset.theme = theme
+  if (palette) document.documentElement.dataset.palette = palette
+}
 
 export async function boot(): Promise<void> {
   const snap = await window.jjmp3.invoke<Snapshot>('state')
-  applyTheme(snap.theme)
+  applyTheme(snap.theme, snap.palette)
   useStore.setState({ snap, statusAt: performance.now() })
   window.jjmp3.on((channel, payload) => {
+    if (channel === 'media') window.dispatchEvent(new CustomEvent('jjmp3-media', { detail: payload }))
     if (channel === 'state') {
       useStore.setState({ snap: payload as Snapshot, statusAt: performance.now() })
-      applyTheme((payload as Snapshot).theme)
+      applyTheme((payload as Snapshot).theme, (payload as Snapshot).palette)
     }
     if (channel === 'dev:go') useStore.getState().go(payload as Page)
   })

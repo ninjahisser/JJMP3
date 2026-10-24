@@ -416,6 +416,45 @@ struct SettingsScreen : ListScreen {
 static SettingsScreen settingsScreen;
 
 // ---------- Home ----------
+// ---------- World time ----------
+struct WorldScreen : ListScreen {
+  String title() override { return Profile::hhmm(); }
+  bool animating() override { return false; }
+  int count() override { return Profile::timeKnown() ? Profile::CITY_COUNT + 1 : 0; }
+  String label(int i) override { return i == 0 ? String("Here") : String(Profile::CITIES[i - 1].name); }
+  String detail(int i) override { return i == 0 ? Profile::hhmm() : Profile::cityTime(Profile::CITIES[i - 1]); }
+  String emptyText() override { return "Open the app to set the clock"; }
+  void select(int) override {}
+};
+static WorldScreen worldScreen;
+
+// ---------- Visualiser: loudness history of what is playing ----------
+struct VisualiserScreen : Screen {
+  String title() override { return Player::current.id.length() ? Player::current.title : String("Visualiser"); }
+  bool animating() override { return true; }
+  void key(const KeyEvent &e) override {
+    if (e.key == K_PLAY && e.act == A_HOLD) return OS::back();
+    if (e.key == K_PLAY && e.act == A_PRESS && OS::canPlay()) Player::toggle();
+    if (e.key == K_LEFT && e.act == A_PRESS) Player::prev();
+    if (e.key == K_RIGHT && e.act == A_PRESS) Player::next();
+  }
+  void draw() override {
+    if (Player::state != PLAYING) {
+      UI::centerText("Press P to play", 38);
+      return;
+    }
+    uint8_t pos = Player::levelPos;
+    for (int i = 0; i < 32; i++) {
+      int h = 2 + Player::level[(pos + i) & 31] * 42 / 255;
+      int x = i * 4;
+      UI::oled.fillRect(x, 62 - h, 3, h, SSD1306_WHITE);
+      UI::oled.fillRect(x, 62 - h, 3, 1, SSD1306_WHITE);
+    }
+  }
+};
+static VisualiserScreen visualiserScreen;
+
+// ---------- Home ----------
 struct HomeScreen : ListScreen {
   bool hasNow() { return JJ_BT && Player::current.id.length(); }
   int first() { return hasNow() ? 0 : 1; }
@@ -425,11 +464,11 @@ struct HomeScreen : ListScreen {
       if (JJ_WIFI) return t + " Wi-Fi";
       return t;
     }
-    return JJ_WIFI ? "Wi-Fi mode" : "Z0Ɛ";
+    return JJ_WIFI ? "Wi-Fi mode" : "Z0E";
   }
-  int count() override { return 5 - first(); }
+  int count() override { return 7 - first(); }
   String label(int i) override {
-    static const char *names[] = {"Now playing", "Music", "Playlists", "Games", "Settings"};
+    static const char *names[] = {"Now playing", "Music", "Playlists", "Visualiser", "World time", "Games", "Settings"};
     return names[i + first()];
   }
   String detail(int i) override { return i + first() == 1 ? String(Library::count()) : String(">"); }
@@ -438,7 +477,9 @@ struct HomeScreen : ListScreen {
       case 0: OS::openNowPlaying(); break;
       case 1: OS::push(&musicScreen); break;
       case 2: OS::push(&playlistsScreen); break;
-      case 3: OS::push(&gamesScreen); break;
+      case 3: OS::push(&visualiserScreen); break;
+      case 4: OS::push(&worldScreen); break;
+      case 5: OS::push(&gamesScreen); break;
       default: OS::push(&settingsScreen); break;
     }
   }

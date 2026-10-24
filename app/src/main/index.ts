@@ -1,4 +1,5 @@
-import { BrowserWindow, Menu, app, ipcMain, net, protocol, shell } from 'electron'
+import { BrowserWindow, Menu, app, ipcMain, nativeImage, net, protocol, shell } from 'electron'
+import { THUMB_ICONS } from './thumbIcons'
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { createServer } from 'node:http'
@@ -48,7 +49,8 @@ function snapshot(): Snapshot {
     playlists: library.playlists(),
     jobs: importer.snapshot(),
     tools: { ...tools },
-    theme: library.setting<'light' | 'dark'>('theme', 'light')
+    theme: library.setting<'light' | 'dark'>('theme', 'light'),
+    palette: library.setting<'green' | 'paper' | 'slate'>('palette', 'green')
   }
 }
 
@@ -131,6 +133,11 @@ function registerIpc(): void {
     library.setSetting('theme', theme === 'dark' ? 'dark' : 'light')
     paintWindow()
   })
+  h('media:state', (playing: boolean) => setThumbButtons(!!playing))
+  h('palette:set', (palette: string) => {
+    library.setSetting('palette', ['green', 'paper', 'slate'].includes(palette) ? palette : 'green')
+    paintWindow()
+  })
 
   h('import', (url: string, playlistId?: string) => {
     url = String(url || '').trim()
@@ -139,7 +146,7 @@ function registerIpc(): void {
   })
   h('preview', (url: string) => {
     url = String(url || '').trim()
-    if (!/^https?:\/\//.test(url)) throw new Error('Paste a full YouTube or Spotify link.')
+    if (!url) throw new Error('Type a song name or paste a link.')
     return importer.preview(url)
   })
   h('import:items', (items: Item[], name: string | null) => importer.addItems(items, name))
@@ -209,8 +216,17 @@ function registerIpc(): void {
   })
 }
 
-const THEME = { light: { bg: '#f1ede4', fg: '#1b1a17' }, dark: { bg: '#1c1b18', fg: '#ede7db' } }
-const themeColors = () => THEME[library.setting<'light' | 'dark'>('theme', 'light')] ?? THEME.light
+// Window and title-bar colours; they must match the --paper / --ink variables in styles.css
+const THEME: Record<string, { bg: string; fg: string }> = {
+  'green-light': { bg: '#eef2ea', fg: '#1d2a21' },
+  'green-dark': { bg: '#161d18', fg: '#e6eee8' },
+  'paper-light': { bg: '#f1ede4', fg: '#1b1a17' },
+  'paper-dark': { bg: '#1c1b18', fg: '#ede7db' },
+  'slate-light': { bg: '#edf0f4', fg: '#1c2430' },
+  'slate-dark': { bg: '#171b22', fg: '#e5e9f0' }
+}
+const themeColors = () =>
+  THEME[`${library.setting<string>('palette', 'green')}-${library.setting<string>('theme', 'light')}`] ?? THEME['green-light']
 
 /** Window background and the title-bar buttons follow the theme. */
 function paintWindow(): void {
@@ -218,6 +234,19 @@ function paintWindow(): void {
   const c = themeColors()
   win.setBackgroundColor(c.bg)
   win.setTitleBarOverlay({ color: c.bg, symbolColor: c.fg, height: 40 })
+}
+
+let thumbPlaying = false
+/** Previous / play-pause / next on the taskbar thumbnail, like Spotify. They act on whatever is playing (player or computer). */
+function setThumbButtons(playing = thumbPlaying): void {
+  thumbPlaying = playing
+  if (!win || win.isDestroyed()) return
+  const send = (action: string) => () => win?.webContents.send(EVENT_CHANNEL, 'media', action)
+  win.setThumbarButtons([
+    { tooltip: 'Previous', icon: nativeImage.createFromDataURL(THUMB_ICONS.prev), click: send('prev') },
+    { tooltip: playing ? 'Pause' : 'Play', icon: nativeImage.createFromDataURL(playing ? THUMB_ICONS.pause : THUMB_ICONS.play), click: send('toggle') },
+    { tooltip: 'Next', icon: nativeImage.createFromDataURL(THUMB_ICONS.next), click: send('next') }
+  ])
 }
 
 function createWindow(): void {
@@ -235,7 +264,10 @@ function createWindow(): void {
     icon: join(__dirname, '../../resources/icon.png'),
     webPreferences: { preload: join(__dirname, '../preload/index.mjs'), sandbox: false, backgroundThrottling: process.env.JJMP3_DEV !== '1' }
   })
-  win.once('ready-to-show', () => win?.show())
+  win.once('ready-to-show', () => {
+    win?.show()
+    setThumbButtons(false)
+  })
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//.test(url)) void shell.openExternal(url)
     return { action: 'deny' }

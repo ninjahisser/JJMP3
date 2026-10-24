@@ -91,6 +91,18 @@ export async function resolve(url: string): Promise<[string | null, Item[]]> {
   return [null, [{ key: `yt:${info.id}`, title, artist, duration: info.duration || 0, thumb: info.thumbnail || null, source: 'youtube', url: info.webpage_url || url }]]
 }
 
+/** Text search: the top YouTube results as importable songs. */
+async function searchYouTube(query: string): Promise<[string | null, Item[]]> {
+  const res = await ytdlpJson(['--flat-playlist', `ytsearch10:${query}`])
+  const items: Item[] = (res.entries || [])
+    .filter((e: any) => e?.id && (e.duration || 0) < 1500)
+    .map((e: any) => {
+      const [artist, title] = cleanTitle(e.title, e.uploader || e.channel)
+      return { key: `yt:${e.id}`, title, artist, duration: e.duration || 0, thumb: e.thumbnails?.at(-1)?.url || `https://i.ytimg.com/vi/${e.id}/mqdefault.jpg`, source: 'youtube' as const, url: `https://www.youtube.com/watch?v=${e.id}` }
+    })
+  return [null, items]
+}
+
 async function matchOnYouTube(item: Item): Promise<string> {
   const res = await ytdlpJson(['--flat-playlist', `ytsearch6:${item.artist} - ${item.title} audio`])
   const hits: any[] = (res.entries || []).filter((e: any) => e?.id)
@@ -139,11 +151,12 @@ export class Importer {
   }
 
   /** Looks a link up without downloading anything: what would be added. */
-  async preview(url: string): Promise<{ name: string | null; items: (Item & { id: string; inLibrary: boolean })[] }> {
+  async preview(url: string): Promise<{ name: string | null; search: boolean; items: (Item & { id: string; inLibrary: boolean })[] }> {
     await ensureTools()
     if (!tools.ytdlp) throw new Error('yt-dlp is missing')
-    const [name, items] = await resolve(url)
-    return { name, items: items.map((it) => ({ ...it, id: trackId(it.key), inLibrary: !!this.library.get(trackId(it.key)) && !this.library.get(trackId(it.key))?.recovered })) }
+    const isLink = /^https?:\/\//.test(url)
+    const [name, items] = isLink ? await resolve(url) : await searchYouTube(url)
+    return { name, search: !isLink, items: items.map((it) => ({ ...it, id: trackId(it.key), inLibrary: !!this.library.get(trackId(it.key)) && !this.library.get(trackId(it.key))?.recovered })) }
   }
 
   /** Adds songs from a preview. A collection of several becomes a playlist too. */

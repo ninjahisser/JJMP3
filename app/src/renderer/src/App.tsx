@@ -8,11 +8,28 @@ import { Library } from './pages/Library'
 import { Playlists, PlaylistPage } from './pages/Playlists'
 import { Player } from './pages/Player'
 import { Games } from './pages/Games'
+import { HeartBurst } from './components/HeartBurst'
 import { useStore } from './store'
-import { controls } from './playback'
+import { controls, useNowPlaying } from './playback'
 
 export function App() {
   const page = useStore((s) => s.page)
+  const playing = useNowPlaying().playing
+
+  // taskbar thumbnail buttons act on whatever is playing; keep their play/pause icon in step
+  useEffect(() => {
+    void window.jjmp3.invoke('media:state', playing).catch(() => {})
+  }, [playing])
+  useEffect(() => {
+    const onMedia = (e: Event) => {
+      const a = (e as CustomEvent<string>).detail
+      if (a === 'toggle') controls.toggle()
+      if (a === 'next') controls.next()
+      if (a === 'prev') controls.prev()
+    }
+    window.addEventListener('jjmp3-media', onMedia)
+    return () => window.removeEventListener('jjmp3-media', onMedia)
+  }, [])
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -38,12 +55,11 @@ export function App() {
         <main>
           <div className="page" key={page.name === 'playlist' ? page.id : page.name}>
             <ErrorBoundary onReset={() => useStore.getState().go({ name: 'library' })}>
-      {page.name === 'library' && <Library />}
-      {page.name === 'playlists' && <Playlists />}
-      {page.name === 'playlist' && <Playlist id={(page as any).id} />}
-      {page.name === 'add' && <Add />}
-      {page.name === 'games' && <Games />}
-      {page.name === 'player' && <Player />}
+              {page.name === 'library' && <Library />}
+              {page.name === 'playlists' && <Playlists />}
+              {page.name === 'playlist' && <PlaylistPage id={page.id} />}
+              {page.name === 'games' && <Games />}
+              {page.name === 'player' && <Player />}
             </ErrorBoundary>
           </div>
         </main>
@@ -54,6 +70,7 @@ export function App() {
         <DialogHost />
       </ErrorBoundary>
       <Toasts />
+      <HeartBurst />
     </>
   )
 }

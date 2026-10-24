@@ -85,6 +85,7 @@ export interface Snapshot {
   jobs: Job[]
   tools: ToolsView
   theme: 'light' | 'dark'
+  palette: 'green' | 'paper' | 'slate'
 }
 
 export const EVENT_CHANNEL = 'jjmp3:event'

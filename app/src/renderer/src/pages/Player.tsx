@@ -41,11 +41,6 @@ function ModeCard() {
   )
 }
 
-interface Game {
-  name: string
-  size: number
-}
-
 function You() {
   const st = useStore((s) => s.snap.device.status)
   const toast = useStore((s) => s.toast)
@@ -70,63 +65,6 @@ function You() {
         <input className="field" placeholder="Your name" maxLength={20} value={name} onChange={(e) => (setName(e.target.value), setDirty(true))} onKeyDown={(e) => e.key === 'Enter' && void save()} />
         <Button onClick={() => void save()} disabled={!dirty}>Save</Button>
       </div>
-    </div>
-  )
-}
-
-function Games() {
-  const toast = useStore((s) => s.toast)
-  const connected = useStore((s) => s.snap.device.connected)
-  const [games, setGames] = useState<Game[] | null>(null)
-  const refresh = async () => setGames((await call<Game[]>('games:list')) ?? [])
-  useEffect(() => {
-    if (connected) void refresh()
-  }, [connected])
-  return (
-    <div className="card">
-      <h3>
-        <Icon name="gamepad" /> Games
-      </h3>
-      <p className="lead">It can play CHIP-8 games.</p>
-      <div className="picklist">
-        {games === null && <div className="note">Reading the card…</div>}
-        {games?.length === 0 && <div className="note">No CHIP-8 games on the card yet.</div>}
-        {games?.map((g) => (
-          <div className="pick" key={g.name}>
-            <Icon name="gamepad" />
-            <span className="nm">{g.name.replace(/\.ch8$/i, '')}</span>
-            <span className="mono muted">{(g.size / 1024).toFixed(1)} KB</span>
-            <Button
-              small
-              variant="danger"
-              onClick={async () => {
-                if (confirm(`Take ${g.name} off the player?`) && (await call('games:remove', g.name) !== undefined)) void refresh()
-              }}
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-      </div>
-      <label className="btn ghost file-btn">
-        <Icon name="plus" size={17} />
-        Add a game
-        <input
-          type="file"
-          accept=".ch8"
-          multiple
-          hidden
-          onChange={async (e) => {
-            for (const file of Array.from(e.target.files || [])) {
-              const data = new Uint8Array(await file.arrayBuffer())
-              if ((await call('games:add', file.name, data)) !== undefined) toast(`${file.name} is on the player`)
-            }
-            e.target.value = ''
-            void refresh()
-          }}
-        />
-      </label>
-      <p className="note">Play: Games on the player.</p>
     </div>
   )
 }
@@ -404,7 +342,6 @@ export function Player() {
             <Headphones />
             <Wifi />
             <You />
-            <Games />
             <About />
           </div>
         </>

@@ -35,6 +35,11 @@
 #define PIN_BTN_VOLUP  13   // +
 #define PIN_BTN_VOLDN  14   // -
 
+// Speaker (MAX98357 I2S amplifier): BCLK, LRC (word select), DIN. Firmware output is not written yet.
+#define PIN_I2S_BCLK   26
+#define PIN_I2S_LRC    25
+#define PIN_I2S_DIN    27
+
 // Battery: LiPo + -> 100k -> D34 -> 100k -> GND (ADC1 pin, works with Wi-Fi on)
 #define PIN_BATTERY      34
 #define BATTERY_DIVIDER  2.0f

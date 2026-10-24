@@ -29,6 +29,15 @@ static const uint8_t ICON_WIFI[] PROGMEM = {0x7C, 0x82, 0x38, 0x44, 0x10};
 
 static void drawSplash();
 
+/** "Z0Ɛ": the OLED font has no Ɛ, so the last letter is drawn as a mirrored E. */
+static void drawBrand(int cx, int y) {
+  static const uint8_t REV_E[] PROGMEM = {0xF8, 0x08, 0x08, 0x78, 0x08, 0x08, 0xF8};
+  int x = cx - 9;
+  oled.setCursor(x, y);
+  oled.print("Z0");
+  oled.drawBitmap(x + 14, y, REV_E, 5, 7, SSD1306_WHITE);
+}
+
 static void centerText(const String &s, int y, int size = 1) {
   oled.setTextSize(size);
   oled.setCursor(max(0, (128 - (int)s.length() * 6 * size) / 2), y);
@@ -70,7 +79,7 @@ static void drawSplash() {
   else if (name.length()) centerText(name, 32);
   else centerText("set your name", 32);
   oled.setTextSize(1);
-  centerText("Z0Ɛ", 54);
+  drawBrand(64, 54);
 }
 
 static void toast(const String &text, uint32_t ms = 1800) {
@@ -235,6 +244,11 @@ static void drawNowPlaying() {
   if (Player::queue.size() > 1) {
     oled.setCursor(X, 54);
     oled.print(String(Player::qpos + 1) + " of " + String(Player::queue.size()));
+  }
+  if (Battery::present) {  // battery level, bottom right
+    String b = String(Battery::percent) + "%";
+    oled.setCursor(128 - b.length() * 6, 54);
+    oled.print(b);
   }
 }
 

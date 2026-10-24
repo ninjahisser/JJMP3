@@ -128,27 +128,33 @@ interface PreviewItem {
   inLibrary: boolean
 }
 
-/** Paste a link, see what it is, then add it. Nothing downloads before you confirm. */
+/** Paste a link or type a song name, see the results, tick what you want, then add. Nothing downloads before you confirm. */
 function AddSongs() {
-  const [url, setUrl] = useState('')
+  const [query, setQuery] = useState('')
   const [looking, setLooking] = useState(false)
-  const [preview, setPreview] = useState<{ name: string | null; items: PreviewItem[] } | null>(null)
+  const [preview, setPreview] = useState<{ name: string | null; items: PreviewItem[]; search: boolean } | null>(null)
+  const [picked, setPicked] = useState<Set<string>>(new Set())
   const [error, setError] = useState('')
   const toast = useStore((s) => s.toast)
 
-  const lookUp = async (link = url) => {
-    link = link.trim()
-    if (!link) return
+  const lookUp = async (text = query) => {
+    text = text.trim()
+    if (!text) return
     setLooking(true)
     setError('')
     try {
-      setPreview(await window.jjmp3.invoke('preview', link))
+      const r = await window.jjmp3.invoke<{ name: string | null; items: PreviewItem[]; search: boolean }>('preview', text)
+      setPreview(r)
+      // links: everything new is ticked; search results: nothing, you choose
+      setPicked(new Set(r.search ? [] : r.items.filter((i) => !i.inLibrary).map((i) => i.key)))
     } catch (e) {
       setError(String((e as Error).message).replace(/^Error invoking remote method '[^']+': (Error: )?/, ''))
     } finally {
       setLooking(false)
     }
   }
+
+  const toggle = (key: string) => setPicked((s) => (s.has(key) ? new Set([...s].filter((k) => k !== key)) : new Set([...s, key])))
 
   if (!preview)
     return (
@@ -157,49 +163,51 @@ function AddSongs() {
         actions={
           <>
             <Button variant="ghost" onClick={close}>Cancel</Button>
-            <Button onClick={() => void lookUp()} disabled={looking || !url.trim()}>{looking ? 'Looking up…' : 'Look up'}</Button>
+            <Button onClick={() => void lookUp()} disabled={looking || !query.trim()}>{looking ? 'Looking up…' : 'Look up'}</Button>
           </>
         }
       >
-        <label>YouTube or Spotify link</label>
+        <label>Song name, or a YouTube / Spotify link</label>
         <input
           className="field"
           autoFocus
-          placeholder="https://open.spotify.com/… or https://youtube.com/…"
-          value={url}
+          placeholder="Tame Impala The Less I Know The Better"
+          value={query}
           spellCheck={false}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           onPaste={(e) => {
             const text = e.clipboardData.getData('text')
             if (/^https?:\/\//.test(text.trim())) {
               e.preventDefault()
-              setUrl(text.trim())
+              setQuery(text.trim())
               void lookUp(text)
             }
           }}
           onKeyDown={(e) => e.key === 'Enter' && void lookUp()}
         />
-        {error ? <p className="note err-text">{error}</p> : <p className="note">Songs, albums and playlists work. You'll see what's in it before anything downloads.</p>}
+        {looking && <div className="lookup-bar"><i /></div>}
+        {error && <p className="note err-text">{error}</p>}
       </Dialog>
     )
 
-  const fresh = preview.items.filter((i) => !i.inLibrary)
-  const total = preview.items.reduce((a, i) => a + (i.duration || 0), 0)
-  const single = preview.items.length === 1 ? preview.items[0] : null
+  const chosen = preview.items.filter((i) => picked.has(i.key))
+  const total = chosen.reduce((a, i) => a + (i.duration || 0), 0)
+  const single = !preview.search && preview.items.length === 1 ? preview.items[0] : null
   const add = async () => {
-    await call('import:items', fresh, preview.name)
+    await call('import:items', chosen, chosen.length > 1 && !preview.search ? preview.name : null)
     close()
-    toast(fresh.length === 1 ? `Adding “${fresh[0].title}”…` : `Adding ${fresh.length} songs…`)
+    toast(chosen.length === 1 ? `Adding “${chosen[0].title}”…` : `Adding ${chosen.length} songs…`)
   }
+  const selectable = preview.items.filter((i) => !i.inLibrary)
 
   return (
     <Dialog
-      title={single ? 'Add this song?' : preview.name || 'Add these songs?'}
+      title={single ? 'Add this song?' : preview.search ? 'Results' : preview.name || 'Add these songs?'}
       actions={
         <>
           <Button variant="ghost" onClick={() => setPreview(null)}>Back</Button>
-          <Button onClick={() => void add()} disabled={!fresh.length}>
-            {!fresh.length ? 'Already in your library' : fresh.length === 1 ? 'Add song' : `Add ${fresh.length} songs`}
+          <Button onClick={() => void add()} disabled={!chosen.length}>
+            {!chosen.length ? (selectable.length ? 'Pick a song' : 'Already in your library') : chosen.length === 1 ? 'Add song' : `Add ${chosen.length} songs`}
           </Button>
         </>
       }
@@ -212,28 +220,35 @@ function AddSongs() {
               <div className="pv-title">{single.title}</div>
               <div className="pv-artist">{single.artist || 'Unknown artist'}</div>
               <div className="mono muted">
-                {fmt(single.duration)} · from {single.source === 'spotify' ? 'Spotify (audio from YouTube)' : 'YouTube'}
+                {fmt(single.duration)} · {single.source === 'spotify' ? 'Spotify, audio from YouTube' : 'YouTube'}
               </div>
               {single.inLibrary && <p className="note">Already in your library.</p>}
             </div>
           </div>
         ) : (
           <>
-            <div className="mono muted pv-sum">
-              {plural(preview.items.length, 'song')}
-              {total ? ` · ${fmtLong(total)}` : ''}
-              {fresh.length < preview.items.length ? ` · ${preview.items.length - fresh.length} already in your library` : ''}
-              {' · becomes a playlist'}
+            <div className="pv-sum">
+              <span className="mono muted">
+                {plural(preview.items.length, 'song')}
+                {total ? ` · ${fmtLong(total)} selected` : ''}
+                {!preview.search && selectable.length > 1 ? ' · becomes a playlist' : ''}
+              </span>
+              {selectable.length > 1 && (
+                <button className="link-btn" onClick={() => setPicked(picked.size === selectable.length ? new Set() : new Set(selectable.map((i) => i.key)))}>
+                  {picked.size === selectable.length ? 'Select none' : 'Select all'}
+                </button>
+              )}
             </div>
             <div className="picklist pv-list">
               {preview.items.map((i) => (
-                <div className={`pick ${i.inLibrary ? 'muted-row' : ''}`} key={i.key}>
+                <label className={`pick ${i.inLibrary ? 'muted-row' : ''}`} key={i.key}>
+                  <input type="checkbox" disabled={i.inLibrary} checked={picked.has(i.key)} onChange={() => toggle(i.key)} />
                   <div className="cover sm" style={i.thumb ? { backgroundImage: `url("${i.thumb}")` } : undefined} />
                   <span className="nm">
                     {i.title} <span className="muted">· {i.artist}</span>
                   </span>
                   <span className="mono muted">{i.inLibrary ? 'have it' : fmt(i.duration)}</span>
-                </div>
+                </label>
               ))}
             </div>
           </>
