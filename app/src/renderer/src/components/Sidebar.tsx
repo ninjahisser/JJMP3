@@ -2,7 +2,7 @@ import { Icon } from './Icon'
 import { Oled } from './Oled'
 import { Activity } from './Activity'
 import { Dot } from './ui'
-import { applyTheme, call, plural, useStore, type Page } from '../store'
+import { plural, useStore, type Page } from '../store'
 
 function Nav({ label, page, count }: { label: string; page: Page; count?: number }) {
   const current = useStore((s) => s.page)
@@ -17,7 +17,7 @@ function Nav({ label, page, count }: { label: string; page: Page; count?: number
 }
 
 export function Sidebar() {
-  const { device, tracks, playlists, theme, palette } = useStore((s) => s.snap)
+  const { device, tracks, playlists } = useStore((s) => s.snap)
   const st = device.status
   const sending = tracks.filter((t) => t.uploading != null).length
   const onPlayer = tracks.filter((t) => t.onDevice || t.deviceOnly).length
@@ -99,37 +99,7 @@ export function Sidebar() {
       </nav>
       <Activity />
       <div className="side-foot">
-        <div className="palettes" role="radiogroup" aria-label="Colours">
-          {([['green', 'Green'], ['paper', 'Paper'], ['slate', 'Slate']] as const).map(([id, label]) => (
-            <button
-              key={id}
-              className={`swatch ${id} ${palette === id ? 'on' : ''}`}
-              title={label}
-              role="radio"
-              aria-checked={palette === id}
-              onClick={() => {
-                applyTheme(theme, id)
-                void call('palette:set', id)
-              }}
-            />
-          ))}
-        </div>
-        <button
-          className="theme-switch"
-          role="switch"
-          aria-checked={theme === 'dark'}
-          onClick={() => {
-            const next = theme === 'dark' ? 'light' : 'dark'
-            applyTheme(next, palette)
-            void call('theme:set', next)
-          }}
-        >
-          <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={16} />
-          <span>Dark mode</span>
-          <span className={`toggle ${theme === 'dark' ? 'on' : ''}`}>
-            <i />
-          </span>
-        </button>
+        <Nav label="Settings" page={{ name: 'settings' }} />
       </div>
     </aside>
   )

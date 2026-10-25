@@ -1,4 +1,4 @@
-# Todo
+﻿# Todo
 
 Legend: ✅ checked by you and it works · 🔍 done, waiting for your review · ⬜ not done yet (reason in italics)
 
@@ -31,7 +31,7 @@ zorg dat er veel meer themas zijn, maar steek ze achter een menu
 
 🔍 Spotify mode: the app shows what Spotify is playing (artwork, title, progress), controls it, and mirrors it on the player's screen, with the player's buttons controlling Spotify. *Replaces the Spotify login idea. Works with the Spotify desktop app through Windows media controls.*
 
-🔍 add theme support to the frontend, by default now its like this mokka-brown but it should be a nice calm green. *Green is the default; Paper (the old brown) and Slate are the colour dots in the sidebar.*
+🔍 add theme support to the frontend, by default now its like this mokka-brown but it should be a nice calm green. *Settings > Theme: 6 light and 7 dark themes (Sage is the default, Paper is the old brown).*
 
 🔍 the icon for the app should be a heart.
 

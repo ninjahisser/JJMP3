@@ -14,6 +14,7 @@ import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
 import { makeOledArt } from './artwork'
 import { Sync } from './sync'
 import { getLyrics, pickLyrics, searchLyrics } from './lyrics'
+import { findTheme } from '@shared/themes'
 import { SPOTIFY_ART, SpotifyMode } from './spotify'
 import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
@@ -53,7 +54,7 @@ function snapshot(): Snapshot {
     jobs: importer.snapshot(),
     tools: { ...tools },
     theme: library.setting<'light' | 'dark'>('theme', 'light'),
-    palette: library.setting<'green' | 'paper' | 'slate'>('palette', 'green'),
+    palette: library.setting<string>('palette', 'green'),
     spotify: spotify.view
   }
 }
@@ -172,8 +173,10 @@ function registerIpc(): void {
   })
   h('spotify:control', (cmd: string) => spotify.control(cmd))
   h('media:state', (playing: boolean) => setThumbButtons(!!playing))
-  h('palette:set', (palette: string) => {
-    library.setSetting('palette', ['green', 'paper', 'slate'].includes(palette) ? palette : 'green')
+  h('appearance:set', (palette: string, mode: string) => {
+    const t = findTheme(String(palette), String(mode))
+    library.setSetting('palette', t.palette)
+    library.setSetting('theme', t.mode)
     paintWindow()
   })
 
@@ -255,16 +258,10 @@ function registerIpc(): void {
 }
 
 // Window and title-bar colours; they must match the --paper / --ink variables in styles.css
-const THEME: Record<string, { bg: string; fg: string }> = {
-  'green-light': { bg: '#eef2ea', fg: '#1d2a21' },
-  'green-dark': { bg: '#161d18', fg: '#e6eee8' },
-  'paper-light': { bg: '#f1ede4', fg: '#1b1a17' },
-  'paper-dark': { bg: '#1c1b18', fg: '#ede7db' },
-  'slate-light': { bg: '#edf0f4', fg: '#1c2430' },
-  'slate-dark': { bg: '#171b22', fg: '#e5e9f0' }
+const themeColors = () => {
+  const t = findTheme(library.setting<string>('palette', 'green'), library.setting<string>('theme', 'light'))
+  return t.colors ? { bg: t.colors.paper, fg: t.colors.ink } : { bg: '#f1ede4', fg: '#1b1a17' }
 }
-const themeColors = () =>
-  THEME[`${library.setting<string>('palette', 'green')}-${library.setting<string>('theme', 'light')}`] ?? THEME['green-light']
 
 /** Window background and the title-bar buttons follow the theme. */
 function paintWindow(): void {

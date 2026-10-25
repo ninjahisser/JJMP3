@@ -98,7 +98,7 @@ export interface Snapshot {
   jobs: Job[]
   tools: ToolsView
   theme: 'light' | 'dark'
-  palette: 'green' | 'paper' | 'slate'
+  palette: string
   spotify: SpotifyView
 }
 

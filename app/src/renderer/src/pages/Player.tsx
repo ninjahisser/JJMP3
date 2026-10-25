@@ -60,7 +60,6 @@ function You() {
       <h3>
         <Icon name="edit" /> Your name
       </h3>
-      <p className="lead">The player says it on its start screen (I ♥ U …). Its clock follows this computer whenever they connect.</p>
       <div className="inline-form">
         <input className="field" placeholder="Your name" maxLength={20} value={name} onChange={(e) => (setName(e.target.value), setDirty(true))} onKeyDown={(e) => e.key === 'Enter' && void save()} />
         <Button onClick={() => void save()} disabled={!dirty}>Save</Button>

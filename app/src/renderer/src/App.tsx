@@ -8,6 +8,7 @@ import { Library } from './pages/Library'
 import { Playlists, PlaylistPage } from './pages/Playlists'
 import { Player } from './pages/Player'
 import { Games } from './pages/Games'
+import { Settings } from './pages/Settings'
 import { Karaoke } from './pages/Karaoke'
 import { Spotify } from './pages/Spotify'
 import { HeartBurst } from './components/HeartBurst'
@@ -61,6 +62,7 @@ export function App() {
               {page.name === 'playlists' && <Playlists />}
               {page.name === 'playlist' && <PlaylistPage id={page.id} />}
               {page.name === 'games' && <Games />}
+              {page.name === 'settings' && <Settings />}
               {page.name === 'karaoke' && <Karaoke />}
               {page.name === 'spotify' && <Spotify />}
               {page.name === 'player' && <Player />}

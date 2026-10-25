@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import type { ReactNode } from 'react'
 import type { Snapshot, Track } from '@shared/types'
+import { findTheme } from '@shared/themes'
 
-export type Page = { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'karaoke' } | { name: 'spotify' } | { name: 'player' }
+export type Page = { name: 'settings' } | { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'karaoke' } | { name: 'spotify' } | { name: 'player' }
 
 export interface Toast {
   id: number
@@ -85,9 +86,17 @@ export async function call<T = any>(channel: string, ...args: unknown[]): Promis
   }
 }
 
-export const applyTheme = (theme: 'light' | 'dark', palette?: string) => {
-  document.documentElement.dataset.theme = theme
-  if (palette) document.documentElement.dataset.palette = palette
+const COLOR_VARS = ['paper', 'paper-2', 'sheet', 'ink', 'ink-2', 'ink-3', 'rule', 'rule-2', 'accent', 'ok', 'ink-hover']
+
+export const applyTheme = (mode: 'light' | 'dark', palette = 'green') => {
+  const t = findTheme(palette, mode)
+  const root = document.documentElement
+  root.dataset.theme = t.mode
+  root.dataset.palette = t.palette
+  for (const v of COLOR_VARS) {
+    if (t.colors) root.style.setProperty(`--${v}`, t.colors[v as keyof typeof t.colors])
+    else root.style.removeProperty(`--${v}`)
+  }
 }
 
 export async function boot(): Promise<void> {
