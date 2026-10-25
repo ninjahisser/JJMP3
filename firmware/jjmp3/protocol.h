@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <SD.h>
+#include <Update.h>
 #include "config.h"
 #include "library.h"
 #include "player.h"
@@ -428,6 +429,36 @@ static void httpRoutes() {
     s.streamFile(f, "application/octet-stream");
     f.close();
   });
+
+  // firmware update over Wi-Fi: POST /ota?size=N (multipart). Writes the other app slot and boots into it.
+  s.on(
+      "/ota", HTTP_POST,
+      [&s]() {
+        bool ok = !Update.hasError();
+        s.send(200, "application/json", ok ? "{\"ok\":true}" : "{\"ok\":false}");
+        if (ok) Mode::restart();
+      },
+      [&s]() {
+        HTTPUpload &up = s.upload();
+        static uint32_t total = 0, lastUi = 0;
+        if (up.status == UPLOAD_FILE_START) {
+          Player::pause();
+          total = s.arg("size").toInt();
+          Update.begin(UPDATE_SIZE_UNKNOWN);
+        } else if (up.status == UPLOAD_FILE_WRITE) {
+          Update.write(up.buf, up.currentSize);
+          if (millis() - lastUi > 400) {
+            UI::progress("Updating firmware", up.totalSize, total);
+            lastUi = millis();
+          }
+        } else if (up.status == UPLOAD_FILE_END) {
+          Update.end(true);
+          UI::doneReceiving();
+        } else if (up.status == UPLOAD_FILE_ABORTED) {
+          Update.abort();
+          UI::doneReceiving();
+        }
+      });
 
   // multipart upload: POST /upload?path=/music/x.mp3&size=123
   s.on(

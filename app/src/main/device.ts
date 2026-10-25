@@ -221,6 +221,24 @@ class HttpLink implements Link {
     }
   }
 
+  /** Sends a firmware image; the player writes its other slot and reboots into it. */
+  async ota(data: Buffer): Promise<void> {
+    const boundary = '----jjmp3boundary'
+    const head = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="fw.bin"\r\nContent-Type: application/octet-stream\r\n\r\n`
+    const body = Buffer.concat([Buffer.from(head), data, Buffer.from(`\r\n--${boundary}--\r\n`)])
+    try {
+      const r = await fetch(`http://${this.where}/ota?size=${data.length}`, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+        signal: AbortSignal.timeout(120000)
+      })
+      if (!r.ok || !((await r.json()) as Reply).ok) throw new LinkError('the player rejected the update')
+    } catch (e) {
+      throw e instanceof LinkError ? e : new LinkError((e as Error).message)
+    }
+  }
+
   async get(path: string): Promise<Buffer> {
     let r: Response
     try {
@@ -327,6 +345,14 @@ export class Device {
   async poll(cmd: string, params: Record<string, unknown> = {}, timeout = 2500): Promise<Reply | null> {
     if (!this.link) return null
     return this.call(cmd, params, timeout).catch(() => null)
+  }
+
+  /** Firmware update over Wi-Fi; the player reboots into the new image. */
+  ota(data: Buffer): Promise<void> {
+    return this.guard(async (l) => {
+      if (!(l instanceof HttpLink)) throw new LinkError('Updating over Wi-Fi needs the player in Wi-Fi mode, connected by Wi-Fi.')
+      await l.ota(data)
+    })
   }
 
   put(path: string, data: Buffer, progress?: Progress): Promise<void> {

@@ -322,6 +322,7 @@ function About() {
 
 export function Player() {
   const device = useStore((s) => s.snap.device)
+  const toast = useStore((s) => s.toast)
   return (
     <>
       <div className="head">
@@ -338,6 +339,22 @@ export function Player() {
       {device.connected ? (
         <>
           <ModeCard />
+          {device.via === 'wifi' && (
+            <div className="card wide">
+              <h3>
+                <Icon name="wifi" /> Update the player over Wi-Fi
+              </h3>
+              <p className="lead">No cable needed. Takes about a minute and the player restarts twice. Keep it plugged into power.</p>
+              <Button
+                onClick={async () => {
+                  toast('Updating the player… do not unplug it.')
+                  if (await call('device:ota')) toast('Player updated.')
+                }}
+              >
+                Update firmware
+              </Button>
+            </div>
+          )}
           <div className="cards">
             <Headphones />
             <Wifi />

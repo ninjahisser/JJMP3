@@ -3,7 +3,7 @@ import { THUMB_ICONS } from './thumbIcons'
 import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { createServer } from 'node:http'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { EVENT_CHANNEL, type Snapshot } from '@shared/types'
 import { Device } from './device'
@@ -151,6 +151,19 @@ function registerIpc(): void {
     else all[id] = v
     library.setSetting('lyricsOffsets', all)
     return v
+  })
+  // Firmware over Wi-Fi: the Wi-Fi image goes into the idle slot and boots, then the music image goes into the other one.
+  h('device:ota', async () => {
+    const dir = join(dirname(process.execPath), '..', 'firmware', 'build')
+    const wifiBin = join(dir, 'wifi', 'jjmp3.ino.bin')
+    const musicBin = join(dir, 'music', 'jjmp3.ino.bin')
+    if (!existsSync(wifiBin) || !existsSync(musicBin)) throw new Error('Firmware files not found next to the app (firmware\\build). Build them first.')
+    await device.ota(readFileSync(wifiBin))
+    await new Promise((r) => setTimeout(r, 8000))
+    for (let i = 0; i < 40 && !(device.connected && device.view().via === 'wifi'); i++) await new Promise((r) => setTimeout(r, 1500))
+    if (!device.connected) throw new Error('The player did not come back on Wi-Fi after step 1. Press its reset button and try again.')
+    await device.ota(readFileSync(musicBin))
+    return true
   })
   h('spotify:set', (on: boolean) => {
     library.setSetting('spotifyMode', !!on)
