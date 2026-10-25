@@ -427,12 +427,28 @@ dialog:has(.add-preview) { width: min(640px, 92vw); }
 .lyrics-hit { display: flex; justify-content: space-between; gap: 16px; text-align: left; padding: 8px 6px; border: 0; border-bottom: 1px solid var(--line, rgba(0,0,0,.08)); background: none; color: inherit; font: inherit; cursor: pointer; }
 .lyrics-hit:hover { background: var(--paper-2); }
 
-/* ---------- themes menu ---------- */
+/* ---------- themes menu: fixed type and metrics, so previewing a theme never moves it ---------- */
 .themes-menu { position: relative; cursor: pointer; }
-.themes-label { display: inline-block; padding: 4px 0; font: 400 22px/1.2 var(--serif); color: var(--ink-2); cursor: pointer; }
+.themes-label { display: inline-block; padding: 4px 0; font: 400 22px/28px "Instrument Serif", Georgia, serif; color: var(--ink-2); cursor: pointer; text-transform: none; letter-spacing: normal; }
 .themes-menu:hover .themes-label { color: var(--ink); }
-.themes-list { position: absolute; left: -10px; right: -10px; bottom: 100%; max-height: 66vh; overflow-y: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); padding: 8px 6px 10px; z-index: 40; }
-.themes-list .eyebrow { margin: 8px 8px 4px; }
-.themes-list a { display: block; padding: 5px 10px; border-radius: 6px; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+.themes-list { position: absolute; left: -10px; right: -10px; bottom: 100%; max-height: 66vh; overflow-y: scroll; background: var(--sheet); border: 1px solid var(--rule); box-shadow: var(--shadow); padding: 8px 6px 10px; z-index: 40; border-radius: 10px; }
+.themes-list, .themes-list * { font-family: "Inter", "Segoe UI", sans-serif !important; letter-spacing: normal !important; text-transform: none !important; }
+.themes-list .eyebrow { margin: 8px 8px 4px; font-size: 11px; line-height: 16px; }
+.themes-list a { display: block; padding: 0 10px; height: 30px; line-height: 30px; border-radius: 6px; font-size: 14px; color: var(--ink-2); cursor: pointer; overflow: hidden; white-space: nowrap; }
 .themes-list a:hover { background: var(--paper-2); color: var(--ink); }
 .themes-list a.on { color: var(--ink); font-weight: 600; }
+.themes-list a.on, .themes-list a { padding-left: 10px; }
+
+/* ---------- designer themes: data-shape ---------- */
+:root[data-shape] *, :root[data-shape] *::before, :root[data-shape] *::after { border-radius: 0 !important; }
+/* outlines and shadows, not borders: they never change an element's size, so nothing shifts */
+:root[data-shape="brutal"] :is(.card, dialog, .menu, .oled, .btn, .dbtn, .output, .jobs, .pl-card, .toast, input, .field, .theme-switch) { outline: 2px solid var(--ink); outline-offset: -2px; box-shadow: 4px 4px 0 var(--ink) !important; }
+:root[data-shape="brutal"] .btn:active, :root[data-shape="brutal"] .dbtn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink) !important; }
+:root[data-shape="brutal"] a:hover { text-decoration: underline; text-decoration-thickness: 3px; }
+:root[data-shape="block"] :is(.card, dialog, .menu, .btn, .dbtn, input, .field) { outline: 2px solid var(--ink); outline-offset: -2px; box-shadow: none !important; }
+:root[data-shape="pixel"] :is(.card, dialog, .menu, .oled, .btn, .dbtn, input, .field) { outline: 2px solid var(--ink); outline-offset: -2px; box-shadow: none !important; }
+:root[data-shape="pixel"] * { transition: none !important; animation-timing-function: steps(4) !important; }
+:root[data-shape="pixel"] :is(img, .cover, .mosaic, .pv-cover, .spotify-cover, canvas, [style*="background-image"]) { image-rendering: pixelated; }
+:root[data-shape="pixel"] :is(.head h2, .card h3, .brand h1, .eyebrow, nav a) { text-transform: uppercase; letter-spacing: .04em; }
+:root[data-shape="bevel"] :is(.card, .btn, .dbtn, .output, .menu, dialog) { border: 2px solid; border-color: #fff #404040 #404040 #fff !important; box-shadow: 1px 1px 0 #000 !important; }
+:root[data-shape="bevel"] :is(input, .field) { border: 2px solid; border-color: #404040 #fff #fff #404040 !important; }

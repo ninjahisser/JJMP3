@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Icon } from './Icon'
 import { IconButton } from './ui'
 import { Cover } from './TrackRow'
@@ -71,9 +71,9 @@ function OutputSwitch() {
   const connected = useStore((s) => s.snap.device.connected)
   return (
     <div className="output" role="radiogroup" aria-label="Listen on">
-      <button className={output === 'player' ? 'on' : ''} disabled={!connected && output !== 'player'} title="Listen on the JJMP3" onClick={() => void switchOutput('player')}>
+      <button className={output === 'player' ? 'on' : ''} disabled={!connected && output !== 'player'} title="Listen on the Z0Ɛ player" onClick={() => void switchOutput('player')}>
         <Icon name="player" size={15} />
-        JJMP3
+        Z0Ɛ
       </button>
       <button className={output === 'computer' ? 'on' : ''} title="Listen on this computer" onClick={() => void switchOutput('computer')}>
         <Icon name="laptop" size={15} />
@@ -96,10 +96,10 @@ export function PlayerBar() {
       artist = 'Pick a song to play on this computer'
     } else if (!device.connected) {
       title = 'Nothing playing'
-      artist = 'Connect your JJMP3 via USB, or listen on the computer'
+      artist = 'Connect your Z0Ɛ via USB, or listen on the computer'
     } else if (st.mode === 'wifi') {
       title = 'Wi-Fi mode'
-      artist = 'Switch to music mode to listen on the JJMP3'
+      artist = 'Switch to music mode to listen on the Z0Ɛ'
     } else {
       title = 'Ready'
       artist = st.bt?.state === 'connected' ? 'Pick a song to play' : 'Connect headphones under Player'

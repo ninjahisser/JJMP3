@@ -91,14 +91,18 @@ export const themePreview = { on: false }
 
 const COLOR_VARS =['paper', 'paper-2', 'sheet', 'ink', 'ink-2', 'ink-3', 'rule', 'rule-2', 'accent', 'ok', 'ink-hover']
 
-export const applyTheme = (mode: 'light' | 'dark', palette = 'green') => {
+/** `fonts: false` previews only colours and shape, so hovering a theme never reflows the page. */
+export const applyTheme = (mode: 'light' | 'dark', palette = 'green', fonts = true) => {
   const t = findTheme(palette, mode)
   const root = document.documentElement
-  for (const f of ['serif', 'sans', 'mono'] as const) {
-    const font = t.fonts?.[f]
-    if (font) root.style.setProperty(`--${f}`, font)
-    else root.style.removeProperty(`--${f}`)
-  }
+  if (t.shape) root.dataset.shape = t.shape
+  else delete root.dataset.shape
+  if (fonts)
+    for (const f of ['serif', 'sans', 'mono'] as const) {
+      const font = t.fonts?.[f]
+      if (font) root.style.setProperty(`--${f}`, font)
+      else root.style.removeProperty(`--${f}`)
+    }
   root.dataset.theme = t.mode
   root.dataset.palette = t.palette
   for (const v of COLOR_VARS) {

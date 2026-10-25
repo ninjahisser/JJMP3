@@ -45,7 +45,7 @@ function ThemeMenu() {
                 <a
                   key={`${t.palette}-${t.mode}`}
                   className={theme === t.mode && palette === t.palette ? 'on' : ''}
-                  onMouseEnter={() => applyTheme(t.mode, t.palette)}
+                  onMouseEnter={() => applyTheme(t.mode, t.palette, false)}
                   onClick={() => {
                     applyTheme(t.mode, t.palette)
                     void call('appearance:set', t.palette, t.mode)

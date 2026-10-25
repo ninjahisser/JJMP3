@@ -21,6 +21,7 @@ export interface ThemeDef {
   name: string
   colors: Colors | null // null = the stylesheet's own colours (Paper, light)
   fonts?: { serif?: string; sans?: string; mono?: string } // wilder themes bring their own type
+  shape?: 'block' | 'brutal' | 'pixel' | 'bevel' // no rounding; brutal adds hard outlines and shadows, pixel crisp images, bevel Win95 buttons
 }
 
 const c = (paper: string, p2: string, sheet: string, ink: string, i2: string, i3: string, rule: string, rule2: string, accent: string, ok: string, hover: string): Colors => ({
@@ -70,8 +71,27 @@ export const THEMES: ThemeDef[] = [
   { palette: 'toxic', mode: 'dark', name: 'Toxic', colors: c('#0a0f00', '#141f00', '#0f1700', '#c6ff00', '#9ed100', '#6a8c00', '#2d4000', '#213000', '#ff00c8', '#c6ff00', '#e6ff7a'), fonts: { serif: 'Impact, "Arial Narrow", sans-serif' } },
   { palette: 'vampire', mode: 'dark', name: 'Vampire', colors: c('#12070a', '#1f0c11', '#190a0e', '#f2dede', '#cfa9a9', '#8f6262', '#4a1219', '#380d13', '#d0021b', '#9bbf86', '#ffffff'), fonts: { serif: 'Georgia, "Times New Roman", serif' } },
   { palette: 'blueprint', mode: 'dark', name: 'Blueprint', colors: c('#0b3a82', '#0f4797', '#0d4090', '#e6f0ff', '#bcd4ff', '#86aef0', '#2a62b8', '#2155a5', '#ffd54a', '#9be28a', '#ffffff'), fonts: { serif: '"JetBrains Mono", Consolas, monospace', sans: '"JetBrains Mono", Consolas, monospace' } },
-  { palette: 'void', mode: 'dark', name: 'The Void', colors: c('#050505', '#0b0b0b', '#080808', '#e8e8e8', '#9a9a9a', '#5c5c5c', '#1d1d1d', '#141414', '#ffffff', '#9a9a9a', '#ffffff') }
+  { palette: 'void', mode: 'dark', name: 'The Void', colors: c('#050505', '#0b0b0b', '#080808', '#e8e8e8', '#9a9a9a', '#5c5c5c', '#1d1d1d', '#141414', '#ffffff', '#9a9a9a', '#ffffff') },
+
+  // ---- designer themes: square, loud, high contrast ----
+  { palette: 'brutal', mode: 'light', name: 'Brutalist', colors: c('#ffffff', '#ffe600', '#ffffff', '#000000', '#000000', '#333333', '#000000', '#000000', '#ff3b00', '#009a00', '#000000'), fonts: { serif: '"Arial Black", Impact, sans-serif', sans: 'Arial, Helvetica, sans-serif' } },
+  { palette: 'neopop', mode: 'light', name: 'Neo Pop', colors: c('#fff1d6', '#ffc9e3', '#ffffff', '#111111', '#222222', '#555555', '#111111', '#111111', '#ff5c8a', '#00a878', '#000000'), fonts: { serif: '"Trebuchet MS", sans-serif', sans: '"Trebuchet MS", sans-serif' } },
+  { palette: 'pixel', mode: 'light', name: 'Pixel Art', colors: c('#fcfcfc', '#bcbcbc', '#ffffff', '#000000', '#3c3c3c', '#6c6c6c', '#000000', '#7c7c7c', '#e40058', '#00a800', '#000000'), fonts: { serif: '"Lucida Console", Consolas, monospace', sans: '"Lucida Console", Consolas, monospace', mono: '"Lucida Console", Consolas, monospace' } },
+  { palette: 'sweetie', mode: 'dark', name: 'Pixel Night', colors: c('#1a1c2c', '#333c57', '#262b44', '#f4f4f4', '#94b0c2', '#566c86', '#566c86', '#333c57', '#ef7d57', '#a7f070', '#ffffff'), fonts: { serif: '"Lucida Console", Consolas, monospace', sans: '"Lucida Console", Consolas, monospace', mono: '"Lucida Console", Consolas, monospace' } },
+  { palette: 'hidark', mode: 'dark', name: 'High Contrast', colors: c('#000000', '#1a1a1a', '#000000', '#ffffff', '#ffffff', '#dddddd', '#ffffff', '#ffffff', '#ffff00', '#00ff00', '#ffff00') },
+  { palette: 'hilight', mode: 'light', name: 'High Contrast Light', colors: c('#ffffff', '#e6e6e6', '#ffffff', '#000000', '#000000', '#222222', '#000000', '#000000', '#0000ff', '#006400', '#0000ff') },
+  { palette: 'bauhaus', mode: 'light', name: 'Bauhaus', colors: c('#f4efe1', '#ffd400', '#ffffff', '#111111', '#111111', '#444444', '#111111', '#111111', '#e10600', '#0044cc', '#e10600'), fonts: { serif: '"Century Gothic", "Trebuchet MS", sans-serif', sans: '"Century Gothic", "Trebuchet MS", sans-serif' } },
+  { palette: 'mondrian', mode: 'light', name: 'Mondrian', colors: c('#fafafa', '#ffd800', '#ffffff', '#000000', '#000000', '#444444', '#000000', '#000000', '#e10600', '#0033a0', '#0033a0') },
+  { palette: 'brutaldark', mode: 'dark', name: 'Brutalist Night', colors: c('#111111', '#2a2a2a', '#111111', '#ffffff', '#ffffff', '#bbbbbb', '#ffffff', '#ffffff', '#ffe600', '#00e676', '#ffe600'), fonts: { serif: '"Arial Black", Impact, sans-serif', sans: 'Arial, Helvetica, sans-serif' } }
 ]
+
+const SHAPES: Record<string, ThemeDef['shape']> = {
+  brutal: 'brutal', neopop: 'brutal', brutaldark: 'brutal', bauhaus: 'brutal', mondrian: 'brutal', toxic: 'brutal',
+  pixel: 'pixel', sweetie: 'pixel', gameboy: 'pixel',
+  hidark: 'block', hilight: 'block', terminal: 'block', amber: 'block', cyber: 'block', blueprint: 'block', void: 'block', newspaper: 'block',
+  win95: 'bevel'
+}
+for (const t of THEMES) t.shape ??= SHAPES[t.palette]
 
 export const findTheme = (palette: string, mode: string): ThemeDef =>
   THEMES.find((t) => t.palette === palette && t.mode === mode) ?? THEMES.find((t) => t.palette === palette) ?? THEMES[0]

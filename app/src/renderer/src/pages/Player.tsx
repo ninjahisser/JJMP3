@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { wifiDialog } from '../components/dialogs'
 import { Button, Dot, Signal } from '../components/ui'
@@ -330,7 +330,7 @@ export function Player() {
           <h2>Player</h2>
           {device.connected && (
             <div className="sub mono">
-              JJMP3 firmware {device.info.fw || '?'} · connected by {device.via === 'usb' ? 'USB' : 'Wi-Fi'}
+              Z0Ɛ firmware {device.info.fw || '?'} · connected by {device.via === 'usb' ? 'USB' : 'Wi-Fi'}
             </div>
           )}
         </div>
@@ -366,7 +366,7 @@ export function Player() {
           <h3>
             <Icon name="usb" /> Not connected
           </h3>
-          <p className="lead">Plug your JJMP3 into this computer with its USB cable. It's picked up automatically, no setup needed.</p>
+          <p className="lead">Plug your Z0Ɛ into this computer with its USB cable. It's picked up automatically, no setup needed.</p>
           <p className="note">Once it's on Wi-Fi it also connects wirelessly, as long as it's on the same network as this computer.</p>
         </div>
       )}
