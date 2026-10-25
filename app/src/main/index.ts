@@ -1,6 +1,6 @@
 import { BrowserWindow, Menu, app, ipcMain, nativeImage, net, protocol, shell } from 'electron'
 import { THUMB_ICONS } from './thumbIcons'
-import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs'
+import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { createServer } from 'node:http'
 import { join } from 'node:path'
@@ -314,7 +314,11 @@ app.whenReady().then(() => {
   protocol.handle('jjmp3', (req) => {
     const { host, pathname } = new URL(req.url)
     const id = pathname.replace(/^\//, '')
-    if (host === 'spotify') return existsSync(SPOTIFY_ART) ? net.fetch(pathToFileURL(SPOTIFY_ART).toString()) : new Response('none', { status: 404 })
+    if (host === 'spotify') {
+      if (!existsSync(SPOTIFY_ART)) return new Response('none', { status: 404 })
+      const bytes = readFileSync(SPOTIFY_ART)
+      return new Response(bytes, { headers: { 'Content-Type': bytes[0] === 0x89 ? 'image/png' : 'image/jpeg', 'Cache-Control': 'no-store' } })
+    }
     if (!/^[a-f0-9]{6,40}$/.test(id)) return new Response('not found', { status: 404 })
     if (host === 'cover') {
       const file = join(COVER_DIR, `${id}.jpg`)

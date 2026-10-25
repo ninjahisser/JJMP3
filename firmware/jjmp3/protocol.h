@@ -177,6 +177,9 @@ static void handle(JsonDocument &req, JsonObject res) {
     UI::invalidate();
   } else if (cmd == "time_set") {
     Profile::setTime(req["t"] | 0, req["tz"] | 0);
+  } else if (cmd == "events") {
+    res["keys"] = Remote::pendingKeys;
+    Remote::pendingKeys = "";
   } else if (cmd == "remote") {
     if (!(req["on"] | false)) {
       Remote::active = false;

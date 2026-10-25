@@ -19,7 +19,11 @@ static uint32_t position() {
 }
 
 /** Tell the app a button was pressed. */
-static void sendKey(const char *k) { Serial.printf("{\"ev\":\"key\",\"k\":\"%s\"}\n", k); }
+static String pendingKeys;  // for the app over Wi-Fi, which polls "events" instead of listening to serial
+static void sendKey(const char *k) {
+  Serial.printf("{\"ev\":\"key\",\"k\":\"%s\"}\n", k);
+  if (pendingKeys.length() < 60) pendingKeys += String(k) + ",";
+}
 
 /** art arrives as base64 text (384 characters for 288 bytes) */
 static void setArt(const char *b64) {

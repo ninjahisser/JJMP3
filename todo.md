@@ -2,6 +2,8 @@
 
 Legend: ✅ checked by you and it works · 🔍 done, waiting for your review · ⬜ not done yet (reason in italics)
 
+we moeten hebben: music player mode (normaal), spotify mode (spotify sync), en speaker mode (werkt als externe speaker met pc bv verbonden).
+
 Als we dit inpluggen in de pc, moet het als drive verschijnen zodat we aan de sd kaart kunnen en daar een software installer hebben ook voor de main software voor pc frontend.
 
 zorg dat er veel meer themas zijn, maar steek ze achter een menu 

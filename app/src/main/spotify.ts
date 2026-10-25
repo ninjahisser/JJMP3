@@ -25,6 +25,8 @@ export class SpotifyMode {
   private pushedKey = ''
   private lastPush = 0
   private timer: NodeJS.Timeout | null = null
+  private keyTimer: NodeJS.Timeout | null = null
+  private polling = false
 
   constructor(private device: Device) {
     device.onEvent.push((e) => this.onDeviceKey(e))
@@ -49,6 +51,7 @@ export class SpotifyMode {
       if (this.proc === p) this.proc = null
     })
     this.timer = setInterval(() => void this.mirror(), 1000)
+    this.keyTimer = setInterval(() => void this.pollKeys(), 400)
     this.onChange()
   }
 
@@ -57,6 +60,8 @@ export class SpotifyMode {
     this.proc = null
     if (this.timer) clearInterval(this.timer)
     this.timer = null
+    if (this.keyTimer) clearInterval(this.keyTimer)
+    this.keyTimer = null
     if (this.view.on) void this.device.tryCall('remote', { on: false })
     this.view = { ...idle }
     this.pushedKey = ''
@@ -103,6 +108,18 @@ export class SpotifyMode {
     else if (e.k === 'next') this.control('next')
     else if (e.k === 'prev') this.control('prev')
     else if (e.k === 'back') this.stop() // holding P on the player leaves Spotify mode
+  }
+
+  /** Over Wi-Fi the player can't push button presses, so ask for them. (Over USB they arrive as events.) */
+  private async pollKeys(): Promise<void> {
+    if (this.polling || !this.view.on || this.device.view().via !== 'wifi') return
+    this.polling = true
+    try {
+      const r = await this.device.tryCall('events')
+      for (const k of String((r as any)?.keys || '').split(',')) if (k) this.onDeviceKey({ ev: 'key', k })
+    } finally {
+      this.polling = false
+    }
   }
 
   /** Show the current song on the player: full details when the song changes, position every second. */

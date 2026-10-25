@@ -62,13 +62,12 @@ while ($true) {
           if ($props.Thumbnail) {
             try {
               $stream = Await ($props.Thumbnail.OpenReadAsync()) ([Windows.Storage.Streams.IRandomAccessStreamWithContentType])
-              $size = [uint32]$stream.Size
-              $reader = New-Object Windows.Storage.Streams.DataReader($stream)
-              $null = Await ($reader.LoadAsync($size)) ([uint32])
-              $bytes = New-Object byte[] $size
-              $reader.ReadBytes($bytes)
-              [System.IO.File]::WriteAllBytes($ArtFile, $bytes)
-              $reader.Dispose(); $stream.Dispose()
+              $asRead = [System.IO.WindowsRuntimeStreamExtensions].GetMethod('AsStreamForRead', [type[]]@([Windows.Storage.Streams.IInputStream]))
+              $net = $asRead.Invoke($null, @($stream))
+              $ms = New-Object System.IO.MemoryStream
+              $net.CopyTo($ms)
+              [System.IO.File]::WriteAllBytes($ArtFile, $ms.ToArray())
+              $net.Dispose(); $stream.Dispose()
             } catch { }
           }
         }
