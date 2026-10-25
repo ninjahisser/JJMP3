@@ -2,7 +2,9 @@ import { Icon } from './Icon'
 import { Oled } from './Oled'
 import { Activity } from './Activity'
 import { Dot } from './ui'
-import { plural, useStore, type Page } from '../store'
+import { useState } from 'react'
+import { THEMES } from '@shared/themes'
+import { applyTheme, call, plural, themePreview, useStore, type Page } from '../store'
 
 function Nav({ label, page, count }: { label: string; page: Page; count?: number }) {
   const current = useStore((s) => s.page)
@@ -13,6 +15,51 @@ function Nav({ label, page, count }: { label: string; page: Page; count?: number
       <span>{label}</span>
       <span className="mono">{count || ''}</span>
     </a>
+  )
+}
+
+/** "Themes" at the bottom: hover to open the list, hover a name to preview it, click to keep it. */
+function ThemeMenu() {
+  const { theme, palette } = useStore((s) => s.snap)
+  const [open, setOpen] = useState(false)
+  const close = () => {
+    themePreview.on = false
+    setOpen(false)
+    applyTheme(theme, palette) // back to the saved one unless something was clicked
+  }
+  return (
+    <div
+      className="side-foot themes-menu"
+      onMouseEnter={() => {
+        themePreview.on = true
+        setOpen(true)
+      }}
+      onMouseLeave={close}
+    >
+      {open && (
+        <div className="themes-list">
+          {(['light', 'dark'] as const).map((mode) => (
+            <div key={mode}>
+              <div className="eyebrow">{mode}</div>
+              {THEMES.filter((t) => t.mode === mode).map((t) => (
+                <a
+                  key={`${t.palette}-${t.mode}`}
+                  className={theme === t.mode && palette === t.palette ? 'on' : ''}
+                  onMouseEnter={() => applyTheme(t.mode, t.palette)}
+                  onClick={() => {
+                    applyTheme(t.mode, t.palette)
+                    void call('appearance:set', t.palette, t.mode)
+                  }}
+                >
+                  {t.name}
+                </a>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      <span className="themes-label">Themes</span>
+    </div>
   )
 }
 
@@ -98,9 +145,7 @@ export function Sidebar() {
         <Nav label="Player" page={{ name: 'player' }} />
       </nav>
       <Activity />
-      <div className="side-foot">
-        <Nav label="Settings" page={{ name: 'settings' }} />
-      </div>
+      <ThemeMenu />
     </aside>
   )
 }

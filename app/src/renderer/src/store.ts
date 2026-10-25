@@ -1,9 +1,9 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import type { ReactNode } from 'react'
 import type { Snapshot, Track } from '@shared/types'
 import { findTheme } from '@shared/themes'
 
-export type Page = { name: 'settings' } | { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'karaoke' } | { name: 'spotify' } | { name: 'player' }
+export type Page = { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'karaoke' } | { name: 'spotify' } | { name: 'player' }
 
 export interface Toast {
   id: number
@@ -86,11 +86,19 @@ export async function call<T = any>(channel: string, ...args: unknown[]): Promis
   }
 }
 
-const COLOR_VARS = ['paper', 'paper-2', 'sheet', 'ink', 'ink-2', 'ink-3', 'rule', 'rule-2', 'accent', 'ok', 'ink-hover']
+/** While the theme list is open the app shows a preview; state pushes must not snap it back. */
+export const themePreview = { on: false }
+
+const COLOR_VARS =['paper', 'paper-2', 'sheet', 'ink', 'ink-2', 'ink-3', 'rule', 'rule-2', 'accent', 'ok', 'ink-hover']
 
 export const applyTheme = (mode: 'light' | 'dark', palette = 'green') => {
   const t = findTheme(palette, mode)
   const root = document.documentElement
+  for (const f of ['serif', 'sans', 'mono'] as const) {
+    const font = t.fonts?.[f]
+    if (font) root.style.setProperty(`--${f}`, font)
+    else root.style.removeProperty(`--${f}`)
+  }
   root.dataset.theme = t.mode
   root.dataset.palette = t.palette
   for (const v of COLOR_VARS) {
@@ -107,7 +115,7 @@ export async function boot(): Promise<void> {
     if (channel === 'media') window.dispatchEvent(new CustomEvent('jjmp3-media', { detail: payload }))
     if (channel === 'state') {
       useStore.setState({ snap: payload as Snapshot, statusAt: performance.now() })
-      applyTheme((payload as Snapshot).theme, (payload as Snapshot).palette)
+      if (!themePreview.on) applyTheme((payload as Snapshot).theme, (payload as Snapshot).palette)
     }
     if (channel === 'dev:go') useStore.getState().go(payload as Page)
   })
