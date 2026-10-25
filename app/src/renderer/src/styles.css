@@ -440,14 +440,14 @@ dialog:has(.add-preview) { width: min(640px, 92vw); }
 .themes-list a.on, .themes-list a { padding-left: 10px; }
 
 /* ---------- designer themes: data-shape ---------- */
-:root[data-shape] *, :root[data-shape] *::before, :root[data-shape] *::after { border-radius: 0 !important; }
+:root[data-shape] :not(.themes-menu, .themes-menu *), :root[data-shape] :not(.themes-menu, .themes-menu *)::before, :root[data-shape] :not(.themes-menu, .themes-menu *)::after { border-radius: 0 !important; }
 /* outlines and shadows, not borders: they never change an element's size, so nothing shifts */
 :root[data-shape="brutal"] :is(.card, dialog, .menu, .oled, .btn, .dbtn, .output, .jobs, .pl-card, .toast, input, .field, .theme-switch) { outline: 2px solid var(--ink); outline-offset: -2px; box-shadow: 4px 4px 0 var(--ink) !important; }
 :root[data-shape="brutal"] .btn:active, :root[data-shape="brutal"] .dbtn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink) !important; }
 :root[data-shape="brutal"] a:hover { text-decoration: underline; text-decoration-thickness: 3px; }
 :root[data-shape="block"] :is(.card, dialog, .menu, .btn, .dbtn, input, .field) { outline: 2px solid var(--ink); outline-offset: -2px; box-shadow: none !important; }
 :root[data-shape="pixel"] :is(.card, dialog, .menu, .oled, .btn, .dbtn, input, .field) { outline: 2px solid var(--ink); outline-offset: -2px; box-shadow: none !important; }
-:root[data-shape="pixel"] * { transition: none !important; animation-timing-function: steps(4) !important; }
+:root[data-shape="pixel"] :not(.themes-menu, .themes-menu *) { transition: none !important; animation-timing-function: steps(4) !important; }
 :root[data-shape="pixel"] :is(img, .cover, .mosaic, .pv-cover, .spotify-cover, canvas, [style*="background-image"]) { image-rendering: pixelated; }
 :root[data-shape="pixel"] :is(.head h2, .card h3, .brand h1, .eyebrow, nav a) { text-transform: uppercase; letter-spacing: .04em; }
 :root[data-shape="bevel"] :is(.card, .btn, .dbtn, .output, .menu, dialog) { border: 2px solid; border-color: #fff #404040 #404040 #fff !important; box-shadow: 1px 1px 0 #000 !important; }

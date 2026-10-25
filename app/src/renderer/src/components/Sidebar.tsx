@@ -1,4 +1,4 @@
-import { Icon } from './Icon'
+﻿import { Icon } from './Icon'
 import { Oled } from './Oled'
 import { Activity } from './Activity'
 import { Dot } from './ui'
@@ -45,7 +45,7 @@ function ThemeMenu() {
                 <a
                   key={`${t.palette}-${t.mode}`}
                   className={theme === t.mode && palette === t.palette ? 'on' : ''}
-                  onMouseEnter={() => applyTheme(t.mode, t.palette, false)}
+                  onMouseEnter={() => applyTheme(t.mode, t.palette)}
                   onClick={() => {
                     applyTheme(t.mode, t.palette)
                     void call('appearance:set', t.palette, t.mode)
