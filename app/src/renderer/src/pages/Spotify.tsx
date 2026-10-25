@@ -5,7 +5,7 @@ import { call, fmt, useStore } from '../store'
 
 /** Remote for whatever Spotify (or another player on this PC) is playing; mirrors it on the player's screen. */
 export function Spotify() {
-  const { spotify: sp, device } = useStore((s) => s.snap)
+  const sp = useStore((s) => s.snap.spotify)
   const statusAt = useStore((s) => s.statusAt)
   const [, tick] = useState(0)
 
@@ -23,9 +23,7 @@ export function Spotify() {
     <>
       <div className="head">
         <div>
-          <div className="eyebrow">On this computer</div>
           <h2>Spotify</h2>
-          <div className="sub mono">{sp.on ? (sp.available ? `following ${sp.app || 'your player'}` : 'waiting for something to play') : 'off'}</div>
         </div>
         <button className="theme-switch fit" role="switch" aria-checked={sp.on} onClick={() => void call('spotify:set', !sp.on)}>
           <span>Spotify mode</span>
@@ -84,9 +82,6 @@ export function Spotify() {
               </button>
               <IconButton icon="next" title="Next" onClick={() => control('next')} />
             </div>
-            <p className="note">
-              {device.connected ? 'Also showing on the player. Its P, < and > buttons control Spotify; hold P on the player to leave this mode.' : 'Plug in the player to see this on its screen too.'}
-            </p>
           </div>
         </div>
       )}
