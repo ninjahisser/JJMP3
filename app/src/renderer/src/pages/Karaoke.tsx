@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Empty } from '../components/ui'
 import { Cover } from '../components/TrackRow'
 import { useNowPlaying } from '../playback'
@@ -160,7 +160,6 @@ export function Karaoke() {
           <button className="btn small ghost" onClick={() => nudge(0.1)}>+0.1</button>
           <button className="btn small ghost" onClick={() => nudge(0.5)}>+0.5</button>
           <button className="btn small ghost" onClick={() => nudge(null)} disabled={offset === 0}>Reset</button>
-          <span className="muted timing-hint">Lyrics too early? Use +. Too late? Use −. Saved for this song.</span>
         </div>
       )}
       {loading && <div className="lookup-bar"><i /></div>}
