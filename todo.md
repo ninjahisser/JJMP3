@@ -41,9 +41,9 @@ zorg dat er veel meer themas zijn, maar steek ze achter een menu
 
 ⬜ music playing should sync with the device, so playing a song, timeline etc is always the same and controls control both on both devices. *The app shows the player's state and the output switch hands over; full two-way sync is not done.*
 
-⬜ make it so you can check for updates on the frontend and it can update the device too. *Not started.*
+🔍 make it so you can check for updates on the frontend and it can update the device too. *Player page > "Update firmware" updates the player over Wi-Fi, no cable (needs Wi-Fi mode, and the firmware files built next to the app). Not done: the app itself checking for a new version, there is no release channel for it yet.*
 
-the exe in bin should be renamed to the new zoé themed branding.
+🔍 the exe in bin should be renamed to the new zoé themed branding. *Now bin\Z0E.exe (the file name is plain ASCII, the window and installer shortcut say Z0Ɛ). Re-pin it to the taskbar.*
 
 🔍 there is bloat: now next to the title in the frontend it says "pocket player, that is bloat remove that", "Bluetooth audio is on. Wi-Fi is off, because this chip has room for only one of the two." is bloat, "Pibble Catch and Snake are built in. Add CHIP-8 games (.ch8 files) and they show up under games on the player." is bloat, it should say it can play CHIP-8 games tho., Play: Games on the player. ‹ › and P are the game's keys 4, 6 and 5, – + are 8 and 2. Hold P to quit. is also bloat. in add music "Songs, albums and playlists work. You'll see what's in it before anything downloads." is bloat.
 

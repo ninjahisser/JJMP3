@@ -18,22 +18,22 @@
   },
   "build": {
     "appId": "dev.jjmp3.app",
-    "productName": "JJMP3",
+    "productName": "Z0E",
     "copyright": "Copyright © 2026 Seth Van den Bossche",
     "directories": { "output": "release", "buildResources": "build" },
     "files": ["out/**", "resources/**", "package.json"],
     "win": {
       "icon": "build/icon.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "artifactName": "JJMP3-${version}-win-${arch}.${ext}"
+      "artifactName": "Z0E-${version}-win-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "JJMP3",
-      "artifactName": "JJMP3-Setup-${version}.${ext}"
+      "shortcutName": "Z0Ɛ",
+      "artifactName": "Z0E-Setup-${version}.${ext}"
     }
   },
   "dependencies": {

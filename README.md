@@ -59,7 +59,7 @@ Run **`JJMP3-Setup-1.0.0.exe`** (attached to the GitHub release). It installs pe
 
 On first use it fetches what it needs into `%APPDATA%\JJMP3\tools`: `yt-dlp.exe` always, and `ffmpeg.exe` only when ffmpeg isn't already on the PC. yt-dlp updates itself weekly, so YouTube links keep working. Nothing else is required (no Python, no Node).
 
-Or run it straight from the project folder: **`bin\JJMP3.exe`** (right-click it to pin to Start or the taskbar). `npm run local` in `app` rebuilds that copy after code changes. Both share the same library in `%APPDATA%\JJMP3`, and only one runs at a time.
+Or run it straight from the project folder: **`bin\Z0E.exe`** (right-click it to pin to Start or the taskbar). `npm run local` in `app` rebuilds that copy after code changes. Both share the same library in `%APPDATA%\JJMP3`, and only one runs at a time.
 
 ### Build it
 

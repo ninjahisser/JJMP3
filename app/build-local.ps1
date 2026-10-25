@@ -1,4 +1,4 @@
-# Rebuilds the app and refreshes ..\bin\JJMP3.exe (the copy you can run or pin from the project folder).
+# Rebuilds the app and refreshes ..\bin\Z0E.exe (the copy you can run or pin from the project folder).
 # Usage: powershell -ExecutionPolicy Bypass -File app\build-local.ps1   (or: npm run local)
 $ErrorActionPreference = "Stop"
 $app = $PSScriptRoot
@@ -13,7 +13,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "electron-builder failed" }
 } finally { Pop-Location }
 
-Get-Process JJMP3 -ErrorAction SilentlyContinue | Stop-Process -Force  # any running copy locks files in bin
+Get-Process Z0E, JJMP3 -ErrorAction SilentlyContinue | Stop-Process -Force  # any running copy locks files in bin (JJMP3 = the old name)
 robocopy (Join-Path $tmp "win-unpacked") $bin /MIR /MT:16 /R:2 /W:1 /NFL /NDL /NJH /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "copying to bin failed" }
-Write-Host "Updated $bin\JJMP3.exe"
+Write-Host "Updated $bin\Z0E.exe"
