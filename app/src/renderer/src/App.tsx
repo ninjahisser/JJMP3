@@ -9,6 +9,7 @@ import { Playlists, PlaylistPage } from './pages/Playlists'
 import { Player } from './pages/Player'
 import { Games } from './pages/Games'
 import { Karaoke } from './pages/Karaoke'
+import { Spotify } from './pages/Spotify'
 import { HeartBurst } from './components/HeartBurst'
 import { useStore } from './store'
 import { controls, useNowPlaying } from './playback'
@@ -61,6 +62,7 @@ export function App() {
               {page.name === 'playlist' && <PlaylistPage id={page.id} />}
               {page.name === 'games' && <Games />}
               {page.name === 'karaoke' && <Karaoke />}
+              {page.name === 'spotify' && <Spotify />}
               {page.name === 'player' && <Player />}
             </ErrorBoundary>
           </div>

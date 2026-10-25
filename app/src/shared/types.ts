@@ -71,6 +71,19 @@ export interface DeviceView {
   error: string
 }
 
+export interface SpotifyView {
+  on: boolean
+  available: boolean
+  title: string
+  artist: string
+  album: string
+  app: string
+  playing: boolean
+  pos: number
+  dur: number
+  art: number // changes with every new song, for the cover URL
+}
+
 export interface ToolsView {
   ffmpeg: string | null
   ytdlp: string | null
@@ -86,6 +99,7 @@ export interface Snapshot {
   tools: ToolsView
   theme: 'light' | 'dark'
   palette: 'green' | 'paper' | 'slate'
+  spotify: SpotifyView
 }
 
 export const EVENT_CHANNEL = 'jjmp3:event'

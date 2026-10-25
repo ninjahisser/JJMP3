@@ -40,13 +40,18 @@ export function ditherToOled(grey: Uint8Array, size = ART_SIZE): Buffer {
   return out
 }
 
+/** Dithered 1-bit picture (size x size) from any image ffmpeg can read. 48x48 = 288 bytes. */
+export async function oledPicture(imagePath: string, size = ART_SIZE): Promise<Buffer> {
+  if (!tools.ffmpeg) throw new Error('ffmpeg missing')
+  const n = size * size
+  const grey = await run(tools.ffmpeg, ['-loglevel', 'error', '-i', imagePath, '-vf', `${SQUARE},scale=${size}:${size}:flags=lanczos,format=gray`, '-f', 'rawvideo', '-pix_fmt', 'gray', '-'], { binary: true })
+  if (grey.code || grey.out.length < n) throw new Error('art conversion failed: ' + grey.stderr.trim())
+  return ditherToOled(grey.out.subarray(0, n), size)
+}
+
 /** Writes art/<id>.bin, the player's dithered artwork, from any image ffmpeg can read. */
 export async function makeOledArt(id: string, imagePath: string): Promise<void> {
-  if (!tools.ffmpeg) throw new Error('ffmpeg missing')
-  const n = ART_SIZE * ART_SIZE
-  const grey = await run(tools.ffmpeg, ['-loglevel', 'error', '-i', imagePath, '-vf', `${SQUARE},scale=${ART_SIZE}:${ART_SIZE}:flags=lanczos,format=gray`, '-f', 'rawvideo', '-pix_fmt', 'gray', '-'], { binary: true })
-  if (grey.code || grey.out.length < n) throw new Error('art conversion failed: ' + grey.stderr.trim())
-  writeFileSync(join(ART_DIR, `${id}.bin`), ditherToOled(grey.out.subarray(0, n)))
+  writeFileSync(join(ART_DIR, `${id}.bin`), await oledPicture(imagePath, ART_SIZE))
 }
 
 /** Writes covers/<id>.jpg and art/<id>.bin from any image ffmpeg can read. */

@@ -406,3 +406,23 @@ dialog:has(.add-preview) { width: min(640px, 92vw); }
 .lyric.past { color: var(--ink-3); opacity: .55; }
 .lyric.now { color: var(--ink); font-size: 40px; transform: translateX(6px); }
 .plain-lyrics { white-space: pre-wrap; font: 400 20px/1.6 var(--serif); color: var(--ink-2); }
+
+.timing { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: sticky; top: -56px; z-index: 3; background: var(--paper); padding: 10px 0; margin-top: 10px; border-bottom: 1px solid var(--rule-2); }
+.timing-val { min-width: 64px; text-align: center; font-weight: 600; }
+.timing-hint { font-size: 12px; margin-left: 8px; }
+
+/* ---------- spotify mode ---------- */
+.theme-switch.fit { width: auto; gap: 12px; padding: 8px 4px; font-size: 14px; }
+.spotify-now { display: grid; grid-template-columns: minmax(240px, 380px) 1fr; gap: 40px; align-items: center; padding-top: 10px; }
+.spotify-cover { aspect-ratio: 1; border-radius: 6px; background: var(--paper-2) center / cover; box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,.05); display: grid; place-items: center; color: var(--ink-3); }
+.spotify-title { font: 400 52px/1.05 var(--serif); margin: 0 0 8px; }
+.spotify-artist { font-size: 20px; color: var(--ink-2); margin-bottom: 4px; }
+.spotify-seek { margin: 26px 0 14px; max-width: 520px; }
+.spotify-ctl { display: flex; gap: 14px; align-items: center; }
+
+/* ---------- lyrics finder ---------- */
+.lyrics-search { display: flex; gap: 10px; }
+.lyrics-search input { flex: 1; }
+.lyrics-hits { display: flex; flex-direction: column; margin-top: 12px; max-height: 320px; overflow: auto; }
+.lyrics-hit { display: flex; justify-content: space-between; gap: 16px; text-align: left; padding: 8px 6px; border: 0; border-bottom: 1px solid var(--line, rgba(0,0,0,.08)); background: none; color: inherit; font: inherit; cursor: pointer; }
+.lyrics-hit:hover { background: var(--paper-2); }

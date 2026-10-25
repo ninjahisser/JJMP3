@@ -68,8 +68,14 @@ export async function getLyrics(t: Pick<Track, 'id' | 'title' | 'artist' | 'dura
     log('lyrics lookup failed:', e)
     return { found: false, synced: false, lines: [], plain: null, checked: 0 } // network trouble: don't cache
   }
+  const result = toLyrics(hit)
+  writeFileSync(file, JSON.stringify(result))
+  return result
+}
+
+function toLyrics(hit: any): Lyrics {
   const synced = hit?.syncedLyrics ? parseLrc(hit.syncedLyrics) : []
-  const result: Lyrics = {
+  return {
     found: !!(synced.length || hit?.plainLyrics),
     synced: synced.length > 0,
     lines: synced,
@@ -77,6 +83,33 @@ export async function getLyrics(t: Pick<Track, 'id' | 'title' | 'artist' | 'dura
     source: 'lrclib.net',
     checked: Date.now()
   }
-  writeFileSync(file, JSON.stringify(result))
+}
+
+export interface LyricsHit {
+  lrclibId: number
+  title: string
+  artist: string
+  album: string
+  duration: number
+  synced: boolean
+}
+
+/** Free-text search on lrclib, for when a song's own title doesn't match anything. */
+export async function searchLyrics(query: string): Promise<LyricsHit[]> {
+  const q = query.trim()
+  if (!q) return []
+  const results: any[] = (await lrclib(`search?${new URLSearchParams({ q })}`)) || []
+  return results
+    .filter((r) => r.syncedLyrics || r.plainLyrics)
+    .slice(0, 30)
+    .map((r) => ({ lrclibId: r.id, title: r.trackName || '', artist: r.artistName || '', album: r.albumName || '', duration: r.duration || 0, synced: !!r.syncedLyrics }))
+}
+
+/** Use a chosen lrclib entry for this song (kept for good). */
+export async function pickLyrics(trackId: string, lrclibId: number): Promise<Lyrics> {
+  const hit = await lrclib(`get/${Math.floor(lrclibId)}`)
+  if (!hit) throw new Error('That lyrics entry is gone')
+  const result = toLyrics(hit)
+  writeFileSync(join(DIR, `${trackId}.json`), JSON.stringify(result))
   return result
 }

@@ -11,6 +11,7 @@
 #include "mode.h"
 #include "input.h"
 #include "battery.h"
+#include "os.h"
 #include "profile.h"
 
 // JSON command protocol shared by USB serial and HTTP.
@@ -176,6 +177,26 @@ static void handle(JsonDocument &req, JsonObject res) {
     UI::invalidate();
   } else if (cmd == "time_set") {
     Profile::setTime(req["t"] | 0, req["tz"] | 0);
+  } else if (cmd == "remote") {
+    if (!(req["on"] | false)) {
+      Remote::active = false;
+    } else {
+      if (req["title"].is<const char *>()) {
+        Remote::title = req["title"].as<String>();
+        Remote::artist = req["artist"] | "";
+        Remote::setArt(req["art"] | "");
+      }
+      if (req["dur"].is<int>()) Remote::dur = req["dur"];
+      Remote::posBase = req["pos"] | 0;
+      Remote::posAt = millis();
+      Remote::playing = req["playing"] | false;
+      Remote::lastUpdate = millis();
+      if (!Remote::active) {
+        Remote::active = true;
+        if (OS::top() != &remoteScreen) OS::push(&remoteScreen);
+      }
+      UI::invalidate();
+    }
   } else if (cmd == "pintest") {
     // wire a jumper from D19 to the pin under test: drives it high and low, reports what D19 sees
     int out = req["out"] | -1;

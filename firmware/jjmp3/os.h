@@ -13,6 +13,7 @@
 #include "keyboard.h"
 #include "games.h"
 #include "saveseth.h"
+#include "remote.h"
 #include "zen.h"
 #include "profile.h"
 #if JJ_WIFI
@@ -419,6 +420,49 @@ struct SettingsScreen : ListScreen {
 static SettingsScreen settingsScreen;
 
 // ---------- Home ----------
+// ---------- Spotify / PC remote: shows what the computer is playing ----------
+struct RemoteScreen : Screen {
+  String title() override { return "Spotify"; }
+  bool animating() override { return true; }
+  void tick() override {
+    if (!Remote::active || millis() - Remote::lastUpdate > 8000) {  // the app stopped talking to us
+      Remote::active = false;
+      OS::back();
+    }
+  }
+  void key(const KeyEvent &e) override {
+    if (e.key == K_PLAY && e.act == A_HOLD) {
+      Remote::sendKey("back");
+      Remote::active = false;
+      return OS::back();
+    }
+    if (e.act != A_PRESS) return;
+    if (e.key == K_PLAY) Remote::sendKey("play");
+    if (e.key == K_LEFT) Remote::sendKey("prev");
+    if (e.key == K_RIGHT) Remote::sendKey("next");
+  }
+  void draw() override {
+    const int X = 52, W = 76;
+    UI::marquee(Remote::title.length() ? Remote::title : String("Nothing playing"), X, 19, W);
+    UI::marquee(Remote::artist, X, 31, W);
+    UI::oled.fillRect(0, UI::BAND, X - 1, 64 - UI::BAND, SSD1306_BLACK);  // art over any scrolled text
+    if (Remote::hasArt) UI::oled.drawBitmap(0, UI::BAND, Remote::art, 48, 48, SSD1306_WHITE);
+    else {
+      UI::oled.drawCircle(23, UI::BAND + 23, 22, SSD1306_WHITE);
+      UI::oled.fillCircle(23, UI::BAND + 23, 4, SSD1306_WHITE);
+    }
+    uint32_t pos = Remote::position();
+    UI::oled.drawRect(X, 45, W, 4, SSD1306_WHITE);
+    if (Remote::dur) UI::oled.fillRect(X, 45, min<uint32_t>(W, (uint64_t)W * pos / Remote::dur), 4, SSD1306_WHITE);
+    UI::oled.setCursor(X, 54);
+    UI::oled.print(UI::fmtTime(pos));
+    String d = UI::fmtTime(Remote::dur);
+    UI::oled.setCursor(128 - d.length() * 6, 54);
+    UI::oled.print(d);
+  }
+};
+static RemoteScreen remoteScreen;
+
 // ---------- World time ----------
 struct WorldScreen : ListScreen {
   String title() override { return Profile::hhmm(); }

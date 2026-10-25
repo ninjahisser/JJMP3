@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { ReactNode } from 'react'
 import type { Snapshot, Track } from '@shared/types'
 
-export type Page = { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'karaoke' } | { name: 'player' }
+export type Page = { name: 'library' } | { name: 'playlists' } | { name: 'playlist'; id: string } | { name: 'games' } | { name: 'karaoke' } | { name: 'spotify' } | { name: 'player' }
 
 export interface Toast {
   id: number
@@ -44,7 +44,8 @@ const empty: Snapshot = {
   jobs: [],
   tools: { ffmpeg: null, ytdlp: null },
   theme: 'light',
-  palette: 'green'
+  palette: 'green',
+  spotify: { on: false, available: false, title: '', artist: '', album: '', app: '', playing: false, pos: 0, dur: 0, art: 0 }
 }
 
 let toastId = 0

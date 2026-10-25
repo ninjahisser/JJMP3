@@ -2,6 +2,10 @@
 
 Legend: ✅ checked by you and it works · 🔍 done, waiting for your review · ⬜ not done yet (reason in italics)
 
+Als we dit inpluggen in de pc, moet het als drive verschijnen zodat we aan de sd kaart kunnen en daar een software installer hebben ook voor de main software voor pc frontend.
+
+zorg dat er veel meer themas zijn, maar steek ze achter een menu 
+
 🔍 First of all, I made opencode make changes but I like none of these, so fix them. *Fixed what was broken: the playlist pages crashed, the Games tab was a placeholder. Tell me which other changes you want undone.*
 
 🔍 Rebrand it to the Z0Ɛ instead of JJSMP3. *App title, window and OLED splash use Z0Ɛ (the OLED font has no Ɛ, so it is drawn as a mirrored E). Folder, repo and installer are still called JJMP3.*
@@ -10,7 +14,6 @@ Legend: ✅ checked by you and it works · 🔍 done, waiting for your review ·
 
 🔍 show battery percentage when playing on bluetooth. *Bottom right of Now Playing, when a battery is wired.*
 
-⬜ save all music on the mp3 and if they have a videoclip or something, let me choose that as artwork or like a gif loop of the album that plays on the cover viewer on the display. *Big feature, not started.*
 
 ⬜ I can't add some CHIP-8 games because it says limit is 3.5kb. but they are saved on the SD card so fix this. *CHIP-8 has 3.5 KB of program memory by design; bigger games are SCHIP/XO-CHIP and need more RAM than the ESP32 has left with Bluetooth on.* and the dinorun game on the device plays a bit strange. *Needs the SD card and the game file to look at.*
 
@@ -24,7 +27,7 @@ Legend: ✅ checked by you and it works · 🔍 done, waiting for your review ·
 
 🔍 Games should be on the pc frontend app its own tab like library, player, playlists.
 
-⬜ Allow me to enter a spotify account and select what music I want to import. *Needs a Spotify developer app (client id) to log in; not started.*
+🔍 Spotify mode: the app shows what Spotify is playing (artwork, title, progress), controls it, and mirrors it on the player's screen, with the player's buttons controlling Spotify. *Replaces the Spotify login idea. Works with the Spotify desktop app through Windows media controls.*
 
 🔍 add theme support to the frontend, by default now its like this mokka-brown but it should be a nice calm green. *Green is the default; Paper (the old brown) and Slate are the colour dots in the sidebar.*
 
@@ -38,6 +41,8 @@ Legend: ✅ checked by you and it works · 🔍 done, waiting for your review ·
 
 ⬜ make it so you can check for updates on the frontend and it can update the device too. *Not started.*
 
+the exe in bin should be renamed to the new zoé themed branding.
+
 🔍 there is bloat: now next to the title in the frontend it says "pocket player, that is bloat remove that", "Bluetooth audio is on. Wi-Fi is off, because this chip has room for only one of the two." is bloat, "Pibble Catch and Snake are built in. Add CHIP-8 games (.ch8 files) and they show up under games on the player." is bloat, it should say it can play CHIP-8 games tho., Play: Games on the player. ‹ › and P are the game's keys 4, 6 and 5, – + are 8 and 2. Hold P to quit. is also bloat. in add music "Songs, albums and playlists work. You'll see what's in it before anything downloads." is bloat.
 
 🔍 when adding music after entering a link it loads, but show a progress bar.
@@ -48,4 +53,4 @@ Legend: ✅ checked by you and it works · 🔍 done, waiting for your review ·
 
 🔍 when I hover over teh app in the taskbar it should havce those controls like spotify does.
 
-🔍 add karaoke mode in a tab. *Karaoke tab with synced lyrics.* the device should also show the lyrics of the song. *Not done: needs the SD card.*
+🔍 add karaoke mode in a tab. *Karaoke tab with synced lyrics, a saved timing offset per song, and a live search ("Wrong or missing lyrics? Search") to pick the right lyrics when the title doesn't match.* the device should also show the lyrics of the song. *Not done: needs the SD card.*

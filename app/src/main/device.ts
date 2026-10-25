@@ -22,6 +22,7 @@ interface Link {
   put(path: string, data: Buffer, progress?: Progress): Promise<void>
   get(path: string): Promise<Buffer>
   close(): void
+  onEvent?: (e: Record<string, any>) => void
 }
 
 class SerialLink implements Link {
@@ -30,10 +31,30 @@ class SerialLink implements Link {
   private wake: (() => void)[] = []
   private closed = false
   private nextId = 1
+  private rawGet = false
+  onEvent?: (e: Record<string, any>) => void
+
+  /** Lines like {"ev":"key","k":"play"} are pushed by the player unasked (its buttons); handle them right away. */
+  private drainEvents(): void {
+    if (this.rawGet) return
+    const tag = Buffer.from('{"ev":')
+    for (let i = this.buf.indexOf(tag); i >= 0; i = this.buf.indexOf(tag)) {
+      const end = this.buf.indexOf(10, i)
+      if (end < 0) return
+      const line = this.buf.subarray(i, end).toString('utf8')
+      this.buf = Buffer.concat([this.buf.subarray(0, i), this.buf.subarray(end + 1)])
+      try {
+        this.onEvent?.(JSON.parse(line))
+      } catch {
+        // garbled, drop it
+      }
+    }
+  }
 
   private constructor(private port: SerialPort, public where: string) {
     port.on('data', (d: Buffer) => {
       this.buf = Buffer.concat([this.buf, d])
+      this.drainEvents()
       this.notify()
     })
     const end = () => {
@@ -144,14 +165,19 @@ class SerialLink implements Link {
 
   async get(path: string): Promise<Buffer> {
     const id = await this.send({ cmd: 'get', path })
-    const r = await this.reply(id, Date.now() + 8000)
-    if (!r.ok) throw new LinkError(r.error || 'not found')
-    const n: number = r.size
-    const deadline = Date.now() + 10000 + n / 50
-    while (this.buf.length < n) await this.waitData(deadline)
-    const out = Buffer.from(this.buf.subarray(0, n))
-    this.buf = this.buf.subarray(n)
-    return out
+    this.rawGet = true // file bytes follow the reply: never treat them as events
+    try {
+      const r = await this.reply(id, Date.now() + 8000)
+      if (!r.ok) throw new LinkError(r.error || 'not found')
+      const n: number = r.size
+      const deadline = Date.now() + 10000 + n / 50
+      while (this.buf.length < n) await this.waitData(deadline)
+      const out = Buffer.from(this.buf.subarray(0, n))
+      this.buf = this.buf.subarray(n)
+      return out
+    } finally {
+      this.rawGet = false
+    }
   }
 }
 
@@ -234,6 +260,7 @@ export class Device {
   info: DeviceView['info'] = {}
   error = ''
   onConnect: (() => void)[] = []
+  onEvent: ((e: Record<string, any>) => void)[] = []
   onChange: () => void = () => {}
 
   constructor(private wifiHost: () => string | null, private setWifiHost: (h: string) => void) {
@@ -351,6 +378,7 @@ export class Device {
 
   private attach([link, hello]: [Link, Reply]): void {
     this.link = link
+    link.onEvent = (e) => this.onEvent.forEach((f) => f(e))
     this.info = hello
     this.error = ''
     log('connected via', link.kind, link.where, hello)

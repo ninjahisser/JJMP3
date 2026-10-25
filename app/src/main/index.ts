@@ -13,7 +13,8 @@ import { log } from './log'
 import { ART_DIR, COVER_DIR, DATA_DIR, MEDIA_DIR } from './paths'
 import { makeOledArt } from './artwork'
 import { Sync } from './sync'
-import { getLyrics } from './lyrics'
+import { getLyrics, pickLyrics, searchLyrics } from './lyrics'
+import { SPOTIFY_ART, SpotifyMode } from './spotify'
 import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
 
@@ -38,6 +39,7 @@ device.onConnect.push(() => {
   const t = Math.floor(Date.now() / 1000)
   void device.call('time_set', { t, tz: -new Date().getTimezoneOffset() }).catch(() => {})
 })
+const spotify = new SpotifyMode(device)
 const importer = new Importer(library, () => sync.kick(true))
 let win: BrowserWindow | null = null
 
@@ -51,7 +53,8 @@ function snapshot(): Snapshot {
     jobs: importer.snapshot(),
     tools: { ...tools },
     theme: library.setting<'light' | 'dark'>('theme', 'light'),
-    palette: library.setting<'green' | 'paper' | 'slate'>('palette', 'green')
+    palette: library.setting<'green' | 'paper' | 'slate'>('palette', 'green'),
+    spotify: spotify.view
   }
 }
 
@@ -64,7 +67,7 @@ function push(): void {
     win?.webContents.send(EVENT_CHANNEL, 'state', snapshot())
   }, 120)
 }
-library.onChange = device.onChange = sync.onChange = importer.onChange = push
+library.onChange = device.onChange = sync.onChange = importer.onChange = spotify.onChange = push
 setToolsListener(push)
 
 /** Runs a device command; a refusal from the player becomes an error with its message. */
@@ -137,8 +140,24 @@ function registerIpc(): void {
   h('lyrics:get', (id: string) => {
     const t = library.get(id)
     if (!t) throw new Error('No such song')
-    return getLyrics(t)
+    return getLyrics(t).then((l) => ({ ...l, offset: library.setting<Record<string, number>>('lyricsOffsets', {})[id] ?? 0 }))
   })
+  h('lyrics:search', (query: string) => searchLyrics(String(query)))
+  h('lyrics:pick', async (id: string, lrclibId: number) => ({ ...(await pickLyrics(id, lrclibId)), offset: library.setting<Record<string, number>>('lyricsOffsets', {})[id] ?? 0 }))
+  h('lyrics:offset', (id: string, seconds: number) => {
+    const all = { ...library.setting<Record<string, number>>('lyricsOffsets', {}) }
+    const v = Math.max(-30, Math.min(30, Math.round(Number(seconds) * 10) / 10))
+    if (v === 0) delete all[id]
+    else all[id] = v
+    library.setSetting('lyricsOffsets', all)
+    return v
+  })
+  h('spotify:set', (on: boolean) => {
+    library.setSetting('spotifyMode', !!on)
+    if (on) spotify.start()
+    else spotify.stop()
+  })
+  h('spotify:control', (cmd: string) => spotify.control(cmd))
   h('media:state', (playing: boolean) => setThumbButtons(!!playing))
   h('palette:set', (palette: string) => {
     library.setSetting('palette', ['green', 'paper', 'slate'].includes(palette) ? palette : 'green')
@@ -295,6 +314,7 @@ app.whenReady().then(() => {
   protocol.handle('jjmp3', (req) => {
     const { host, pathname } = new URL(req.url)
     const id = pathname.replace(/^\//, '')
+    if (host === 'spotify') return existsSync(SPOTIFY_ART) ? net.fetch(pathToFileURL(SPOTIFY_ART).toString()) : new Response('none', { status: 404 })
     if (!/^[a-f0-9]{6,40}$/.test(id)) return new Response('not found', { status: 404 })
     if (host === 'cover') {
       const file = join(COVER_DIR, `${id}.jpg`)
@@ -319,6 +339,7 @@ app.whenReady().then(() => {
   updateYtDlpLater()
   ensureTools().catch((e) => log('tool setup failed:', e))
   recoverOrphans()
+  if (library.setting('spotifyMode', false)) spotify.start()
   sync.onLoaded = recoverOrphans
   migrateArt().catch((e) => log('art migration failed:', e))
   log('JJMP3 started', app.getVersion())
