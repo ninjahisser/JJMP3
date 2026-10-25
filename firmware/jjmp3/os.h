@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <Arduino.h>
 #include <SD.h>
 #include <vector>
@@ -422,7 +422,7 @@ static SettingsScreen settingsScreen;
 // ---------- Home ----------
 // ---------- Spotify / PC remote: shows what the computer is playing ----------
 struct RemoteScreen : Screen {
-  String title() override { return "Spotify"; }
+  String title() override { return "Media control"; }
   bool animating() override { return true; }
   void tick() override {
     if (!Remote::active || millis() - Remote::lastUpdate > 8000) {  // the app stopped talking to us

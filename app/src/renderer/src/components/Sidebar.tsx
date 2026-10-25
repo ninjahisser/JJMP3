@@ -139,7 +139,7 @@ export function Sidebar() {
       <nav>
         <Nav label="Library" page={{ name: 'library' }} count={tracks.length} />
         <Nav label="Playlists" page={{ name: 'playlists' }} count={playlists.length} />
-        <Nav label="Spotify" page={{ name: 'spotify' }} />
+        <Nav label="Media control" page={{ name: 'spotify' }} />
         <Nav label="Karaoke" page={{ name: 'karaoke' }} />
         <Nav label="Games" page={{ name: 'games' }} />
         <Nav label="Player" page={{ name: 'player' }} />

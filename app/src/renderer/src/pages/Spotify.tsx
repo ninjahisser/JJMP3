@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { IconButton } from '../components/ui'
 import { call, fmt, useStore } from '../store'
@@ -23,10 +23,10 @@ export function Spotify() {
     <>
       <div className="head">
         <div>
-          <h2>Spotify</h2>
+          <h2>Media control</h2>
         </div>
         <button className="theme-switch fit" role="switch" aria-checked={sp.on} onClick={() => void call('spotify:set', !sp.on)}>
-          <span>Spotify mode</span>
+          <span>Media control</span>
           <span className={`toggle ${sp.on ? 'on' : ''}`}>
             <i />
           </span>
@@ -36,17 +36,17 @@ export function Spotify() {
       {!sp.on && (
         <div className="card wide">
           <h3>
-            <Icon name="music" /> Control Spotify from here
+            <Icon name="music" /> Control your music from here
           </h3>
           <p className="lead">
-            Turn Spotify mode on and this page shows what Spotify is playing, with its cover, and buttons to pause and skip. The player's screen shows the same song, and its buttons control Spotify too.
+            Turn it on and this page shows what is playing on this computer (Spotify or any other player), with its cover, and buttons to pause and skip. The player's screen shows the same song, and its buttons control it too.
           </p>
         </div>
       )}
 
       {sp.on && !sp.available && (
         <div className="empty">
-          <h3>Nothing playing.</h3>Open Spotify and play a song.
+          <h3>Nothing playing.</h3>Play a song in Spotify or another player.
         </div>
       )}
 
