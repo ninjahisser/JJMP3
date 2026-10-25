@@ -320,7 +320,8 @@ export class Device {
       try {
         return await fn(link)
       } catch (e) {
-        if (e instanceof LinkError && !(keepOnNotFound && e.message === 'not found')) this.lose(e.message)
+        // "cannot open file" means the card is missing or unreadable, not that the link is gone
+        if (e instanceof LinkError && e.message !== 'cannot open file' && !(keepOnNotFound && e.message === 'not found')) this.lose(e.message)
         throw e
       }
     })
