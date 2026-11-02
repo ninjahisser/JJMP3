@@ -58,11 +58,15 @@ static bool answers(int sda) {
 }
 
 static void begin() {
-  for (int sda : {PIN_SDA, PIN_SDA_SPARE})
-    if (answers(sda)) {
-      sdaPin = sda;
-      break;
-    }
+  // a few rounds: right after power-on the display can take a moment before it answers
+  bool found = false;
+  for (int round = 0; round < 5 && !found; round++, delay(50))
+    for (int sda : {PIN_SDA, PIN_SDA_SPARE})
+      if (answers(sda)) {
+        sdaPin = sda;
+        found = true;
+        break;
+      }
   Serial.printf("# oled: sda D%d\n", sdaPin);
   Wire.end();
   Wire.begin(sdaPin, PIN_SCL);

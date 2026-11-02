@@ -247,6 +247,24 @@ static void handle(JsonDocument &req, JsonObject res) {
     Wire.end();
     Wire.begin(UI::sdaPin, PIN_SCL);
     UI::invalidate();
+  } else if (cmd == "oled_test") {
+    // light every pixel straight from the controller (0xA5 ignores the image in RAM) for a few seconds,
+    // slowly: tells a dead panel from a software or bus problem. 0 = the display took the command.
+    auto send = [](std::initializer_list<uint8_t> bytes) {
+      Wire.beginTransmission(OLED_ADDR);
+      Wire.write(0x00);
+      for (uint8_t b : bytes) Wire.write(b);
+      return (int)Wire.endTransmission();
+    };
+    UI::begin();  // find the display again first
+    Wire.setClock(100000);
+    res["sda"] = UI::sdaPin;
+    res["init_ok"] = UI::ok;
+    res["power_on"] = send({0x8D, 0x14, 0x81, 0xFF, 0xAF});  // charge pump on, max contrast, display on
+    res["all_on"] = send({0xA5});
+    delay(req["ms"] | 10000);
+    res["back"] = send({0xA4});
+    UI::invalidate();
   } else if (cmd == "events") {    res["keys"] = Remote::pendingKeys;
     Remote::pendingKeys = "";
   } else if (cmd == "remote") {
