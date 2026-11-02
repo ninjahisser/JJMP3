@@ -1,8 +1,8 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<title>JJMP3 bedrading</title>
+<title>Z0Ɛ bedrading</title>
 <style>
   @page { size: A4 landscape; margin: 8mm; }
   * { box-sizing: border-box; }
@@ -29,7 +29,7 @@
 <body>
 
 <section class="page">
-  <h1>JJMP3 – bedrading (1/4): alle draden</h1>
+  <h1>Z0Ɛ – bedrading (1/5): alle draden</h1>
   <p class="sub">Elke draad is apart getekend en genummerd (zie pagina 4 voor de lijst). Onderaan lopen de voedingsrails: 3V3, 5V en GND. Een lijn die een andere kruist zonder stip is <b>niet</b> verbonden; alleen bij een stip.</p>
   <svg id="p1" viewBox="0 0 1400 800"></svg>
   <div class="legend">
@@ -45,7 +45,7 @@
 </section>
 
 <section class="page">
-  <h1>JJMP3 – bedrading (2/4): voeding, aan/uit-schakelaar en batterij</h1>
+  <h1>Z0Ɛ – bedrading (2/5): voeding, aan/uit-schakelaar en batterij</h1>
   <p class="sub">USB laadt de LiPo altijd, ook als de schakelaar uit staat. De schakelaar zit tussen de lader en de 5 V-booster: uit = de ESP32, het scherm en de versterker hebben geen stroom.</p>
   <svg id="p2" viewBox="0 0 1400 820"></svg>
   <div class="legend">
@@ -56,13 +56,13 @@
 </section>
 
 <section class="page">
-  <h1>JJMP3 – bedrading (3/4): drukknoppen en schakelaar van dichtbij</h1>
+  <h1>Z0Ɛ – bedrading (3/5): drukknoppen en schakelaar van dichtbij</h1>
   <p class="sub">Een 6×6 mm drukknop heeft vier pootjes. De twee pootjes aan dezelfde kant zijn altijd met elkaar verbonden; bij indrukken verbindt de knop de linker- met de rechterkant. Gebruik daarom twee pootjes die <b>diagonaal</b> tegenover elkaar staan.</p>
   <svg id="p3" viewBox="0 0 1400 800"></svg>
 </section>
 
 <section class="page">
-  <h1>JJMP3 – bedrading (4/4): draadlijst en onderdelen</h1>
+  <h1>Z0Ɛ – bedrading (4/5): draadlijst en onderdelen</h1>
   <div class="cols">
     <div><h2>Pagina 1: signalen en voeding op het bord</h2><table id="t1"></table></div>
     <div><h2>Pagina 2: voeding en batterij</h2><table id="t2"></table>
@@ -73,11 +73,65 @@
       </div>
       <h2>Onderdelen</h2>
       <ul>
-        <li>ESP32-devkit (30 pins), OLED 128×64 (I²C), SD-kaartmodule (SPI)</li>
+        <li>ESP32-devkit (30 pins), OLED 128×64 (I²C), SD-kaartmodule (SPI; DFRobot Fermion, werkt op 5 V)</li>
         <li>5 drukknoppen 6×6 mm (4 pootjes), 1 mini schuifschakelaar (3 pootjes, SPDT)</li>
         <li>MAX98357 I²S-versterker en luidspreker 4–8 Ω</li>
         <li>LiPo 3,7 V, TP4056-laadmodule met beveiliging (DW01), step-up naar 5 V (2 A)</li>
         <li>2 × 100 kΩ, optioneel 100 nF (D34 naar GND)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="page">
+  <h1>Z0Ɛ – bedrading (5/5): SD-kaartlezer, elke draad</h1>
+  <p class="sub">De lezer is de DFRobot Fermion microSD-module. Hij werkt op <b>5 V</b>. Zeven draden in totaal, van de lezer naar de ESP32 (links of rechts = kant van de devkit met USB onderaan). Zet de kaart stevig in de lezer tot hij klikt.</p>
+  <div class="cols">
+    <div>
+      <h2>Standaard-pennen (draad 11 t/m 14, 28, 29 op pagina 1)</h2>
+      <table>
+        <thead><tr><th>Draad</th><th>Pin op de SD-lezer</th><th>Pin op de ESP32</th><th>Kant</th></tr></thead>
+        <tbody>
+          <tr><td class="n">14</td><td>SS (chip select)</td><td><b>D5</b></td><td>rechts</td></tr>
+          <tr><td class="n">13</td><td>SCK</td><td><b>D18</b></td><td>rechts</td></tr>
+          <tr><td class="n">12</td><td>MISO</td><td><b>D19</b></td><td>rechts</td></tr>
+          <tr><td class="n">11</td><td>MOSI</td><td><b>D23</b></td><td>rechts</td></tr>
+          <tr><td class="n">29</td><td>GND</td><td><b>GND</b> (onder D15)</td><td>rechts</td></tr>
+          <tr><td class="n">28</td><td>VCC (+5V)</td><td><b>VIN</b></td><td>links</td></tr>
+        </tbody>
+      </table>
+      <h2>Alternatief (de firmware probeert dit eerst, dan de standaard-pennen)</h2>
+      <table>
+        <thead><tr><th>Pin op de SD-lezer</th><th>Pin op de ESP32</th></tr></thead>
+        <tbody>
+          <tr><td>SS (chip select)</td><td><b>D15</b></td></tr>
+          <tr><td>SCK</td><td><b>D16</b></td></tr>
+          <tr><td>MOSI</td><td><b>D17</b></td></tr>
+          <tr><td>MISO</td><td><b>D35</b> (links, alleen invoer)</td></tr>
+          <tr><td>GND</td><td>GND</td></tr>
+          <tr><td>VCC</td><td>VIN (5 V)</td></tr>
+        </tbody>
+      </table>
+      <p class="sub">Kies één van de twee sets en gebruik die voor alle vier de datadraden; mix ze niet.</p>
+    </div>
+    <div>
+      <h2>Controle in deze volgorde</h2>
+      <ul>
+        <li><b>1.</b> Stroom uit: USB eruit, batterij los.</li>
+        <li><b>2.</b> Haal alle draden los en steek ze één voor één terug, helemaal tot de bodem.</li>
+        <li><b>3.</b> MISO en MOSI niet omdraaien: MISO → D19, MOSI → D23.</li>
+        <li><b>4.</b> Zijn de pinnen op de lezer gesoldeerd? Draden die alleen in de gaatjes staan, geven losse contacten.</li>
+        <li><b>5.</b> Probeer andere jumperdraden voor SCK, MOSI, MISO en SS.</li>
+        <li><b>6.</b> Zet de kaart stevig in de lezer (FAT32, tot 32 GB).</li>
+        <li><b>7.</b> Start de speler opnieuw op: de kaart wordt alleen bij het opstarten gezocht.</li>
+      </ul>
+      <div class="warn"><b>Werkt het niet?</b><br>
+        Zet VCC van de lezer eens op <b>3V3</b> in plaats van VIN en start opnieuw op. De firmware meldt in de app (of via Wi-Fi) per pin-set wat de kaart antwoordt; "FF FF FF…" betekent dat er niets terugkomt.
+      </div>
+      <h2>Overige draden van dit onderdeel</h2>
+      <ul>
+        <li>OLED: SCL → D22, SDA → D21, VCC → 3V3, GND → GND (pagina 1, draad 9, 10, 26, 27)</li>
+        <li>Knoppen en versterker staan op pagina 1 en 3</li>
       </ul>
     </div>
   </div>
@@ -233,9 +287,10 @@ const lists = {};
     c.text(972, y + 5, p, { size: 13, weight: 600 }); c.pin(960, y, C.spi);
     c.wire(n, C.spi, [[800, ey], [960, y]], e, 'SD-module ' + p, { bez: true });
   });
-  c.text(972, 453, 'VCC', { size: 12 }); c.pin(960, 448, C.v33);
+  c.text(1178, 453, 'VCC (5 V)', { anchor: 'end', size: 12, weight: 600 }); c.pin(1190, 448, C.v5);
   c.text(972, 469, 'GND', { size: 12 }); c.pin(960, 464, C.gnd);
-  c.wire(28, C.v33, [[960, 448], [900, 448], [900, V3]], 'SD-module VCC', '3V3-rail', { dots: [[900, V3]], badge: [900, 580] });
+  c.rail(1290, 1360, V5, C.v5, '5V');
+  c.wire(28, C.v5, [[1190, 448], [1325, 448], [1325, V5]], 'SD-module VCC (5 V)', '5V-rail (VIN)', { dots: [[1325, V5]], badge: [1325, 560] });
   c.wire(29, C.gnd, [[960, 464], [880, 464], [880, G]], 'SD-module GND', 'GND-rail', { dots: [[880, G]], badge: [880, 620] });
 
   // knop P
@@ -377,8 +432,8 @@ const lists = {};
     c.text(730 + col * 330, 505 + row * 32, p, { size: 14, weight: 700 });
     c.text(790 + col * 330, 505 + row * 32, '→ ' + w, { size: 14 });
   });
-  c.text(1060, 505 + 7 * 32, '3V3 → OLED en SD-module', { size: 14, weight: 700 });
-  c.text(1060, 505 + 8 * 32, 'VIN ← 5 V van de booster', { size: 14, weight: 700 });
+  c.text(1060, 505 + 7 * 32, '3V3 → OLED', { size: 14, weight: 700 });
+  c.text(1060, 505 + 8 * 32, 'VIN ← 5 V van de booster, ook naar SD-module', { size: 14, weight: 700 });
 })();
 
 /* =============================== TABELLEN =============================== */

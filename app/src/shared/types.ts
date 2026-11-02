@@ -42,6 +42,7 @@ export interface Job {
 
 export interface DeviceStatus {
   mode?: 'music' | 'wifi'
+  sd?: boolean // false when the card is missing or unreadable
   state?: 'playing' | 'paused' | 'stopped'
   track?: string
   title?: string

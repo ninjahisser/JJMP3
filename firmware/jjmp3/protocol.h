@@ -1,7 +1,8 @@
-#pragma once
+﻿#pragma once
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <SD.h>
+#include "sdcard.h"
 #include <Update.h>
 #include "config.h"
 #include "library.h"
@@ -84,6 +85,8 @@ static void status(JsonObject o) {
   wifi["ssid"] = Net::ssid;
   wifi["ip"] = Net::ip();
   o["heap"] = ESP.getFreeHeap();
+  o["sd"] = Sd::ok;
+  if (!Sd::ok) o["sd_report"] = Sd::report;
   o["minheap"] = ESP.getMinFreeHeap();
   o["user"] = Profile::user;
   JsonObject perf = o["perf"].to<JsonObject>();
@@ -178,6 +181,16 @@ static void handle(JsonDocument &req, JsonObject res) {
     UI::invalidate();
   } else if (cmd == "time_set") {
     Profile::setTime(req["t"] | 0, req["tz"] | 0);
+  } else if (cmd == "sd_mount") {
+    // remount the card (after plugging in a reader or card) and report what happened
+    if (Sd::mount()) {
+      SD.mkdir(MUSIC_DIR);
+      SD.mkdir(ART_DIR);
+      SD.mkdir(GAMES_DIR);
+      res["tracks"] = Library::reload();
+    }
+    res["sd"] = Sd::ok;
+    res["report"] = Sd::report;
   } else if (cmd == "events") {
     res["keys"] = Remote::pendingKeys;
     Remote::pendingKeys = "";

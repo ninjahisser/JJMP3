@@ -75,8 +75,12 @@ export class Sync {
     this.kick()
   }
 
+  /** True while something else needs the link to itself (a firmware update), or the player has no working card. */
+  paused = !!process.env.JJMP3_NOSYNC
+
   private async runOnce(): Promise<void> {
-    if (!this.device.connected || !this.loaded) return
+    if (this.paused || !this.device.connected || !this.loaded) return
+    if (this.device.status.sd === false) return // no card to sync to; sending songs would only clog the link
     this.running = true
     try {
       do {
