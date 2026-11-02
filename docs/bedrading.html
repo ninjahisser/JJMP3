@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="nl">
 <head>
 <meta charset="utf-8">
@@ -29,7 +29,7 @@
 <body>
 
 <section class="page">
-  <h1>Z0Ɛ – bedrading (1/5): alle draden</h1>
+  <h1>Z0Ɛ – bedrading (1/6): alle draden</h1>
   <p class="sub">Elke draad is apart getekend en genummerd (zie pagina 4 voor de lijst). Onderaan lopen de voedingsrails: 3V3, 5V en GND. Een lijn die een andere kruist zonder stip is <b>niet</b> verbonden; alleen bij een stip.</p>
   <svg id="p1" viewBox="0 0 1400 800"></svg>
   <div class="legend">
@@ -45,7 +45,7 @@
 </section>
 
 <section class="page">
-  <h1>Z0Ɛ – bedrading (2/5): voeding, aan/uit-schakelaar en batterij</h1>
+  <h1>Z0Ɛ – bedrading (2/6): voeding, aan/uit-schakelaar en batterij</h1>
   <p class="sub">USB laadt de LiPo altijd, ook als de schakelaar uit staat. De schakelaar zit tussen de lader en de 5 V-booster: uit = de ESP32, het scherm en de versterker hebben geen stroom.</p>
   <svg id="p2" viewBox="0 0 1400 820"></svg>
   <div class="legend">
@@ -56,13 +56,13 @@
 </section>
 
 <section class="page">
-  <h1>Z0Ɛ – bedrading (3/5): drukknoppen en schakelaar van dichtbij</h1>
+  <h1>Z0Ɛ – bedrading (3/6): drukknoppen en schakelaar van dichtbij</h1>
   <p class="sub">Een 6×6 mm drukknop heeft vier pootjes. De twee pootjes aan dezelfde kant zijn altijd met elkaar verbonden; bij indrukken verbindt de knop de linker- met de rechterkant. Gebruik daarom twee pootjes die <b>diagonaal</b> tegenover elkaar staan.</p>
   <svg id="p3" viewBox="0 0 1400 800"></svg>
 </section>
 
 <section class="page">
-  <h1>Z0Ɛ – bedrading (4/5): draadlijst en onderdelen</h1>
+  <h1>Z0Ɛ – bedrading (4/6): draadlijst en onderdelen</h1>
   <div class="cols">
     <div><h2>Pagina 1: signalen en voeding op het bord</h2><table id="t1"></table></div>
     <div><h2>Pagina 2: voeding en batterij</h2><table id="t2"></table>
@@ -75,7 +75,7 @@
       <ul>
         <li>ESP32-devkit (30 pins), OLED 128×64 (I²C), SD-kaartmodule (SPI; DFRobot Fermion, werkt op 5 V)</li>
         <li>5 drukknoppen 6×6 mm (4 pootjes), 1 mini schuifschakelaar (3 pootjes, SPDT)</li>
-        <li>MAX98357 I²S-versterker en luidspreker 4–8 Ω</li>
+        <li>MAX98357 I²S-versterker (DFRobot Fermion, DFR0954) en luidspreker 4 Ω 3 W (pagina 6)</li>
         <li>LiPo 3,7 V, TP4056-laadmodule met beveiliging (DW01), step-up naar 5 V (2 A)</li>
         <li>2 × 100 kΩ, optioneel 100 nF (D34 naar GND)</li>
       </ul>
@@ -84,7 +84,7 @@
 </section>
 
 <section class="page">
-  <h1>Z0Ɛ – bedrading (5/5): SD-kaartlezer, elke draad</h1>
+  <h1>Z0Ɛ – bedrading (5/6): SD-kaartlezer, elke draad</h1>
   <p class="sub">De lezer is de DFRobot Fermion microSD-module. Hij werkt op <b>5 V</b>. Zeven draden in totaal, van de lezer naar de ESP32 (links of rechts = kant van de devkit met USB onderaan). Zet de kaart stevig in de lezer tot hij klikt.</p>
   <div class="cols">
     <div>
@@ -121,10 +121,16 @@
       <ul>
         <li>OLED: SCL → D22, SDA → RX2 (D16), VCC → 3V3, GND → GND (pagina 1, draad 9, 10, 26, 27)</li>
         <li>De GND-pin links op de ESP32 maakt geen contact: gebruik alleen de GND rechts (onder D15)</li>
-        <li>Knoppen en versterker staan op pagina 1 en 3</li>
+        <li>Knoppen staan op pagina 1 en 3, de versterker op pagina 1 en 6</li>
       </ul>
     </div>
   </div>
+</section>
+
+<section class="page">
+  <h1>Z0Ɛ – bedrading (6/6): versterker en luidspreker van dichtbij</h1>
+  <p class="sub">De versterker is de DFRobot MAX98357 (Fermion, DFR0954), van boven gezien met het witte stekkertje linksboven. De luidspreker is 4 Ω, 3 W. De draadnummers zijn die van pagina 1.</p>
+  <svg id="p6" viewBox="0 0 1400 800"></svg>
 </section>
 
 <script>
@@ -232,20 +238,20 @@ const lists = {};
 
   // versterker
   c.box(210, 270, 190, 120, '', { fill: '#faf5ff' });
-  c.text(222, 290, 'MAX98357 (I²S)', { size: 13.5, weight: 600 });
+  c.text(222, 290, 'MAX98357 (pag. 6)', { size: 13.5, weight: 600 });
   [['LRC', 292, 3, 'D25'], ['BCLK', 326, 4, 'D26'], ['DIN', 360, 5, 'D27']].forEach(([p, y, n, e]) => {
     c.text(390, y + 5, p, { anchor: 'end', size: 13, weight: 600 });
     c.pin(400, y, C.i2s);
     c.wire(n, C.i2s, [[400, y], [560, y]], e, 'versterker ' + p, { badge: [480, y] });
   });
-  c.text(222, 322, 'VIN', { size: 12.5, weight: 600 }); c.pin(210, 318, C.v5);
+  c.text(222, 322, 'VCC', { size: 12.5, weight: 600 }); c.pin(210, 318, C.v5);
   c.text(222, 344, 'GND', { size: 12.5, weight: 600 }); c.pin(210, 340, C.gnd);
   c.text(222, 366, 'SPK +', { size: 12.5, weight: 600 }); c.pin(210, 362, C.v5);
   c.text(222, 384, 'SPK −', { size: 12.5, weight: 600 }); c.pin(210, 380, C.gnd);
-  c.wire(18, C.v5, [[210, 318], [190, 318], [190, V5]], 'versterker VIN', '5V-rail', { dots: [[190, V5]], badge: [190, 500] });
+  c.wire(18, C.v5, [[210, 318], [190, 318], [190, V5]], 'versterker VCC', '5V-rail', { dots: [[190, V5]], badge: [190, 500] });
   c.wire(19, C.gnd, [[210, 340], [170, 340], [170, G]], 'versterker GND', 'GND-rail', { dots: [[170, G]], badge: [170, 560] });
   c.speaker(46, 352, 36);
-  c.text(46, 420, 'Luidspreker', { size: 13, weight: 600 }); c.text(46, 436, '4–8 Ω, tot 3 W', { size: 11.5 });
+  c.text(46, 420, 'Luidspreker', { size: 13, weight: 600 }); c.text(46, 436, '4 Ω, 3 W', { size: 11.5 });
   c.pin(104, 362, C.v5); c.pin(104, 380, C.gnd);
   c.wire(20, C.v5, [[210, 362], [104, 362]], 'versterker SPK +', 'luidspreker +', { badge: [118, 362] });
   c.wire(21, C.gnd, [[210, 380], [104, 380]], 'versterker SPK −', 'luidspreker −', { badge: [118, 380] });
@@ -333,7 +339,7 @@ const lists = {};
   c.pin(1130, 268, C.v5); c.text(1142, 273, 'VIN (5V-pin)', { size: 13, weight: 600 });
   c.pin(1130, 306, C.gnd); c.text(1142, 311, 'GND', { size: 13, weight: 600 });
   c.box(1130, 370, 230, 110, 'MAX98357 versterker', { fill: '#faf5ff', size: 14 });
-  c.pin(1130, 408, C.v5); c.text(1142, 413, 'VIN', { size: 13, weight: 600 });
+  c.pin(1130, 408, C.v5); c.text(1142, 413, 'VCC', { size: 13, weight: 600 });
   c.pin(1130, 446, C.gnd); c.text(1142, 451, 'GND', { size: 13, weight: 600 });
 
   c.box(310, 570, 220, 90, 'LiPo 3,7 V', { fill: '#fff5f5', size: 14 });
@@ -346,7 +352,7 @@ const lists = {};
   c.wire(4, C.v5, [[710, 332], [710, 350], [760, 350], [760, 300], [800, 300]], 'schakelaar, zijpootje B', 'booster IN+', { badge: [760, 325] });
   c.wire(5, C.gnd, [[530, 400], [800, 400]], 'TP4056 OUT−', 'booster IN−', { badge: [780, 400] });
   c.wire(6, C.v5, [[1000, 300], [1070, 300], [1070, 268], [1130, 268]], 'booster OUT 5 V', 'ESP32 VIN', { badge: [1100, 268] });
-  c.wire(7, C.v5, [[1070, 300], [1070, 408], [1130, 408]], 'booster OUT 5 V', 'versterker VIN', { dots: [[1070, 300]], badge: [1100, 408] });
+  c.wire(7, C.v5, [[1070, 300], [1070, 408], [1130, 408]], 'booster OUT 5 V', 'versterker VCC', { dots: [[1070, 300]], badge: [1100, 408] });
   c.wire(8, C.gnd, [[1000, 400], [1030, 400], [1030, 306], [1130, 306]], 'booster OUT GND', 'ESP32 GND', { badge: [1100, 306] });
   c.wire(9, C.gnd, [[1030, 400], [1030, 446], [1130, 446]], 'booster OUT GND', 'versterker GND', { dots: [[1030, 400]], badge: [1100, 446] });
   c.wire(10, C.v5, [[360, 480], [360, 570]], 'TP4056 B+', 'LiPo +', { badge: [360, 540] });
@@ -424,6 +430,99 @@ const lists = {};
   });
   c.text(1060, 505 + 7 * 32, '3V3 → OLED', { size: 14, weight: 700 });
   c.text(1060, 505 + 8 * 32, 'VIN ← 5 V van de booster, ook naar SD-module', { size: 14, weight: 700 });
+})();
+
+/* =============================== PAGINA 6 =============================== */
+(function () {
+  const c = new Canvas('p6');
+  const pad = (x, y) => {
+    c.add(S('circle', { cx: x, cy: y, r: 12, fill: '#d69e2e' }));
+    c.add(S('circle', { cx: x, cy: y, r: 5, fill: '#fff' }));
+  };
+
+  // het bordje: zwart, gouden halve gaatjes onderaan en rechts
+  const bx = 360, by = 110, bw = 440, bh = 380;
+  c.add(S('rect', { x: bx, y: by, width: bw, height: bh, rx: 14, fill: '#1a202c' }));
+  c.add(S('rect', { x: 390, y: 130, width: 130, height: 100, rx: 6, fill: '#f7fafc', stroke: '#a0aec0', 'stroke-width': 2 }));
+  c.add(S('rect', { x: 410, y: 150, width: 90, height: 40, rx: 4, fill: '#e2e8f0', stroke: '#a0aec0', 'stroke-width': 1.5 }));
+  c.text(455, 252, 'stekkertje luidspreker', { anchor: 'middle', size: 12, fill: '#fff' });
+  c.add(S('rect', { x: 580, y: 290, width: 80, height: 80, rx: 6, fill: '#2d3748' }));
+  c.text(620, 335, 'MAX98357A', { anchor: 'middle', size: 11, fill: '#cbd5e0' });
+
+  // onderkant: SPK+ DIN BCLK LRC GND VCC
+  const bottom = [
+    ['SPK+', 'luidspreker +', 'zonder stekker', '#718096'],
+    ['DIN', 'D27', 'draad 5', C.i2s],
+    ['BCLK', 'D26', 'draad 4', C.i2s],
+    ['LRC', 'D25', 'draad 3', C.i2s],
+    ['GND', 'GND-rail', 'draad 19', C.gnd],
+    ['VCC', '5 V (VIN)', 'draad 18', C.v5],
+  ];
+  bottom.forEach(([p, to, sub, col], i) => {
+    const x = 400 + i * 68, y = by + bh;
+    c.text(x, y - 20, p, { anchor: 'middle', size: 13, weight: 700, fill: '#fff' });
+    c.line([[x, y + 12], [x, 590]], col, 3.4);
+    pad(x, y);
+    c.text(x, 612, to, { anchor: 'middle', size: 12.5, weight: 700, fill: col });
+    c.text(x, 630, sub, { anchor: 'middle', size: 11, fill: '#4a5568' });
+  });
+
+  // rechterkant, van boven naar onder: SPK− VCC GND NC SD GAIN
+  const right = [
+    ['SPK−', 'luidspreker −, alleen zonder stekkertje'],
+    ['VCC', 'niet nodig (zelfde als VCC onderaan)'],
+    ['GND', 'niet nodig (zelfde als GND onderaan)'],
+    ['NC', 'los laten'],
+    ['SD', 'los laten (los = aan, beide kanalen gemengd)'],
+    ['GAIN', 'los laten (9 dB, standaard)'],
+  ];
+  right.forEach(([p, note], i) => {
+    const x = bx + bw, y = 145 + i * 56;
+    c.text(x - 22, y + 5, p, { anchor: 'end', size: 13, weight: 700, fill: '#fff' });
+    pad(x, y);
+    c.line([[x + 14, y], [x + 40, y]], '#a0aec0', 2);
+    c.text(x + 48, y + 5, note, { size: 12.5, fill: '#4a5568' });
+  });
+
+  // de luidspreker, van achteren: twee soldeerlipjes
+  c.add(S('circle', { cx: 160, cy: 200, r: 95, fill: '#e2e8f0', stroke: C.gnd, 'stroke-width': 2.4 }));
+  c.add(S('circle', { cx: 160, cy: 200, r: 60, fill: '#cbd5e0', stroke: C.gnd, 'stroke-width': 2 }));
+  c.text(160, 205, '4 Ω 3 W', { anchor: 'middle', size: 15, weight: 700 });
+  [[171, '+'], [231, '−']].forEach(([y, s]) => {
+    c.add(S('rect', { x: 248, y: y - 13, width: 44, height: 26, rx: 4, fill: '#edf2f7', stroke: C.gnd, 'stroke-width': 2 }));
+    c.add(S('circle', { cx: 278, cy: y, r: 5, fill: '#fff', stroke: C.gnd, 'stroke-width': 1.8 }));
+    c.text(258, y + 5, s, { anchor: 'middle', size: 14, weight: 700 });
+  });
+  c.line([[284, 171], [340, 171], [340, 165], [390, 165]], C.v5, 3.4);
+  c.line([[284, 231], [360, 231], [360, 205], [390, 205]], C.gnd, 3.4);
+  c.badge(320, 171, 20, C.v5);
+  c.badge(320, 231, 21, C.gnd);
+  c.text(160, 322, 'Luidspreker, achterkant', { anchor: 'middle', size: 13.5, weight: 700 });
+
+  c.text(20, 370, 'Draadjes aan de luidspreker', { size: 14, weight: 700 });
+  ['• Solderen houdt het best.',
+   '• Zonder soldeerbout: steek een gestript',
+   '  draadje door het gaatje van het lipje',
+   '  en draai het stevig om.',
+   '• Of gebruik krokodillenklemmetjes.',
+   '• De lipjes mogen elkaar en het metalen',
+   '  frame niet raken.',
+   '• Lipje met + of rood stipje = plus.',
+   '  Niets te zien? Bij één luidspreker',
+   '  maakt het niet uit.'].forEach((t, i) => c.text(20, 394 + i * 19, t, { size: 12.5 }));
+
+  c.add(S('rect', { x: 800, y: 540, width: 580, height: 240, rx: 8, fill: '#faf5ff', stroke: C.i2s, 'stroke-width': 2 }));
+  c.text(815, 566, 'Zo sluit je hem aan', { size: 14, weight: 700 });
+  ['1. Stroom uit: USB eruit, batterij los.',
+   '2. Soldeer een pinheader in de halve gaatjes, of draadjes er rechtstreeks in.',
+   '3. LRC → D25, BCLK → D26, DIN → D27 (paars).',
+   '4. VCC → 5 V (VIN of de 5V-rail), GND → GND-rail of de GND rechts.',
+   '   Niet de GND links: die maakt geen contact.',
+   '5. SD, GAIN, NC en de tweede VCC/GND rechts: los laten.',
+   '6. Luidspreker in het witte stekkertje, of op SPK+ en SPK−.',
+   '7. Op 5 V levert hij tot ~3 W in 4 Ω: precies wat deze luidspreker aankan.',
+   'De firmware stuurt nog geen geluid naar de versterker (staat op de todo-lijst).'].forEach((t, i) =>
+    c.text(815, 592 + i * 21, t, { size: 12.5, weight: i === 8 ? 600 : 400, fill: i === 8 ? '#6b46c1' : '#1a202c' }));
 })();
 
 /* =============================== TABELLEN =============================== */
