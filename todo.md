@@ -2,6 +2,12 @@
 
 Legend: ✅ checked by you and it works · 🔍 done, waiting for your review · ⬜ not done yet (reason in italics)
 
+i connected the new sd card reader but it says no sd card? help
+
+ik wil meerdere wifis kunnen opslaan gelijk een gsm
+
+it says nothing on the player yet, waiting for the upload to finish, ik snap niet goed of het iets upload ik heb nergens feedback overal staat gwn queued, er moet ook een manuele send to player button zijn
+
 we moeten hebben: music player mode (normaal), spotify mode (spotify sync), en speaker mode (werkt als externe speaker met pc bv verbonden).
 
 Als we dit inpluggen in de pc, moet het als drive verschijnen zodat we aan de sd kaart kunnen en daar een software installer hebben ook voor de main software voor pc frontend.

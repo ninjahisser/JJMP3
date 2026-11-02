@@ -1,4 +1,4 @@
-// Connection to the JJMP3 player over USB serial or Wi-Fi (HTTP).
+﻿// Connection to the JJMP3 player over USB serial or Wi-Fi (HTTP).
 // Both speak the JSON command protocol in firmware/jjmp3/protocol.h.
 import { SerialPort } from 'serialport'
 import type { DeviceStatus, DeviceView } from '@shared/types'
@@ -188,15 +188,28 @@ class HttpLink implements Link {
   close(): void {}
 
   async request(cmd: string, params: Record<string, unknown> = {}, timeout = 6000): Promise<Reply> {
+    // fetch's own abort can hang while connecting to an address that is not there (an old IP on another
+    // network), so the timeout is also enforced from outside
+    const ctl = new AbortController()
+    let timer: NodeJS.Timeout | undefined
     try {
-      const r = await fetch(`http://${this.where}/cmd`, {
+      const work = fetch(`http://${this.where}/cmd`, {
         method: 'POST',
         body: JSON.stringify({ cmd, ...params }),
-        signal: AbortSignal.timeout(timeout)
+        signal: ctl.signal
+      }).then((r) => r.json() as Promise<Reply>)
+      const limit = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          ctl.abort()
+          reject(new Error('timed out'))
+        }, timeout)
       })
-      return (await r.json()) as Reply
+      work.catch(() => {})
+      return await Promise.race([work, limit])
     } catch (e) {
       throw new LinkError((e as Error).message)
+    } finally {
+      clearTimeout(timer)
     }
   }
 
@@ -212,7 +225,7 @@ class HttpLink implements Link {
         method: 'POST',
         body,
         headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-        signal: AbortSignal.timeout(30000 + data.length / 20)
+        signal: AbortSignal.timeout(Math.round(30000 + data.length / 20))
       })
       if (!r.ok) throw new LinkError(`upload failed (${r.status})`)
       progress?.(data.length, data.length)
@@ -391,16 +404,19 @@ export class Device {
   }
 
   private async tryWifi(): Promise<[Link, Reply] | null> {
-    for (const host of [this.wifiHost(), 'jjmp3.local'].filter(Boolean) as string[]) {
+    // the saved address can be stale (other network), so the player's own name comes second; jjmp3.local is the old name
+    const hosts = [...new Set([this.wifiHost(), 'z0e.local', 'jjmp3.local'].filter(Boolean) as string[])]
+    const tries = hosts.map(async (host): Promise<[Link, Reply]> => {
       const link = new HttpLink(host)
-      try {
-        const hello = await link.request('hello', {}, 1500)
-        if (isPlayer(hello.name)) return [link, hello]
-      } catch {
-        // not there
-      }
+      const hello = await link.request('hello', {}, 6000)
+      if (!isPlayer(hello.name)) throw new LinkError('not a player')
+      return [link, hello]
+    })
+    try {
+      return await Promise.any(tries)
+    } catch {
+      return null // not there
     }
-    return null
   }
 
   private attach([link, hello]: [Link, Reply]): void {
@@ -420,7 +436,7 @@ export class Device {
       if (!this.link) {
         misses = 0
         let found = await this.tryUsb()
-        if (!found && Date.now() - lastWifiTry > 8000) {
+        if (!found && Date.now() - lastWifiTry > 3000) {
           lastWifiTry = Date.now()
           found = await this.tryWifi()
         }
