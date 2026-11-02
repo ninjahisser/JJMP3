@@ -20,15 +20,62 @@ static i2s_chan_handle_t tx = nullptr;
 static bool running = false;          // clocks on; with them off the amplifier shuts itself down (no hiss)
 static volatile bool active = false;  // playing through the speaker right now
 
+static bool failed = false;  // the I2S channel could not be set up
+
 static bool wanted() { return enabled && !BT::connected() && Player::isPlaying(); }
+
+// The channel's DMA buffers are only allocated while the speaker may play: a Bluetooth
+// stream needs nearly all the heap there is, so with headphones linked it is freed again.
+static bool open() {
+  i2s_chan_config_t cc = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
+  cc.dma_desc_num = 4;
+  cc.dma_frame_num = 240;  // 4 x 240 frames: ~22 ms of buffer, ~4 KB
+  cc.auto_clear = true;    // an underrun plays silence, not the last buffer again
+  if (i2s_new_channel(&cc, &tx, nullptr) != ESP_OK) {
+    tx = nullptr;
+    return false;
+  }
+  i2s_std_config_t sc = {
+      .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE),
+      .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
+      .gpio_cfg = {.mclk = I2S_GPIO_UNUSED,
+                   .bclk = (gpio_num_t)PIN_I2S_BCLK,
+                   .ws = (gpio_num_t)PIN_I2S_LRC,
+                   .dout = (gpio_num_t)PIN_I2S_DIN,
+                   .din = I2S_GPIO_UNUSED,
+                   .invert_flags = {false, false, false}},
+  };
+  if (i2s_channel_init_std_mode(tx, &sc) != ESP_OK) {
+    i2s_del_channel(tx);
+    tx = nullptr;
+    return false;
+  }
+  return true;
+}
+
+static void close() {
+  if (!tx) return;
+  if (running) i2s_channel_disable(tx);
+  i2s_del_channel(tx);
+  tx = nullptr;
+  running = false;
+}
 
 static void task(void *) {
   static uint32_t buf[256];  // stereo frames, ~6 ms
   for (;;) {
     if (!wanted()) {
-      if (running) i2s_channel_disable(tx);
-      running = active = false;
+      if (!enabled || BT::connected()) close();
+      else if (running) {  // just paused: keep the buffers, stop the clocks
+        i2s_channel_disable(tx);
+        running = false;
+      }
+      active = false;
       vTaskDelay(pdMS_TO_TICKS(20));
+      continue;
+    }
+    if (!tx && (failed = !open())) {
+      vTaskDelay(pdMS_TO_TICKS(500));  // no memory for the buffers right now: try again shortly
       continue;
     }
     if (!running) running = i2s_channel_enable(tx) == ESP_OK;
@@ -47,30 +94,7 @@ static void task(void *) {
 
 static void begin() {
   enabled = prefs.getBool("spk", true);
-  i2s_chan_config_t cc = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-  cc.dma_desc_num = 6;
-  cc.dma_frame_num = 240;  // 6 x 240 frames: ~33 ms of buffer, ~6 KB
-  cc.auto_clear = true;    // an underrun plays silence, not the last buffer again
-  if (i2s_new_channel(&cc, &tx, nullptr) != ESP_OK) {
-    tx = nullptr;
-    return;
-  }
-  i2s_std_config_t sc = {
-      .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE),
-      .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
-      .gpio_cfg = {.mclk = I2S_GPIO_UNUSED,
-                   .bclk = (gpio_num_t)PIN_I2S_BCLK,
-                   .ws = (gpio_num_t)PIN_I2S_LRC,
-                   .dout = (gpio_num_t)PIN_I2S_DIN,
-                   .din = I2S_GPIO_UNUSED,
-                   .invert_flags = {false, false, false}},
-  };
-  if (i2s_channel_init_std_mode(tx, &sc) != ESP_OK) {
-    i2s_del_channel(tx);
-    tx = nullptr;
-    return;
-  }
-  xTaskCreatePinnedToCore(task, "speaker", 3072, nullptr, 4, nullptr, 1);
+  xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, nullptr, 1);
 }
 
 static void set(bool on) {
@@ -79,8 +103,8 @@ static void set(bool on) {
 }
 
 static const char *stateName() {
-  if (!tx) return "error";
   if (!enabled) return "off";
+  if (failed) return "error";
   if (BT::connected()) return "headphones";
   return active ? "playing" : "ready";
 }
