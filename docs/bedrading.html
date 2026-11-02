@@ -100,8 +100,8 @@
           <tr><td class="n">28</td><td>VCC (+5V)</td><td><b>VIN</b></td><td>links</td></tr>
         </tbody>
       </table>
-      <h2>Reservepin voor het scherm</h2>
-      <p class="sub">Blijft het scherm zwart omdat D21 geen contact maakt? Zet de SDA-draad van het scherm op <b>RX2 (D16)</b>. De firmware kijkt bij het opstarten op welke van de twee het scherm antwoordt.</p>
+      <h2>Scherm</h2>
+      <p class="sub">De SDA-draad van het scherm zit op <b>RX2 (D16)</b>; D21 werkt ook. De firmware kijkt bij het opstarten op welke van de twee het scherm antwoordt.</p>
     </div>
     <div>
       <h2>Controle in deze volgorde</h2>
@@ -119,7 +119,8 @@
       </div>
       <h2>Overige draden van dit onderdeel</h2>
       <ul>
-        <li>OLED: SCL → D22, SDA → D21 (of RX2/D16), VCC → 3V3, GND → GND (pagina 1, draad 9, 10, 26, 27)</li>
+        <li>OLED: SCL → D22, SDA → RX2 (D16), VCC → 3V3, GND → GND (pagina 1, draad 9, 10, 26, 27)</li>
+        <li>De GND-pin links op de ESP32 maakt geen contact: gebruik alleen de GND rechts (onder D15)</li>
         <li>Knoppen en versterker staan op pagina 1 en 3</li>
       </ul>
     </div>
@@ -214,7 +215,7 @@ const lists = {};
   c.add(S('rect', { x: 645, y: 568, width: 70, height: 22, rx: 3, fill: '#bee3f8', stroke: '#2d3748', 'stroke-width': 2 }));
   c.text(680, 584, 'USB', { anchor: 'middle', size: 12, weight: 600 });
   const L = [['D34', 190], ['D32', 224], ['D33', 258], ['D25', 292], ['D26', 326], ['D27', 360], ['D14', 394], ['D13', 428], ['GND', 462], ['VIN', 496]];
-  const R = [['D23', 190], ['D22', 224], ['D21', 258], ['D19', 292], ['D18', 326], ['D5', 360], ['D4', 394], ['GND', 428], ['3V3', 462]];
+  const R = [['D23', 190], ['D22', 224], ['D21', 258], ['D19', 292], ['D18', 326], ['D5', 360], ['RX2 (D16)', 394], ['D4', 428], ['GND', 462], ['3V3', 496]];
   L.forEach(([n, y]) => { c.text(574, y + 5, n, { size: 14, weight: 600 }); c.pin(560, y); });
   R.forEach(([n, y]) => { c.text(786, y + 5, n, { anchor: 'end', size: 14, weight: 600 }); c.pin(800, y); });
 
@@ -256,8 +257,8 @@ const lists = {};
   c.wire(22, C.gnd, [[330, 540], [290, 540], [290, G]], 'knop −, pootje B', 'GND-rail', { dots: [[290, G]], badge: [290, 640] });
   c.wire(23, C.gnd, [[330, 600], [310, 600], [310, G]], 'knop +, pootje B', 'GND-rail', { dots: [[310, G]], badge: [310, 660] });
 
-  // ESP32 voeding links
-  c.wire(24, C.gnd, [[560, 462], [480, 462], [480, G]], 'ESP32 GND (links)', 'GND-rail', { dots: [[480, G]], badge: [480, 620] });
+  // ESP32 voeding links (de GND links maakt geen contact: de GND-rail hangt aan de GND rechts, draad 31)
+  c.text(515, 467, 'GND links: geen contact, niet gebruiken', { anchor: 'end', size: 11.5, weight: 600, fill: '#c53030' });
   c.wire(25, C.v5, [[560, 496], [460, 496], [460, V5]], 'ESP32 VIN', '5V-rail', { dots: [[460, V5]], badge: [460, 590] });
 
   // --- rechterkant ---
@@ -267,7 +268,7 @@ const lists = {};
   c.text(972, 263, 'SDA', { size: 13, weight: 600 }); c.pin(960, 258, C.i2c);
   c.text(972, 285, 'GND', { size: 12 }); c.pin(960, 280, C.gnd);
   c.wire(9, C.i2c, [[800, 224], [960, 224]], 'D22', 'OLED SCL', { badge: [830, 224] });
-  c.wire(10, C.i2c, [[800, 258], [960, 258]], 'D21', 'OLED SDA', { badge: [830, 258] });
+  c.wire(10, C.i2c, [[800, 394], [900, 394], [900, 258], [960, 258]], 'RX2 (D16)', 'OLED SDA', { badge: [900, 330] });
   c.wire(26, C.v33, [[960, 200], [940, 200], [940, V3]], 'OLED VCC', '3V3-rail', { dots: [[940, V3]], badge: [940, 560] });
   c.wire(27, C.gnd, [[960, 280], [920, 280], [920, G]], 'OLED GND', 'GND-rail', { dots: [[920, G]], badge: [920, 600] });
 
@@ -284,13 +285,13 @@ const lists = {};
 
   // knop P
   c.button(930, 530, 'P');
-  c.wire(15, C.btn, [[800, 394], [830, 394], [830, 530], [930, 530]], 'D4', 'knop P, pootje A', { badge: [830, 480] });
+  c.wire(15, C.btn, [[800, 428], [830, 428], [830, 530], [930, 530]], 'D4', 'knop P, pootje A', { badge: [830, 480] });
   c.wire(30, C.gnd, [[974, 530], [1020, 530], [1020, G]], 'knop P, pootje B', 'GND-rail', { dots: [[1020, G]], badge: [1020, 600] });
   c.text(1050, 536, 'kiezen / play-pauze, lang = terug', { size: 12 });
 
   // ESP32 voeding rechts
-  c.wire(31, C.gnd, [[800, 428], [860, 428], [860, G]], 'ESP32 GND (rechts)', 'GND-rail', { dots: [[860, G]], badge: [860, 690] });
-  c.wire(32, C.v33, [[800, 462], [850, 462], [850, V3]], 'ESP32 3V3', '3V3-rail', { dots: [[850, V3]], badge: [850, 560] });
+  c.wire(31, C.gnd, [[800, 462], [860, 462], [860, G]], 'ESP32 GND (rechts)', 'GND-rail', { dots: [[860, G]], badge: [860, 690] });
+  c.wire(32, C.v33, [[800, 496], [850, 496], [850, V3]], 'ESP32 3V3', '3V3-rail', { dots: [[850, V3]], badge: [850, 560] });
   lists.p1 = c.list;
 })();
 
@@ -415,7 +416,7 @@ const lists = {};
   c.text(40, 508, 'Werkt het andersom, draai hem om; er gaat niets stuk.', { size: 12.5 });
 
   c.box(700, 450, 680, 340, 'Overzicht ESP32-pinnen', { fill: '#ebf8ff', size: 15 });
-  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D33', 'knop >'], ['D13', 'knop +'], ['D14', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['D21', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
+  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D33', 'knop >'], ['D13', 'knop +'], ['D14', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['RX2 (D16)', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
   rows.forEach(([p, w], i) => {
     const col = i < 8 ? 0 : 1, row = i < 8 ? i : i - 8;
     c.text(730 + col * 330, 505 + row * 32, p, { size: 14, weight: 700 });
