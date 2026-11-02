@@ -61,9 +61,17 @@ static void close() {
   running = false;
 }
 
+static TaskHandle_t handle = nullptr;
+
 static void task(void *) {
   static uint32_t buf[256];  // stereo frames, ~6 ms
   for (;;) {
+    if (!enabled) {  // switched off: give back the task's stack too
+      close();
+      active = false;
+      handle = nullptr;
+      vTaskDelete(nullptr);
+    }
     if (!wanted()) {
       if (!enabled || BT::connected()) close();
       else if (running) {  // just paused: keep the buffers, stop the clocks
@@ -92,14 +100,19 @@ static void task(void *) {
   }
 }
 
+static void start() {
+  if (enabled && !handle) xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, &handle, 1);
+}
+
 static void begin() {
   enabled = prefs.getBool("spk", true);
-  xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, nullptr, 1);
+  start();
 }
 
 static void set(bool on) {
   enabled = on;
   prefs.putBool("spk", on);
+  start();
 }
 
 static const char *stateName() {
