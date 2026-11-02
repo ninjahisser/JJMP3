@@ -45,8 +45,27 @@ static void centerText(const String &s, int y, int size = 1) {
   oled.setTextSize(1);
 }
 
+// SDA may be on D21 or on the spare pin (for a board whose D21 connection is broken):
+// use whichever one the display answers on
+static int sdaPin = PIN_SDA;
+
+static bool answers(int sda) {
+  Wire.end();
+  Wire.begin(sda, PIN_SCL);
+  Wire.setTimeOut(20);
+  Wire.beginTransmission(OLED_ADDR);
+  return Wire.endTransmission() == 0;
+}
+
 static void begin() {
-  Wire.begin(PIN_SDA, PIN_SCL);
+  for (int sda : {PIN_SDA, PIN_SDA_SPARE})
+    if (answers(sda)) {
+      sdaPin = sda;
+      break;
+    }
+  Serial.printf("# oled: sda D%d\n", sdaPin);
+  Wire.end();
+  Wire.begin(sdaPin, PIN_SCL);
   Wire.setClock(800000);  // SSD1306 copes; halves the time a full frame takes
   ok = oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   if (!ok) return;

@@ -222,7 +222,9 @@ static void handle(JsonDocument &req, JsonObject res) {
       return String(down ? "pulled up" : up ? "floating" : "held low");
     };
     Wire.end();
+    res["sda_in_use"] = UI::sdaPin;
     res["sda_level"] = level(PIN_SDA);
+    res["sda_spare_level"] = level(PIN_SDA_SPARE);
     res["scl_level"] = level(PIN_SCL);
     res["found"] = scan(PIN_SDA, PIN_SCL);
     res["found_swapped"] = scan(PIN_SCL, PIN_SDA);
@@ -243,7 +245,7 @@ static void handle(JsonDocument &req, JsonObject res) {
       }
     res["found_elsewhere"] = elsewhere.length() ? elsewhere : String("none");
     Wire.end();
-    Wire.begin(PIN_SDA, PIN_SCL);
+    Wire.begin(UI::sdaPin, PIN_SCL);
     UI::invalidate();
   } else if (cmd == "events") {    res["keys"] = Remote::pendingKeys;
     Remote::pendingKeys = "";

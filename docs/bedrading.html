@@ -100,19 +100,8 @@
           <tr><td class="n">28</td><td>VCC (+5V)</td><td><b>VIN</b></td><td>links</td></tr>
         </tbody>
       </table>
-      <h2>Alternatief (de firmware probeert dit eerst, dan de standaard-pennen)</h2>
-      <table>
-        <thead><tr><th>Pin op de SD-lezer</th><th>Pin op de ESP32</th></tr></thead>
-        <tbody>
-          <tr><td>SS (chip select)</td><td><b>D15</b></td></tr>
-          <tr><td>SCK</td><td><b>D16</b></td></tr>
-          <tr><td>MOSI</td><td><b>D17</b></td></tr>
-          <tr><td>MISO</td><td><b>D35</b> (links, alleen invoer)</td></tr>
-          <tr><td>GND</td><td>GND</td></tr>
-          <tr><td>VCC</td><td>VIN (5 V)</td></tr>
-        </tbody>
-      </table>
-      <p class="sub">Kies één van de twee sets en gebruik die voor alle vier de datadraden; mix ze niet.</p>
+      <h2>Reservepin voor het scherm</h2>
+      <p class="sub">Blijft het scherm zwart omdat D21 geen contact maakt? Zet de SDA-draad van het scherm op <b>RX2 (D16)</b>. De firmware kijkt bij het opstarten op welke van de twee het scherm antwoordt.</p>
     </div>
     <div>
       <h2>Controle in deze volgorde</h2>
@@ -126,11 +115,11 @@
         <li><b>7.</b> Start de speler opnieuw op: de kaart wordt alleen bij het opstarten gezocht.</li>
       </ul>
       <div class="warn"><b>Werkt het niet?</b><br>
-        Zet VCC van de lezer eens op <b>3V3</b> in plaats van VIN en start opnieuw op. De firmware meldt in de app (of via Wi-Fi) per pin-set wat de kaart antwoordt; "FF FF FF…" betekent dat er niets terugkomt.
+        Zet VCC van de lezer eens op <b>3V3</b> in plaats van VIN en start opnieuw op. De firmware meldt in de app (of via Wi-Fi) wat de kaart antwoordt; "FF FF FF…" betekent dat er niets terugkomt.
       </div>
       <h2>Overige draden van dit onderdeel</h2>
       <ul>
-        <li>OLED: SCL → D22, SDA → D21, VCC → 3V3, GND → GND (pagina 1, draad 9, 10, 26, 27)</li>
+        <li>OLED: SCL → D22, SDA → D21 (of RX2/D16), VCC → 3V3, GND → GND (pagina 1, draad 9, 10, 26, 27)</li>
         <li>Knoppen en versterker staan op pagina 1 en 3</li>
       </ul>
     </div>
