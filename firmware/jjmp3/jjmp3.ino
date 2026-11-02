@@ -6,7 +6,7 @@
 // Wiring (right-hand header of the DevKit, plus the buttons):
 //   OLED    SDA->D21 (or RX2/D16)  SCL->D22  VCC->3V3  GND->GND
 //   SD      CS->D5  SCK->D18  MOSI->D23  MISO->D19  VCC->5V (VIN)  GND->GND
-//   Buttons to GND: P->D4  <->D32  >->D33  +->D13  -->D14 (internal pull-ups)
+//   Buttons to GND: P->D4  <->D32  >->D12  +->D14  -->D33 (internal pull-ups)
 //   Battery  LiPo+ -> 100k -> D34 -> 100k -> GND
 
 #include <Preferences.h>

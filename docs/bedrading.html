@@ -214,7 +214,7 @@ const lists = {};
   c.box(560, 100, 240, 490, 'ESP32-devkit', { fill: '#ebf8ff', size: 17 });
   c.add(S('rect', { x: 645, y: 568, width: 70, height: 22, rx: 3, fill: '#bee3f8', stroke: '#2d3748', 'stroke-width': 2 }));
   c.text(680, 584, 'USB', { anchor: 'middle', size: 12, weight: 600 });
-  const L = [['D34', 190], ['D32', 224], ['D33', 258], ['D25', 292], ['D26', 326], ['D27', 360], ['D14', 394], ['D13', 428], ['GND', 462], ['VIN', 496]];
+  const L = [['D34', 190], ['D32', 224], ['D33', 258], ['D25', 292], ['D26', 326], ['D27', 360], ['D14', 394], ['D12', 428], ['D13', 462], ['GND', 496], ['VIN', 530]];
   const R = [['D23', 190], ['D22', 224], ['D21', 258], ['D19', 292], ['D18', 326], ['D5', 360], ['RX2 (D16)', 394], ['D4', 428], ['GND', 462], ['3V3', 496]];
   L.forEach(([n, y]) => { c.text(574, y + 5, n, { size: 14, weight: 600 }); c.pin(560, y); });
   R.forEach(([n, y]) => { c.text(786, y + 5, n, { anchor: 'end', size: 14, weight: 600 }); c.pin(800, y); });
@@ -224,11 +224,11 @@ const lists = {};
   c.text(350, 195, 'spanningsdeler (pagina 2)', { anchor: 'middle', size: 12.5, weight: 600, fill: '#8a6d1a' });
   c.wire(8, C.sense, [[560, 190], [450, 190]], 'D34', 'spanningsdeler (pagina 2)', { badge: [505, 190] });
 
-  c.button(330, 224, '<'); c.button(330, 258, '>');
+  c.button(330, 224, '<'); c.button(330, 258, '−');
   c.wire(1, C.btn, [[560, 224], [374, 224]], 'D32', 'knop <, pootje A', { badge: [470, 224] });
-  c.wire(2, C.btn, [[560, 258], [374, 258]], 'D33', 'knop >, pootje A', { badge: [470, 258] });
+  c.wire(2, C.btn, [[560, 258], [374, 258]], 'D33', 'knop −, pootje A', { badge: [470, 258] });
   c.wire(16, C.gnd, [[330, 224], [130, 224], [130, G]], 'knop <, pootje B', 'GND-rail', { dots: [[130, G]], badge: [230, 224] });
-  c.wire(17, C.gnd, [[330, 258], [150, 258], [150, G]], 'knop >, pootje B', 'GND-rail', { dots: [[150, G]], badge: [240, 258] });
+  c.wire(17, C.gnd, [[330, 258], [150, 258], [150, G]], 'knop −, pootje B', 'GND-rail', { dots: [[150, G]], badge: [240, 258] });
 
   // versterker
   c.box(210, 270, 190, 120, '', { fill: '#faf5ff' });
@@ -250,16 +250,16 @@ const lists = {};
   c.wire(20, C.v5, [[210, 362], [104, 362]], 'versterker SPK +', 'luidspreker +', { badge: [118, 362] });
   c.wire(21, C.gnd, [[210, 380], [104, 380]], 'versterker SPK −', 'luidspreker −', { badge: [118, 380] });
 
-  // knoppen − en +
-  c.button(330, 540, '−'); c.button(330, 600, '+');
-  c.wire(6, C.btn, [[560, 394], [520, 394], [520, 540], [374, 540]], 'D14', 'knop −, pootje A', { badge: [520, 470] });
-  c.wire(7, C.btn, [[560, 428], [540, 428], [540, 600], [374, 600]], 'D13', 'knop +, pootje A', { badge: [540, 560] });
-  c.wire(22, C.gnd, [[330, 540], [290, 540], [290, G]], 'knop −, pootje B', 'GND-rail', { dots: [[290, G]], badge: [290, 640] });
-  c.wire(23, C.gnd, [[330, 600], [310, 600], [310, G]], 'knop +, pootje B', 'GND-rail', { dots: [[310, G]], badge: [310, 660] });
+  // knoppen + en >
+  c.button(330, 540, '+'); c.button(330, 600, '>');
+  c.wire(6, C.btn, [[560, 394], [520, 394], [520, 540], [374, 540]], 'D14', 'knop +, pootje A', { badge: [520, 470] });
+  c.wire(7, C.btn, [[560, 428], [540, 428], [540, 600], [374, 600]], 'D12', 'knop >, pootje A', { badge: [540, 560] });
+  c.wire(22, C.gnd, [[330, 540], [290, 540], [290, G]], 'knop +, pootje B', 'GND-rail', { dots: [[290, G]], badge: [290, 640] });
+  c.wire(23, C.gnd, [[330, 600], [310, 600], [310, G]], 'knop >, pootje B', 'GND-rail', { dots: [[310, G]], badge: [310, 660] });
 
   // ESP32 voeding links (de GND links maakt geen contact: de GND-rail hangt aan de GND rechts, draad 31)
-  c.text(515, 467, 'GND links: geen contact, niet gebruiken', { anchor: 'end', size: 11.5, weight: 600, fill: '#c53030' });
-  c.wire(25, C.v5, [[560, 496], [460, 496], [460, V5]], 'ESP32 VIN', '5V-rail', { dots: [[460, V5]], badge: [460, 590] });
+  c.text(515, 501, 'GND links: geen contact, niet gebruiken', { anchor: 'end', size: 11.5, weight: 600, fill: '#c53030' });
+  c.wire(25, C.v5, [[560, 530], [460, 530], [460, V5]], 'ESP32 VIN', '5V-rail', { dots: [[460, V5]], badge: [460, 590] });
 
   // --- rechterkant ---
   c.box(960, 170, 230, 130, 'OLED 128×64 (I²C)', { fill: '#ebf8ff', size: 14 });
@@ -394,7 +394,7 @@ const lists = {};
     c.text(cx + 50, cy - 56, 'B', { anchor: 'middle', size: 12, weight: 700, fill: '#718096' });
   }
   const xs = [150, 410, 670, 930, 1190];
-  [['D32', '<'], ['D33', '>'], ['D14', '−'], ['D13', '+'], ['D4', 'P']].forEach(([pn, nm], i) => {
+  [['D32', '<'], ['D12', '>'], ['D33', '−'], ['D14', '+'], ['D4', 'P']].forEach(([pn, nm], i) => {
     pushButton(xs[i], 190, pn, nm, C.btn);
     c.text(xs[i], 360, 'knop ' + nm, { anchor: 'middle', size: 14, weight: 700 });
   });
@@ -416,7 +416,7 @@ const lists = {};
   c.text(40, 508, 'Werkt het andersom, draai hem om; er gaat niets stuk.', { size: 12.5 });
 
   c.box(700, 450, 680, 340, 'Overzicht ESP32-pinnen', { fill: '#ebf8ff', size: 15 });
-  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D33', 'knop >'], ['D13', 'knop +'], ['D14', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['RX2 (D16)', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
+  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D12', 'knop >'], ['D14', 'knop +'], ['D33', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['RX2 (D16)', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
   rows.forEach(([p, w], i) => {
     const col = i < 8 ? 0 : 1, row = i < 8 ? i : i - 8;
     c.text(730 + col * 330, 505 + row * 32, p, { size: 14, weight: 700 });

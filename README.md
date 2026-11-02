@@ -15,8 +15,8 @@ The player has an iPod-style menu on the OLED: **Now playing, Music, Playlists, 
 |---|---|---|---|
 | < | D32 | up | previous (hold: rewind) |
 | P | D4 | open / select (hold: back) | play / pause (hold: back) |
-| > | D33 | down | next (hold: fast forward) |
-| + / - | D13 / D14 | volume | volume |
+| > | D12 | down | next (hold: fast forward) |
+| + / - | D14 / D33 | volume | volume |
 
 All buttons go to GND (internal pull-ups); unwired ones are ignored, so they can be added one at a time. Until they are, the app's Player sidebar has the same five buttons under the screen mirror.
 
@@ -50,7 +50,7 @@ Everything is on the right-hand header of the ESP32 DevKit (USB port at the bott
 | OLED | VCC / GND | 3V3 / GND |
 | SD module | CS / SCK / MOSI / MISO | D5 / D18 / D23 / D19 |
 | SD module | VCC / GND | 3V3 / GND |
-| Buttons | P / < / > / + / - to GND | D4 / D32 / D33 / D13 / D14 |
+| Buttons | P / < / > / + / - to GND | D4 / D32 / D12 / D14 / D33 |
 | Battery sense (optional) | divider midpoint | D34 |
 
 ## Install and run the app

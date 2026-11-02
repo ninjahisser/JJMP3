@@ -32,9 +32,9 @@
 // Buttons (to GND, internal pull-ups). Unwired pins just read as 'not pressed'.
 #define PIN_BTN_LEFT   32   // <
 #define PIN_BTN_PLAY   4    // P: select / play-pause, hold = back
-#define PIN_BTN_RIGHT  33   // >
-#define PIN_BTN_VOLUP  13   // +
-#define PIN_BTN_VOLDN  14   // -
+#define PIN_BTN_RIGHT  12   // > (strapping pin, but a button to GND is safe at boot)
+#define PIN_BTN_VOLUP  14   // +
+#define PIN_BTN_VOLDN  33   // -
 
 // Speaker (MAX98357 I2S amplifier): BCLK, LRC (word select), DIN. Firmware output is not written yet.
 #define PIN_I2S_BCLK   26

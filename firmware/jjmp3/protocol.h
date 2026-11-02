@@ -307,6 +307,17 @@ static void handle(JsonDocument &req, JsonObject res) {
       res["low"] = low;
       res["follows"] = high == 1 && low == 0;
     }
+  } else if (cmd == "btn_test") {
+    // for a few seconds, which buttons pull their pin low? "stuck" = already low at the start
+    uint32_t until = millis() + (req["ms"] | 15000);
+    bool low[K_COUNT] = {}, atStart[K_COUNT];
+    for (int k = 0; k < K_COUNT; k++) atStart[k] = digitalRead(Input::PINS[k]) == LOW;
+    while (millis() < until) {
+      for (int k = 0; k < K_COUNT; k++) low[k] |= digitalRead(Input::PINS[k]) == LOW;
+      delay(5);
+    }
+    static const char *NAMES[K_COUNT] = {"left_D32", "play_D4", "right_D12", "up_D14", "down_D33"};
+    for (int k = 0; k < K_COUNT; k++) res[NAMES[k]] = atStart[k] ? "stuck" : low[k] ? "pressed" : "nothing";
   } else if (cmd == "btn") {
     // the desktop app's buttons: same as pressing the real ones
     String k = req["k"] | "";
