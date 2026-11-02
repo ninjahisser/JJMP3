@@ -191,8 +191,61 @@ static void handle(JsonDocument &req, JsonObject res) {
     }
     res["sd"] = Sd::ok;
     res["report"] = Sd::report;
-  } else if (cmd == "events") {
-    res["keys"] = Remote::pendingKeys;
+  } else if (cmd == "i2c_scan") {
+    // is the OLED there? levels of SDA/SCL (a powered module pulls them high), and every address that answers,
+    // on the normal pins and on swapped pins
+    auto scan = [](int sda, int scl) {
+      String found;
+      Wire.end();
+      Wire.begin(sda, scl);
+      Wire.setTimeOut(20);
+      for (int a = 1; a < 127; a++) {
+        Wire.beginTransmission(a);
+        if (Wire.endTransmission() == 0) {
+          char h[8];
+          snprintf(h, sizeof h, "0x%02X ", a);
+          found += h;
+        }
+      }
+      return found.length() ? found : String("none");
+    };
+    // a real pull-up (the module's resistors, so the module has power) wins over the weak internal pull-down;
+    // a pin that reads high only without the pull-down is just floating
+    auto level = [](int pin) {
+      pinMode(pin, INPUT_PULLDOWN);
+      delay(2);
+      int down = digitalRead(pin);
+      pinMode(pin, INPUT_PULLUP);
+      delay(2);
+      int up = digitalRead(pin);
+      pinMode(pin, INPUT);
+      return String(down ? "pulled up" : up ? "floating" : "held low");
+    };
+    Wire.end();
+    res["sda_level"] = level(PIN_SDA);
+    res["scl_level"] = level(PIN_SCL);
+    res["found"] = scan(PIN_SDA, PIN_SCL);
+    res["found_swapped"] = scan(PIN_SCL, PIN_SDA);
+    // the display wired to other pins by mistake? Try every pair of free pins for an OLED address
+    // (SD pins are left alone so the card stays mounted)
+    static const int FREE[] = {2, 4, 13, 14, 15, 16, 17, 21, 22, 25, 26, 27, 32, 33};
+    String elsewhere;
+    for (int sda : FREE)
+      for (int scl : FREE) {
+        if (sda == scl) continue;
+        Wire.end();
+        Wire.begin(sda, scl);
+        Wire.setTimeOut(5);
+        for (int a : {0x3C, 0x3D}) {
+          Wire.beginTransmission(a);
+          if (Wire.endTransmission() == 0) elsewhere += "sda=" + String(sda) + " scl=" + String(scl) + " ";
+        }
+      }
+    res["found_elsewhere"] = elsewhere.length() ? elsewhere : String("none");
+    Wire.end();
+    Wire.begin(PIN_SDA, PIN_SCL);
+    UI::invalidate();
+  } else if (cmd == "events") {    res["keys"] = Remote::pendingKeys;
     Remote::pendingKeys = "";
   } else if (cmd == "remote") {
     if (!(req["on"] | false)) {

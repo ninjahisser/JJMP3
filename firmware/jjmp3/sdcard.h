@@ -7,8 +7,8 @@
 // Mounting the SD card, with a report of what happened so a failing card or reader can be diagnosed
 // without a serial cable (the app can ask for it over Wi-Fi).
 //
-// Two sets of pins are tried: the alternative set first (D16 D17 D15 D35, all free pins on the right
-// header), then the original VSPI pins. Whichever the reader is wired to works.
+// Two sets of pins are tried: the original VSPI pins first, then the alternative set (D16 D17 D15 D35,
+// free pins on the right header). Whichever the reader is wired to works.
 namespace Sd {
 
 struct Pins {
@@ -16,8 +16,8 @@ struct Pins {
   const char *name;
 };
 static const Pins SETS[] = {
-    {PIN_SD2_SCK, PIN_SD2_MISO, PIN_SD2_MOSI, PIN_SD2_CS, "alt"},
     {PIN_SD_SCK, PIN_SD_MISO, PIN_SD_MOSI, PIN_SD_CS, "std"},
+    {PIN_SD2_SCK, PIN_SD2_MISO, PIN_SD2_MOSI, PIN_SD2_CS, "alt"},
 };
 
 static bool ok = false;

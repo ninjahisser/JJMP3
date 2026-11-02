@@ -26,7 +26,7 @@
 #define PIN_SD_MISO  19
 #define PIN_SD_MOSI  23
 #define PIN_SD_CS    5
-// Alternative SD pins, tried first: D16 D17 D15 are on the right header next to D5, D35 (input only) on the left
+// Alternative SD pins, tried second: D16 D17 D15 are on the right header next to D5, D35 (input only) on the left
 #define PIN_SD2_SCK  16
 #define PIN_SD2_MISO 35
 #define PIN_SD2_MOSI 17
