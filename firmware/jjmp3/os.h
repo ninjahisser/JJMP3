@@ -400,21 +400,23 @@ static AboutScreen aboutScreen;
 
 struct SettingsScreen : ListScreen {
   String title() override { return "Settings"; }
-  int count() override { return 5; }
+  int count() override { return 6; }
   String label(int i) override {
-    static const char *names[] = {"Bluetooth", "Wi-Fi", "Name", "Mode", "About"};
+    static const char *names[] = {"Bluetooth", "Speaker", "Wi-Fi", "Name", "Mode", "About"};
     return names[i];
   }
   String detail(int i) override {
-    if (i == 2) return Profile::user.length() ? Profile::user.substring(0, 8) : String("-");
-    return i == 3 ? (JJ_WIFI ? "Wi-Fi" : "Music") : String(">");
+    if (i == 1) return Speaker::enabled ? "on" : "off";
+    if (i == 3) return Profile::user.length() ? Profile::user.substring(0, 8) : String("-");
+    return i == 4 ? (JJ_WIFI ? "Wi-Fi" : "Music") : String(">");
   }
   void select(int i) override {
     if (i == 0) OS::push(&bluetoothScreen);
-    if (i == 1) OS::push(&wifiScreen);
-    if (i == 2) keyboardScreen.open("Your name", Profile::user, false, [](const String &v) { Profile::setUser(v); });
-    if (i == 3) switchModeAsk();
-    if (i == 4) OS::push(&aboutScreen);
+    if (i == 1) Speaker::set(!Speaker::enabled);
+    if (i == 2) OS::push(&wifiScreen);
+    if (i == 3) keyboardScreen.open("Your name", Profile::user, false, [](const String &v) { Profile::setUser(v); });
+    if (i == 4) switchModeAsk();
+    if (i == 5) OS::push(&aboutScreen);
   }
 };
 static SettingsScreen settingsScreen;

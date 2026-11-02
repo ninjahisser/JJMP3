@@ -80,6 +80,7 @@ static void status(JsonObject o) {
   for (int i = 0; i < BT::eventCount; i++) ev.add(String(BT::events[i]));
   portEXIT_CRITICAL(&BT::eventLock);
 #endif
+  o["speaker"] = Speaker::stateName();
   JsonObject wifi = o["wifi"].to<JsonObject>();
   wifi["state"] = Net::stateName();
   wifi["ssid"] = Net::ssid;
@@ -122,6 +123,11 @@ static void handle(JsonDocument &req, JsonObject res) {
     status(res);
   } else if (cmd == "sd") {
     sdInfo(res);
+  } else if (cmd == "speaker") {
+    // {"on":true/false} switches the built-in speaker; without it, just report
+    if (req["on"].is<bool>()) Speaker::set(req["on"]);
+    res["on"] = Speaker::enabled;
+    res["state"] = Speaker::stateName();
   } else if (!JJ_BT && (cmd == "play" || cmd == "toggle" || cmd == "next" || cmd == "prev")) {
     res["ok"] = false;
     res["error"] = "The player is in Wi-Fi mode. Switch to music mode to listen.";

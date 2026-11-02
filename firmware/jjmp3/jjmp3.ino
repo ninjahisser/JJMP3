@@ -17,6 +17,7 @@
 #include "library.h"
 #include "player.h"
 #include "bt.h"
+#include "speaker.h"
 #include "net.h"
 #include "ui.h"
 #include "input.h"
@@ -61,6 +62,7 @@ void setup() {
 
   BT::begin();
   Player::begin();
+  Speaker::begin();
   Net::begin();
   Protocol::httpRoutes();
   OS::begin();
