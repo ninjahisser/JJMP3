@@ -32,7 +32,7 @@
 // Buttons (to GND, internal pull-ups). Unwired pins just read as 'not pressed'.
 #define PIN_BTN_LEFT   32   // <
 #define PIN_BTN_PLAY   4    // P: select / play-pause, hold = back
-#define PIN_BTN_RIGHT  12   // > (strapping pin, but a button to GND is safe at boot)
+#define PIN_BTN_RIGHT  13   // >
 #define PIN_BTN_VOLUP  14   // +
 #define PIN_BTN_VOLDN  33   // -
 

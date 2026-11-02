@@ -316,7 +316,7 @@ static void handle(JsonDocument &req, JsonObject res) {
       for (int k = 0; k < K_COUNT; k++) low[k] |= digitalRead(Input::PINS[k]) == LOW;
       delay(5);
     }
-    static const char *NAMES[K_COUNT] = {"left_D32", "play_D4", "right_D12", "up_D14", "down_D33"};
+    static const char *NAMES[K_COUNT] = {"left_D32", "play_D4", "right_D13", "up_D14", "down_D33"};
     for (int k = 0; k < K_COUNT; k++) res[NAMES[k]] = atStart[k] ? "stuck" : low[k] ? "pressed" : "nothing";
   } else if (cmd == "btn") {
     // the desktop app's buttons: same as pressing the real ones

@@ -253,7 +253,7 @@ const lists = {};
   // knoppen + en >
   c.button(330, 540, '+'); c.button(330, 600, '>');
   c.wire(6, C.btn, [[560, 394], [520, 394], [520, 540], [374, 540]], 'D14', 'knop +, pootje A', { badge: [520, 470] });
-  c.wire(7, C.btn, [[560, 428], [540, 428], [540, 600], [374, 600]], 'D12', 'knop >, pootje A', { badge: [540, 560] });
+  c.wire(7, C.btn, [[560, 462], [540, 462], [540, 600], [374, 600]], 'D13', 'knop >, pootje A', { badge: [540, 560] });
   c.wire(22, C.gnd, [[330, 540], [290, 540], [290, G]], 'knop +, pootje B', 'GND-rail', { dots: [[290, G]], badge: [290, 640] });
   c.wire(23, C.gnd, [[330, 600], [310, 600], [310, G]], 'knop >, pootje B', 'GND-rail', { dots: [[310, G]], badge: [310, 660] });
 
@@ -394,7 +394,7 @@ const lists = {};
     c.text(cx + 50, cy - 56, 'B', { anchor: 'middle', size: 12, weight: 700, fill: '#718096' });
   }
   const xs = [150, 410, 670, 930, 1190];
-  [['D32', '<'], ['D12', '>'], ['D33', '−'], ['D14', '+'], ['D4', 'P']].forEach(([pn, nm], i) => {
+  [['D32', '<'], ['D13', '>'], ['D33', '−'], ['D14', '+'], ['D4', 'P']].forEach(([pn, nm], i) => {
     pushButton(xs[i], 190, pn, nm, C.btn);
     c.text(xs[i], 360, 'knop ' + nm, { anchor: 'middle', size: 14, weight: 700 });
   });
@@ -416,7 +416,7 @@ const lists = {};
   c.text(40, 508, 'Werkt het andersom, draai hem om; er gaat niets stuk.', { size: 12.5 });
 
   c.box(700, 450, 680, 340, 'Overzicht ESP32-pinnen', { fill: '#ebf8ff', size: 15 });
-  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D12', 'knop >'], ['D14', 'knop +'], ['D33', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['RX2 (D16)', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
+  const rows = [['D4', 'knop P'], ['D32', 'knop <'], ['D13', 'knop >'], ['D14', 'knop +'], ['D33', 'knop −'], ['D25', 'versterker LRC'], ['D26', 'versterker BCLK'], ['D27', 'versterker DIN'], ['RX2 (D16)', 'OLED SDA'], ['D22', 'OLED SCL'], ['D5', 'SD CS'], ['D18', 'SD SCK'], ['D19', 'SD MISO'], ['D23', 'SD MOSI'], ['D34', 'batterijmeting']];
   rows.forEach(([p, w], i) => {
     const col = i < 8 ? 0 : 1, row = i < 8 ? i : i - 8;
     c.text(730 + col * 330, 505 + row * 32, p, { size: 14, weight: 700 });
