@@ -102,6 +102,12 @@ static void status(JsonObject o) {
   perf["pulls"] = Player::perfPulls;
   perf["pullfr"] = Player::perfPullFrames;
   perf["pullmax"] = Player::perfPullMax;
+  perf["gaps"] = Player::perfGaps;
+  perf["gapfr"] = Player::perfGapFrames;
+  perf["burst"] = Player::perfBurst;
+  perf["pullgap"] = Player::perfPullGapMax;
+  perf["gapstage"] = Player::perfGapStage;
+  Player::perfPullGapMax = 0;
   if (Battery::present) {
     JsonObject b = o["battery"].to<JsonObject>();
     b["pct"] = Battery::percent;

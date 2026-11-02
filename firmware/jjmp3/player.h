@@ -38,6 +38,7 @@ static uint8_t volume = 60;  // 0..100
 static RepeatMode repeat = REPEAT_ALL;
 static bool shuffle = false;
 static String lastError;
+static volatile uint32_t perfGaps = 0, perfGapFrames = 0;  // pulls the ring could not fill while playing (audible dropouts)
 static volatile uint32_t perfRead = 0, perfDecode = 0, perfBytes = 0, perfLockMiss = 0, perfGate = 0, perfIter = 0, perfLockWait = 0, perfPulls = 0, perfPullFrames = 0, perfPullMax = 0;  // microseconds / bytes since boot, for diagnosing slow playback
 
 // Decoding runs in its own task (see decodeTask) so screen updates, USB traffic and menus in
@@ -54,13 +55,44 @@ struct Guard {
 // freeze. So push what fits and drop the rest of this burst; the decode loop
 // sees the shortfall and feeds again shortly. Worst case a rare audible click,
 // never a hang.
+//
+// A decoded MP3 frame (1152 stereo frames) lands in `stage` first and is moved into the ring
+// as room appears. Without it a frame could only be decoded once the ring had room for all of
+// it, and Bluetooth drains the ring in bursts of ~1300 frames: then only one MP3 frame got in
+// per burst, ~87% of real time, heard as ~45 tiny dropouts a second.
 static volatile bool ringOverflow = false;
+static uint32_t stage[1152];
+static uint32_t stageLen = 0, stagePos = 0;
+
 static void onPcm(MP3FrameInfo &info, short *pcm, size_t samples, void *) {
   if (info.samprate != SAMPLE_RATE) lastError = "Unsupported sample rate";
-  uint32_t want = info.nChans == 2 ? samples / 2 : samples;  // frames wanted
-  uint32_t put = ring.pushSamples(pcm, samples, info.nChans);
-  if (put < want) ringOverflow = true;
+  uint32_t frames = info.nChans == 2 ? samples / 2 : samples;
+  if (stageLen > stagePos || frames > 1152) {  // not expected: one write() decodes at most one frame
+    ringOverflow = true;
+    return;
+  }
+  for (uint32_t i = 0; i < frames; i++) {
+    int16_t l = info.nChans == 2 ? pcm[2 * i] : pcm[i];
+    int16_t r = info.nChans == 2 ? pcm[2 * i + 1] : pcm[i];
+    stage[i] = (uint16_t)l | ((uint32_t)(uint16_t)r << 16);
+  }
+  stageLen = frames;
+  stagePos = 0;
 }
+
+// decodeTask only: move what fits from the stage into the ring
+static void drainStage() {
+  if (stagePos < stageLen) stagePos += ring.push(stage + stagePos, stageLen - stagePos);
+  if (stagePos >= stageLen) stageLen = stagePos = 0;
+}
+
+static void clearAudio() {
+  Guard g;
+  ring.clear();
+  stageLen = stagePos = 0;
+}
+
+static bool audioQueued() { return ring.used() > 0 || stagePos < stageLen; }
 
 // Called from the Bluetooth task: fill `len` stereo frames
 // Loudness history for the visualiser: one value per ~46 ms, 0..255
@@ -79,17 +111,29 @@ static void pushLevel(uint32_t frames, uint32_t sumAbs) {
   }
 }
 
+static volatile uint32_t perfBurst = 0, perfPullGapMax = 0, perfGapStage = 0;  // pull timing, for diagnosing dropouts
+static uint32_t lastPullUs = 0;
+
 static int32_t fillFrames(uint32_t *out, int32_t len) {
   uint32_t n = 0;
   perfPulls++; perfPullFrames += len; if ((uint32_t)len > perfPullMax) perfPullMax = len;
+  uint32_t nowUs = micros(), dt = nowUs - lastPullUs;
+  lastPullUs = nowUs;
+  if (dt < 500) perfBurst++;
+  if (dt > perfPullGapMax && dt < 1000000) perfPullGapMax = dt;
   if (state == PLAYING) {
     n = ring.pop(out, len);
+    if (n < (uint32_t)len && stageLen > stagePos) perfGapStage++;
     uint32_t sum = 0;
     for (uint32_t i = 0; i < n; i++) {
       int16_t l = (int16_t)(out[i] & 0xFFFF), r = (int16_t)(out[i] >> 16);
       sum += (abs((int)l) + abs((int)r)) >> 1;
     }
     pushLevel(n, sum);
+    if (n < (uint32_t)len && !eof) {
+      perfGaps++;
+      perfGapFrames += len - n;
+    }
   }
   if (n < (uint32_t)len) memset(out + n, 0, (len - n) * sizeof(uint32_t));
   framesPlayed += n;
@@ -138,7 +182,7 @@ static void closeFile() {
 static bool loadTrack(int index) {
   Guard g;
   closeFile();
-  ring.clear();
+  clearAudio();
   framesPlayed = 0;
   hasArt = false;
   if (index < 0 || index >= (int)queue.size()) return false;
@@ -244,7 +288,7 @@ static void seek(uint32_t sec) {
   file.seek(offset);
   eof = false;
   mp3.begin();  // reset the stream: clears stale bit-reservoir state for the new position
-  ring.clear();
+  clearAudio();
   framesPlayed = sec * SAMPLE_RATE;
 }
 
@@ -272,10 +316,8 @@ static void releaseFile(const String &path) {
 static void decodeTask(void *) {
   static uint8_t buf[256];  // small bites: one decoded frame at most, so the ring never overflows
   for (;;) {
-    bool fed = false;
-    // Wait for room for the largest burst mp3.write() can emit in one call
-    // (helix decodes its whole 2 KB input buffer at once: ~4 MP3 frames,
-    // ~104 ms of PCM). Below this, skip the write so onPcm never has to drop.
+    // Decode the next frame only once the previous one has fully moved into the ring,
+    // so onPcm always has an empty stage to write into.
     if (state == PLAYING) {
       perfIter++;
       uint32_t tl = micros();
@@ -283,17 +325,23 @@ static void decodeTask(void *) {
       perfLockWait += micros() - tl;
       if (!got) perfLockMiss++;
       if (got) {
-        if (!(ring.space() >= RING_HIGH_WATER)) perfGate++;
-        if (state == PLAYING && file && !eof && ring.space() >= RING_HIGH_WATER) {
+        drainStage();
+        if (stageLen) perfGate++;
+        if (state == PLAYING && file && !eof && !stageLen) {
           if (!mp3 && !mp3.begin()) {
             lastError = "Out of memory";
             state = PAUSED;
           } else {
-            uint32_t t0 = micros();
-            int n = file.read(buf, sizeof(buf));
-            perfRead += micros() - t0;
-            if (n <= 0) eof = true;
-            else {
+            // Feed until the next frame is decoded (an MP3 frame is ~420 bytes, so 2-3 bites),
+            // in one go: napping a tick between bites left the ring to run dry under a burst.
+            for (int bite = 0; bite < 6 && !stageLen && !eof && state == PLAYING; bite++) {
+              uint32_t t0 = micros();
+              int n = file.read(buf, sizeof(buf));
+              perfRead += micros() - t0;
+              if (n <= 0) {
+                eof = true;
+                break;
+              }
               // Don't crash if write does something unexpected
               try {
                 uint32_t t1 = micros();
@@ -305,13 +353,13 @@ static void decodeTask(void *) {
                 state = PAUSED;
               }
             }
-            fed = n > 0;
+            drainStage();  // start filling the ring with the new frame right away
           }
         }
         xSemaphoreGiveRecursive(lock);
       }
     }
-    vTaskDelay(fed ? 1 : pdMS_TO_TICKS(4));  // always yield: the main loop (USB, screen, buttons) must run too
+    vTaskDelay(1);  // always yield: the main loop (USB, screen, buttons) must run too
   }
 }
 
@@ -332,7 +380,7 @@ static void begin() {
 // Advance at the end of a track (decoding itself happens in decodeTask)
 static void loop() {
   if (state != PLAYING || !file) return;
-  if (eof && ring.used() == 0) {
+  if (eof && !audioQueued()) {
     if (repeat == REPEAT_ONE) playIndex(qpos);
     else next();
   }

@@ -60,21 +60,11 @@
 
 // Audio: the desktop app converts everything to 44.1 kHz stereo CBR MP3
 #define SAMPLE_RATE  44100
-#define RING_FRAMES  2048           // PCM buffer, ~46 ms (power of two). Memory is tight with Bluetooth on; the decoder task refills it every ms.
-                                    // so a full mp3.write() burst always fits (see
-                                    // RING_HIGH_WATER), so the ring only has to cover jitter
-                                    // between the A2DP pulls and one decode burst, not a whole
-                                    // burst on top of a slack buffer. Bluetooth mode leaves only
-                                    // ~30 KB of heap after the radio reserves its own, and
-                                    // libhelix needs ~25 KB for the decoder, so every KB the
-                                    // ring gives up buys headroom the decoder actually needs
-                                    // (an 8192 ring made mp3.begin() fail with "allocation
-                                    // failed" / "Out of memory").
-// Feed the decoder only when at least this much room is free, so the PCM mp3.write()
-// produces still fits and onPcm never has to drop. Measured: one write() emits exactly
-// one MP3 frame = 1152 stereo frames, and the A2DP task drains the ring concurrently,
-// so this only needs to cover that frame plus a little slack.
-#define RING_HIGH_WATER  1260   // one decoded MP3 frame is 1152 stereo frames; on the 2048 ring this keeps ~18 ms or more buffered
+#define RING_FRAMES  1024           // PCM buffer, ~23 ms (power of two), plus one decoded MP3 frame (1152)
+                                    // waiting in Player::stage: ~49 ms in all. Memory is tight with
+                                    // Bluetooth on: the radio leaves ~30 KB of heap and libhelix needs
+                                    // ~25 KB for the decoder (an 8192 ring made mp3.begin() fail with
+                                    // "Out of memory"), so the buffer stays this small.
 
 // Serial file transfer
 #define XFER_CHUNK   1024
