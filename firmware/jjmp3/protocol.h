@@ -82,6 +82,7 @@ static void status(JsonObject o) {
 #endif
 #if JJ_BT
   bt["bitpool"] = BT::agreedBitpool;
+  bt["mtu"] = BT::a2dp.audioMtu;
 #endif
   o["speaker"] = Speaker::stateName();
   JsonObject wifi = o["wifi"].to<JsonObject>();

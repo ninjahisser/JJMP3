@@ -22,7 +22,7 @@ static volatile bool active = false;  // playing through the speaker right now
 
 static bool failed = false;  // the I2S channel could not be set up
 
-static bool wanted() { return enabled && !BT::connected() && Player::isPlaying(); }
+static bool wanted() { return enabled && !BT::connected() && !BT::reconnecting && Player::isPlaying(); }
 
 // The channel's DMA buffers are only allocated while the speaker may play: a Bluetooth
 // stream needs nearly all the heap there is, so with headphones linked it is freed again.
@@ -101,7 +101,7 @@ static void task(void *) {
 }
 
 static void start() {
-  if (enabled && !handle && !BT::connected()) xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, &handle, 1);
+  if (enabled && !handle && !BT::connected() && !BT::reconnecting) xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, &handle, 1);
 }
 
 static void loop() {

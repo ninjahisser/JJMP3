@@ -19,10 +19,16 @@ class JJA2DP : public BluetoothA2DPSource {
   bool discovering() { return discovery_active; }
 
   void (*onCodecConfig)(const esp_a2d_mcc_t &) = nullptr;  // codec settings agreed with the headphones
+  volatile uint16_t audioMtu = 0;                           // largest media packet the headphones accept
+
+  // Start the audio stream now, instead of at the library's next 10 s heartbeat
+  void kickMedia() { a2d_app_heart_beat(nullptr); }
 
  protected:
   void app_a2d_callback(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param) override {
     if (event == ESP_A2D_AUDIO_CFG_EVT && onCodecConfig) onCodecConfig(param->audio_cfg.mcc);
+    if (event == ESP_A2D_CONNECTION_STATE_EVT && param->conn_stat.state == ESP_A2D_CONNECTION_STATE_CONNECTED)
+      audioMtu = param->conn_stat.audio_mtu;
     BluetoothA2DPSource::app_a2d_callback(event, param);
   }
 };
@@ -65,9 +71,13 @@ static void note(const char *what) {
   portEXIT_CRITICAL(&eventLock);
 }
 
+static volatile uint32_t connectedAt = 0;  // millis() of the last connect, 0 while not connected
+static volatile bool reconnecting = false;  // dropped a slow link on purpose, about to reconnect
+
 static void onConnection(esp_a2d_connection_state_t st, void *) {
   static const char *names[] = {"disconnected", "connecting", "connected", "disconnecting"};
   if (st != ESP_A2D_CONNECTION_STATE_CONNECTED) audioStarted = false;
+  connectedAt = st == ESP_A2D_CONNECTION_STATE_CONNECTED ? max<uint32_t>(1, millis()) : 0;
   if (st == ESP_A2D_CONNECTION_STATE_CONNECTED) refused = 0;
   if (st == ESP_A2D_CONNECTION_STATE_DISCONNECTED) refused++;
   note(st <= 3 ? names[st] : "link ?");
@@ -222,7 +232,55 @@ static const char *lastEvent() {
   return out;
 }
 
+// Some connections to the same headphones only carry ~58% of the stream (play/freeze stutter),
+// others the full rate, at random (see the perf counters). So when a connection stays too slow
+// while music plays, drop it and connect again; give up after three tries in a row.
+static void watchLink() {
+  static uint32_t winStart = 0, winFrames = 0, reconnectAt = 0;
+  static uint8_t slowWins = 0, tries = 0;
+  if (reconnecting) {
+    if (!connected() && millis() > reconnectAt) {
+      reconnecting = false;
+      a2dp.reconnect();
+    }
+    return;
+  }
+  if (!(connected() && audioStarted && Player::isPlaying())) {
+    winStart = 0;
+    return;
+  }
+  uint32_t now = millis();
+  if (!winStart) {
+    winStart = now;
+    winFrames = Player::perfPullFrames;
+    return;
+  }
+  if (now - winStart < 3000) return;
+  uint32_t rate = (uint64_t)(Player::perfPullFrames - winFrames) * 1000 / (now - winStart);
+  winStart = now;
+  winFrames = Player::perfPullFrames;
+  if (rate >= SAMPLE_RATE * 85 / 100) {
+    slowWins = tries = 0;
+    return;
+  }
+  if (++slowWins < 2 || tries >= 3) return;
+  slowWins = 0;
+  tries++;
+  note("slow link, reconnecting");
+  reconnecting = true;
+  reconnectAt = now + 8000;  // let the radio link itself drop too: a quick reconnect reuses it, slow as it was
+  a2dp.disconnect();
+}
+
 static void loop() {
+  // the library only starts the stream at its next heartbeat, up to 10 s after connecting
+  static uint32_t kickedFor = 0;
+  uint32_t at = connectedAt;
+  if (at && !audioStarted && kickedFor != at && millis() - at > 1000) {
+    kickedFor = at;
+    a2dp.kickMedia();
+  }
+  watchLink();
   uint8_t key = pendingKey;
   if (!key) return;
   pendingKey = 0;
@@ -257,6 +315,7 @@ static void connectTo(const char *name) { prefs.putString("bt_name", name); }
 static void forget() { prefs.remove("bt_name"); }
 static const char *stateName() { return "off"; }
 static bool connected() { return false; }
+static const bool reconnecting = false;
 static const char *hint() { return "Off in Wi-Fi mode"; }
 static const char *lastEvent() { return ""; }
 static void loop() {}

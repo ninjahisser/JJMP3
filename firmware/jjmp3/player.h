@@ -56,33 +56,34 @@ struct Guard {
 // sees the shortfall and feeds again shortly. Worst case a rare audible click,
 // never a hang.
 //
-// A decoded MP3 frame (1152 stereo frames) lands in `stage` first and is moved into the ring
-// as room appears. Without it a frame could only be decoded once the ring had room for all of
-// it, and Bluetooth drains the ring in bursts of ~1300 frames: then only one MP3 frame got in
-// per burst, ~87% of real time, heard as ~45 tiny dropouts a second.
+// A decoded MP3 frame (1152 stereo frames) waits in the decoder's own PCM buffer (the "stage")
+// and is moved into the ring as room appears; the next frame is only decoded once it is all in.
+// Without this a frame could only be decoded once the ring had room for all of it, and
+// Bluetooth drains the ring in bursts of ~1300 frames: then only one MP3 frame got in per
+// burst, ~87% of real time, heard as ~45 tiny dropouts a second. Pointing into the decoder's
+// buffer instead of copying saves 4.6 KB, which Bluetooth needs: it allocates a 4 KB block per
+// packet, and with room for only one at a time it sends ~58% of the stream (stutter).
 static volatile bool ringOverflow = false;
-static uint32_t stage[1152];
-static uint32_t stageLen = 0, stagePos = 0;
+static const int16_t *stagePcm = nullptr;
+static int stageCh = 2;
+static uint32_t stageLen = 0, stagePos = 0;  // in frames
 
 static void onPcm(MP3FrameInfo &info, short *pcm, size_t samples, void *) {
   if (info.samprate != SAMPLE_RATE) lastError = "Unsupported sample rate";
-  uint32_t frames = info.nChans == 2 ? samples / 2 : samples;
-  if (stageLen > stagePos || frames > 1152) {  // not expected: one write() decodes at most one frame
+  if (stageLen > stagePos) {  // not expected: one write() decodes at most one frame
     ringOverflow = true;
     return;
   }
-  for (uint32_t i = 0; i < frames; i++) {
-    int16_t l = info.nChans == 2 ? pcm[2 * i] : pcm[i];
-    int16_t r = info.nChans == 2 ? pcm[2 * i + 1] : pcm[i];
-    stage[i] = (uint16_t)l | ((uint32_t)(uint16_t)r << 16);
-  }
-  stageLen = frames;
+  stagePcm = pcm;
+  stageCh = info.nChans == 2 ? 2 : 1;
+  stageLen = samples / stageCh;
   stagePos = 0;
 }
 
 // decodeTask only: move what fits from the stage into the ring
 static void drainStage() {
-  if (stagePos < stageLen) stagePos += ring.push(stage + stagePos, stageLen - stagePos);
+  if (stagePos < stageLen)
+    stagePos += ring.pushSamples(stagePcm + stagePos * stageCh, (stageLen - stagePos) * stageCh, stageCh);
   if (stagePos >= stageLen) stageLen = stagePos = 0;
 }
 
