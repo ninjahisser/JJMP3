@@ -89,6 +89,7 @@ static void status(JsonObject o) {
   o["sd"] = Sd::ok;
   if (!Sd::ok) o["sd_report"] = Sd::report;
   o["minheap"] = ESP.getMinFreeHeap();
+  o["maxblock"] = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
   o["user"] = Profile::user;
   JsonObject perf = o["perf"].to<JsonObject>();
   perf["rd"] = Player::perfRead;
@@ -129,6 +130,16 @@ static void handle(JsonDocument &req, JsonObject res) {
     status(res);
   } else if (cmd == "sd") {
     sdInfo(res);
+#if JJ_BT
+  } else if (cmd == "bt_bitpool") {
+    // {"v":0..53}: cap the SBC bitpool for slow headphone links (0 = no cap); applies after a restart
+    if (req["v"].is<int>()) prefs.putUChar("bt_bp", constrain(req["v"].as<int>(), 0, 53));
+    res["v"] = prefs.getUChar("bt_bp", 0);
+  } else if (cmd == "ring") {
+    // diagnostics: {"frames":1024|2048} resizes the PCM ring now (Speaker::loop may resize it back)
+    if (req["frames"].is<int>()) res["ok"] = Player::resizeRing(req["frames"].as<int>());
+    res["frames"] = Player::ring.capacity();
+#endif
   } else if (cmd == "speaker") {
     // {"on":true/false} switches the built-in speaker; without it, just report
     if (req["on"].is<bool>()) Speaker::set(req["on"]);

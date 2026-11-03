@@ -60,11 +60,13 @@
 
 // Audio: the desktop app converts everything to 44.1 kHz stereo CBR MP3
 #define SAMPLE_RATE  44100
-#define RING_FRAMES  1024           // PCM buffer, ~23 ms (power of two), plus one decoded MP3 frame (1152)
-                                    // waiting in Player::stage: ~49 ms in all. Memory is tight with
-                                    // Bluetooth on: the radio leaves ~30 KB of heap and libhelix needs
-                                    // ~25 KB for the decoder (an 8192 ring made mp3.begin() fail with
-                                    // "Out of memory"), so the buffer stays this small.
+#define RING_FRAMES  2048           // PCM buffer, ~46 ms (power of two), plus one decoded MP3 frame (1152)
+                                    // waiting in Player::stage. Bluetooth pulls ~1200 frames in one burst
+                                    // every ~27 ms, so the ring itself must hold more than that: the stage
+                                    // can't top it up mid-burst. The speaker, pulling steadily, gets half
+                                    // (see Speaker::loop). Memory is tight with Bluetooth on: the
+                                    // radio leaves ~30 KB of heap and libhelix needs ~25 KB for the decoder
+                                    // (an 8192 ring made mp3.begin() fail with "Out of memory").
 
 // Serial file transfer
 #define XFER_CHUNK   1024

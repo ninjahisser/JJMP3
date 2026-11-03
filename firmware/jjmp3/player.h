@@ -94,6 +94,16 @@ static void clearAudio() {
 
 static bool audioQueued() { return ring.used() > 0 || stagePos < stageLen; }
 
+// The ring is only big (RING_FRAMES) while Bluetooth needs it; the speaker gets by with half,
+// and the memory that saves is what lets the headphones connect while the speaker plays.
+static bool resizeRing(uint32_t frames) {
+  Guard g;
+  if (ring.capacity() == frames) return true;
+  bool ok = ring.resize(frames);
+  stageLen = stagePos = 0;
+  return ok;
+}
+
 // Called from the Bluetooth task: fill `len` stereo frames
 // Loudness history for the visualiser: one value per ~46 ms, 0..255
 static volatile uint8_t level[32];
@@ -365,7 +375,7 @@ static void decodeTask(void *) {
 
 static void begin() {
   lock = xSemaphoreCreateRecursiveMutex();
-  ring.begin(RING_FRAMES);
+  ring.begin(RING_FRAMES / 2);  // grows when headphones connect, see resizeRing()
   mp3.setDataCallback(onPcm);
   volume = prefs.getUChar("vol", 60);
   repeat = (RepeatMode)prefs.getUChar("repeat", REPEAT_ALL);

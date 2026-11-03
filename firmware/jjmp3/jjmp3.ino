@@ -76,6 +76,7 @@ void loop() {
   Protocol::serialLoop();
   Player::loop();
   BT::loop();
+  Speaker::loop();
   if (Net::loop()) UI::toast(Net::ip(), 2500);
   Input::loop();
   OS::loop();

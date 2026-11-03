@@ -66,7 +66,7 @@ static TaskHandle_t handle = nullptr;
 static void task(void *) {
   static uint32_t buf[256];  // stereo frames, ~6 ms
   for (;;) {
-    if (!enabled) {  // switched off: give back the task's stack too
+    if (!enabled || BT::connected()) {  // off, or headphones: give the task's stack back too (loop() restarts it)
       close();
       active = false;
       handle = nullptr;
@@ -101,7 +101,20 @@ static void task(void *) {
 }
 
 static void start() {
-  if (enabled && !handle) xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, &handle, 1);
+  if (enabled && !handle && !BT::connected()) xTaskCreatePinnedToCore(task, "speaker", 2560, nullptr, 4, &handle, 1);
+}
+
+static void loop() {
+  start();  // back on once the headphones are gone
+  // Bluetooth pulls ~1200 frames per burst, so it needs the full ring; grow it only once this
+  // task has handed its memory back, and shrink it again before the speaker plays
+  static uint32_t lastTry = 0;
+  bool bt = BT::connected() && !handle;
+  uint32_t want = bt ? RING_FRAMES : RING_FRAMES / 2;
+  if (Player::ring.capacity() != want && millis() - lastTry > 1000) {
+    lastTry = millis();
+    Player::resizeRing(want);
+  }
 }
 
 static void begin() {
@@ -130,6 +143,7 @@ static const char *stateName() {
 namespace Speaker {
 static bool enabled = true;
 static void begin() { enabled = prefs.getBool("spk", true); }
+static void loop() {}
 static void set(bool on) {
   enabled = on;
   prefs.putBool("spk", on);

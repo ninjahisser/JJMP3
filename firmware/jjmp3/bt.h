@@ -17,6 +17,7 @@ class JJA2DP : public BluetoothA2DPSource {
     esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
   }
   bool discovering() { return discovery_active; }
+  uint8_t *peer() { return peer_bd_addr; }
 };
 
 // Streams the player's audio to Bluetooth headphones / speakers (A2DP source)
@@ -65,9 +66,25 @@ static void onConnection(esp_a2d_connection_state_t st, void *) {
   note(st <= 3 ? names[st] : "link ?");
 }
 
+static volatile bool tuneLink = false;  // set when audio starts; loop() then asks for a faster link
+
 static void onAudio(esp_a2d_audio_state_t st, void *) {
   audioStarted = st == ESP_A2D_AUDIO_STATE_STARTED;
+  if (audioStarted) tuneLink = true;
   note(audioStarted ? "audio started" : "audio stopped");
+}
+
+// Some headphones keep the link in a power-saving rhythm (seen: a turn every 45 slots = 28.1 ms)
+// that carries only ~58% of the audio, heard as play/freeze stutter. Ask for frequent polling and
+// allow every ACL packet type, including the fast EDR ones, so the stream fits.
+static void applyLinkTuning() {
+  esp_err_t q = esp_bt_gap_set_qos(a2dp.peer(), 8);  // poll at least every 8 slots (5 ms)
+  esp_err_t p = esp_bt_gap_set_acl_pkt_types(a2dp.peer(), ESP_BT_ACL_PKT_TYPES_MASK_DM1 | ESP_BT_ACL_PKT_TYPES_MASK_DH1 |
+                                                              ESP_BT_ACL_PKT_TYPES_MASK_DM3 | ESP_BT_ACL_PKT_TYPES_MASK_DH3 |
+                                                              ESP_BT_ACL_PKT_TYPES_MASK_DM5 | ESP_BT_ACL_PKT_TYPES_MASK_DH5);
+  char line[28];
+  snprintf(line, sizeof(line), "link qos %s pkt %s", q == ESP_OK ? "ok" : "err", p == ESP_OK ? "ok" : "err");
+  note(line);
 }
 
 static bool onDeviceFound(const char *name, esp_bd_addr_t, int rssi) {
@@ -99,6 +116,30 @@ static void applyVolume() {
   if (started) a2dp.set_volume(Player::volume * 127 / 100);
 }
 
+// Some headphones give the link only ~190 kbit/s at times, while SBC at the usual bitpool 53
+// needs ~330: then the music plays at ~58% speed, stuttering. A lower maximum bitpool makes
+// every SBC frame smaller (13 + 2 x bitpool bytes) so the audio fits; 0 = no limit.
+static uint8_t maxBitpool = 0;
+
+static void limitBitpool() {
+  maxBitpool = prefs.getUChar("bt_bp", 0);
+  if (!maxBitpool) return;
+  esp_a2d_mcc_t mcc = {};
+  mcc.type = ESP_A2D_MCT_SBC;
+  mcc.cie.sbc_info.samp_freq = ESP_A2D_SBC_CIE_SF_44K;
+  mcc.cie.sbc_info.ch_mode = ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO | ESP_A2D_SBC_CIE_CH_MODE_STEREO |
+                             ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL | ESP_A2D_SBC_CIE_CH_MODE_MONO;
+  mcc.cie.sbc_info.block_len = ESP_A2D_SBC_CIE_BLOCK_LEN_16;
+  mcc.cie.sbc_info.num_subbands = ESP_A2D_SBC_CIE_NUM_SUBBANDS_8;
+  mcc.cie.sbc_info.alloc_mthd = ESP_A2D_SBC_CIE_ALLOC_MTHD_LOUDNESS;
+  mcc.cie.sbc_info.min_bitpool = 2;
+  mcc.cie.sbc_info.max_bitpool = maxBitpool;
+  esp_err_t e = esp_a2d_source_register_stream_endpoint(0, &mcc);
+  char line[28];
+  snprintf(line, sizeof(line), "bitpool %u: %s", maxBitpool, e == ESP_OK ? "ok" : esp_err_to_name(e));
+  note(line);
+}
+
 static void start() {
   if (started) return;
   a2dp.set_local_name(DEVICE_NAME);
@@ -116,6 +157,7 @@ static void start() {
   Serial.printf("# heap before bt %lu\n", (unsigned long)ESP.getFreeHeap());
   a2dp.start();
   started = true;
+  limitBitpool();
   // Classic Bluetooth defaults to a low transmit power; a weak link makes the stack slow its audio below real time
   esp_bredr_tx_power_set(ESP_PWR_LVL_P9, ESP_PWR_LVL_P9);
   Serial.printf("# heap after bt %lu\n", (unsigned long)ESP.getFreeHeap());
@@ -204,6 +246,10 @@ static const char *lastEvent() {
 }
 
 static void loop() {
+  if (tuneLink) {
+    tuneLink = false;
+    applyLinkTuning();
+  }
   uint8_t key = pendingKey;
   if (!key) return;
   pendingKey = 0;

@@ -13,6 +13,23 @@ class PcmRing {
     return buf != nullptr;
   }
 
+  // Swap in a buffer of another size, emptying the ring. The new buffer is allocated before the
+  // old one is freed, so on failure (no block that big) the ring stays as it was.
+  bool resize(uint32_t frames) {
+    uint32_t *fresh = (uint32_t *)heap_caps_malloc(frames * sizeof(uint32_t), MALLOC_CAP_8BIT);
+    if (!fresh) return false;
+    portENTER_CRITICAL(&lock);
+    uint32_t *old = buf;
+    buf = fresh;
+    size = frames;
+    mask = frames - 1;
+    head = tail = 0;
+    portEXIT_CRITICAL(&lock);
+    free(old);
+    return true;
+  }
+
+  uint32_t capacity() const { return size; }
   uint32_t used() const { return head - tail; }
   uint32_t space() const { return size - used(); }
 
