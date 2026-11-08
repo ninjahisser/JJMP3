@@ -312,11 +312,15 @@ static void handle(JsonDocument &req, JsonObject res) {
     }
   } else if (cmd == "battery") {
     // raw D34 readings (mV at the pin, before the divider) to diagnose a missing battery level
-    JsonArray mv = res["mv"].to<JsonArray>();
-    for (int i = 0; i < 8; i++) {
-      mv.add(analogReadMilliVolts(PIN_BATTERY));
-      delay(20);
+    JsonObject pins = res["pins"].to<JsonObject>();
+    for (uint8_t p : Battery::PINS) {
+      JsonArray a = pins[String("D") + p].to<JsonArray>();
+      for (int i = 0; i < 4; i++) {
+        a.add(analogReadMilliVolts(p));
+        delay(10);
+      }
     }
+    res["pin"] = Battery::pin;
     res["volts"] = roundf(Battery::volts * 100) / 100;
     res["present"] = Battery::present;
     res["pct"] = Battery::percent;

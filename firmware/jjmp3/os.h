@@ -391,7 +391,8 @@ struct AboutScreen : ListScreen {
       case 3: return String(ESP.getFreeHeap() / 1024) + " KB";
       case 4: return Net::connected() ? Net::ip() : String("off");
       case 5: return BT::connected() ? String("on") : String("off");
-      default: return Battery::present ? String(Battery::percent) + "% " + String(Battery::volts, 2) + "V" : String("none");
+      default: return Battery::present ? String(Battery::percent) + "% " + String(Battery::volts, 2) + "V"
+                                       : "none D" + String(Battery::pin) + " " + String(Battery::volts, 1) + "V";
     }
   }
   void select(int) override {}

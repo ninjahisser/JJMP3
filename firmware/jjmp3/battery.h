@@ -25,14 +25,35 @@ static int toPercent(float v) {
   return 100;
 }
 
-static float sample() {
+// The divider belongs on D34, but D35, VP (36) and VN (39) sit right next to it and are just
+// as good (ADC1, input only, unused): the battery is looked for on all of them.
+static const uint8_t PINS[] = {PIN_BATTERY, 35, 36, 39};
+static uint8_t pin = PIN_BATTERY;
+static uint32_t lastScan = 0;
+
+static float sampleOn(uint8_t p) {
   uint32_t mv = 0;
-  for (int i = 0; i < 16; i++) mv += analogReadMilliVolts(PIN_BATTERY);
+  for (int i = 0; i < 16; i++) mv += analogReadMilliVolts(p);
   return mv / 16.0f / 1000.0f * BATTERY_DIVIDER;
+}
+static float sample() { return sampleOn(pin); }
+
+// Picks the first pin that reads like a battery; stays on D34 when none does
+static void scan() {
+  lastScan = millis();
+  for (uint8_t p : PINS) {
+    float v = sampleOn(p);
+    if (v > 2.9f && v < 4.4f) {
+      if (p != pin) volts = 0;  // start smoothing afresh on the new pin
+      pin = p;
+      return;
+    }
+  }
 }
 
 static void begin() {
-  analogSetPinAttenuation(PIN_BATTERY, ADC_11db);  // full 0-3.1 V input range
+  for (uint8_t p : PINS) analogSetPinAttenuation(p, ADC_11db);  // full 0-3.1 V input range
+  scan();
   volts = sample();
 }
 
@@ -41,6 +62,7 @@ static bool loop() {
   uint32_t now = millis();
   if (now - lastRead < 2000) return false;
   lastRead = now;
+  if (!present && now - lastScan > 10000) scan();  // wired up while running, or to another pin
   float v = sample();
   // A real cell reads 3.0-4.3 V and moves slowly; a floating pin reads low or jumps around.
   bool plausible = v > 2.9f && v < 4.4f && (volts == 0 || fabsf(v - volts) < 0.25f);
