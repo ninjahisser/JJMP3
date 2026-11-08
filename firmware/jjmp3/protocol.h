@@ -310,6 +310,16 @@ static void handle(JsonDocument &req, JsonObject res) {
       }
       UI::invalidate();
     }
+  } else if (cmd == "battery") {
+    // raw D34 readings (mV at the pin, before the divider) to diagnose a missing battery level
+    JsonArray mv = res["mv"].to<JsonArray>();
+    for (int i = 0; i < 8; i++) {
+      mv.add(analogReadMilliVolts(PIN_BATTERY));
+      delay(20);
+    }
+    res["volts"] = roundf(Battery::volts * 100) / 100;
+    res["present"] = Battery::present;
+    res["pct"] = Battery::percent;
   } else if (cmd == "pintest") {
     // wire a jumper from D19 to the pin under test: drives it high and low, reports what D19 sees
     int out = req["out"] | -1;
