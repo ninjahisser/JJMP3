@@ -1,7 +1,7 @@
 {
   "name": "z0e",
   "productName": "Z0Ɛ",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Desktop app for the Z0Ɛ pocket player",
   "author": "ninjahisser",
   "license": "MIT",
@@ -22,6 +22,7 @@
     "copyright": "Copyright © 2026 Seth Van den Bossche",
     "directories": { "output": "release", "buildResources": "build" },
     "files": ["out/**", "resources/**", "package.json"],
+    "extraResources": [{ "from": "firmware", "to": "firmware" }],
     "win": {
       "icon": "build/icon.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }],

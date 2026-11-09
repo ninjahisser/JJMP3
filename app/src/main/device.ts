@@ -361,6 +361,37 @@ export class Device {
     return this.call(cmd, params, timeout).catch(() => null)
   }
 
+  private paused = false
+
+  /**
+   * Hands the player's USB port to someone else (the firmware flasher): the link is closed and
+   * auto-connect waits until fn is done. Finds the port by USB id when nothing is connected yet,
+   * so a blank ESP32 works too.
+   */
+  async withUsbPort<T>(fn: (port: string) => Promise<T>): Promise<T> {
+    this.paused = true
+    try {
+      return await this.mutex.run(async () => {
+        let port = this.link?.kind === 'usb' ? this.link.where : null
+        if (this.link) {
+          this.link.close()
+          this.link = null
+          this.status = {}
+          this.onChange()
+        }
+        await sleep(2000) // let a connect attempt that was already under way let go of the port
+        if (!port) {
+          const ports = await SerialPort.list().catch(() => [])
+          port = ports.find((p) => USB_IDS.has(`${(p.vendorId || '').toLowerCase()}:${(p.productId || '').toLowerCase()}`))?.path ?? null
+        }
+        if (!port) throw new LinkError('No player found on USB. Plug it in with a data cable (some cables only charge).')
+        return await fn(port)
+      })
+    } finally {
+      this.paused = false
+    }
+  }
+
   /** Firmware update over Wi-Fi; the player reboots into the new image. */
   ota(data: Buffer): Promise<void> {
     return this.guard(async (l) => {
@@ -433,6 +464,10 @@ export class Device {
     let lastWifiTry = 0
     let misses = 0
     for (;;) {
+      if (this.paused) {
+        await sleep(500)
+        continue
+      }
       if (!this.link) {
         misses = 0
         let found = await this.tryUsb()
@@ -440,7 +475,8 @@ export class Device {
           lastWifiTry = Date.now()
           found = await this.tryWifi()
         }
-        if (found) this.attach(found)
+        if (found && this.paused) found[0].close()
+        else if (found) this.attach(found)
         await sleep(1500)
         continue
       }

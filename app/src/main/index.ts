@@ -3,7 +3,7 @@ import { THUMB_ICONS } from './thumbIcons'
 import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { createServer } from 'node:http'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { EVENT_CHANNEL, type Snapshot } from '@shared/types'
 import { Device } from './device'
@@ -18,6 +18,7 @@ import { findTheme } from '@shared/themes'
 import { SPOTIFY_ART, SpotifyMode } from './spotify'
 import { addGame, listGames, removeGame } from './games'
 import { detectTools, ensureTools, setToolsListener, tools, updateYtDlpLater } from './tools'
+import { firmware, images, installOverUsb, loadFirmwareInfo, setFirmwareListener } from './firmware'
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'jjmp3', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }])
 
@@ -55,7 +56,8 @@ function snapshot(): Snapshot {
     tools: { ...tools },
     theme: library.setting<'light' | 'dark'>('theme', 'light'),
     palette: library.setting<string>('palette', 'green'),
-    spotify: spotify.view
+    spotify: spotify.view,
+    firmware: { ...firmware }
   }
 }
 
@@ -70,6 +72,8 @@ function push(): void {
 }
 library.onChange = device.onChange = sync.onChange = importer.onChange = spotify.onChange = push
 setToolsListener(push)
+setFirmwareListener(push)
+loadFirmwareInfo()
 
 /** Runs a device command; a refusal from the player becomes an error with its message. */
 async function deviceCall(cmd: string, params: Record<string, unknown> = {}, timeout = 6000) {
@@ -155,15 +159,18 @@ function registerIpc(): void {
   })
   // Firmware over Wi-Fi: the Wi-Fi image goes into the idle slot and boots, then the music image goes into the other one.
   h('device:ota', async () => {
-    const dir = join(dirname(process.execPath), '..', 'firmware', 'build')
-    const wifiBin = join(dir, 'wifi', 'jjmp3.ino.bin')
-    const musicBin = join(dir, 'music', 'jjmp3.ino.bin')
-    if (!existsSync(wifiBin) || !existsSync(musicBin)) throw new Error('Firmware files not found next to the app (firmware\\build). Build them first.')
-    await device.ota(readFileSync(wifiBin))
+    const fw = images()
+    await device.ota(fw.wifi)
     await new Promise((r) => setTimeout(r, 8000))
     for (let i = 0; i < 40 && !(device.connected && device.view().via === 'wifi'); i++) await new Promise((r) => setTimeout(r, 1500))
     if (!device.connected) throw new Error('The player did not come back on Wi-Fi after step 1. Press its reset button and try again.')
-    await device.ota(readFileSync(musicBin))
+    await device.ota(fw.music)
+    return true
+  })
+  // Firmware over USB with the bundled esptool: works on a brand-new ESP32 as well
+  h('device:install', async () => {
+    if (firmware.busy) throw new Error('An install is already running.')
+    await device.withUsbPort((port) => installOverUsb(port))
     return true
   })
   h('spotify:set', (on: boolean) => {

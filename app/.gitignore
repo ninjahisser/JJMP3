@@ -1,4 +1,6 @@
 node_modules/
 out/
 release/
+# packed by firmware/release.ps1, shipped inside the app
+firmware/
 *.tsbuildinfo

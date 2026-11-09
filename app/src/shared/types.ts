@@ -101,6 +101,12 @@ export interface Snapshot {
   theme: 'light' | 'dark'
   palette: string
   spotify: SpotifyView
+  firmware: FirmwareView
+}
+
+export interface FirmwareView {
+  version: string | null // the firmware bundled with this app, null when it has none
+  busy: string | null // what an install in progress is doing, e.g. "Writing 45 %"
 }
 
 export const EVENT_CHANNEL = 'jjmp3:event'

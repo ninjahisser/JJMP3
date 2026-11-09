@@ -53,9 +53,19 @@ Everything is on the right-hand header of the ESP32 DevKit (USB port at the bott
 | Buttons | P / < / > / + / - to GND | D4 / D32 / D13 / D14 / D33 |
 | Battery sense (optional) | divider midpoint | D34 |
 
+## Download
+
+Nothing needs compiling. Get **`Z0E-Setup-<version>.exe`** from the [latest release](https://github.com/ninjahisser/JJMP3/releases/latest) and run it. The app carries the player firmware too:
+
+1. Wire up an ESP32 DevKit (see Wiring) and plug it into the PC by USB.
+2. In the app, open **Player** and click **Install firmware**. It takes about 40 seconds. If the board doesn't answer, hold its **BOOT** button while the install starts.
+3. Later updates go the same way, or over Wi-Fi (**Update over Wi-Fi**) once the player is on your network. Songs, settings, Wi-Fi and paired headphones survive an update.
+
+No Windows PC? The release also has **`Z0E-firmware-<version>.bin`**, a single image for a browser flasher: open [espressif.github.io/esptool-js](https://espressif.github.io/esptool-js/) in Chrome or Edge, connect, and program the file at address **0x0**.
+
 ## Install and run the app
 
-Run **`JJMP3-Setup-1.0.0.exe`** (attached to the GitHub release). It installs per user, with Start menu and desktop shortcuts, like any other program. The app keeps its library in `%APPDATA%\JJMP3` (music, covers, settings, log).
+Run **`Z0E-Setup-<version>.exe`** (attached to the GitHub release). It installs per user, with Start menu and desktop shortcuts, like any other program. The app keeps its library in `%APPDATA%\JJMP3` (music, covers, settings, log).
 
 On first use it fetches what it needs into `%APPDATA%\JJMP3\tools`: `yt-dlp.exe` always, and `ffmpeg.exe` only when ffmpeg isn't already on the PC. yt-dlp updates itself weekly, so YouTube links keep working. Nothing else is required (no Python, no Node).
 
@@ -82,6 +92,16 @@ powershell -ExecutionPolicy Bypass -File firmware\flash.ps1 -Port COM3
 ```
 
 This builds both firmwares (`-DJJ_WIFI=0` for music mode, `-DJJ_WIFI=1` for Wi-Fi mode) and writes them to the two app slots of the `min_spiffs` partition layout. Close the app first, because it holds the USB serial port. Libraries: Adafruit SSD1306 + GFX, ArduinoJson, ESP32-A2DP, arduino-libhelix (the last two from github.com/pschatzmann).
+
+### Make a release
+
+```
+powershell -ExecutionPolicy Bypass -File firmware\release.ps1
+cd app
+npx electron-builder --win --config.directories.output=%TEMP%\z0e-release
+```
+
+`release.ps1` builds both firmwares and packs them, with `esptool.exe` (GPL-2.0, license alongside), into `app\firmware`, which the installer ships in its resources. It also writes `firmware\build\release\Z0E-firmware-<version>.bin` for browser flashers. Attach the installer and that `.bin` to the GitHub release.
 
 ## How it fits together
 

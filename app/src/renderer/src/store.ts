@@ -46,7 +46,8 @@ const empty: Snapshot = {
   tools: { ffmpeg: null, ytdlp: null },
   theme: 'light',
   palette: 'green',
-  spotify: { on: false, available: false, title: '', artist: '', album: '', app: '', playing: false, pos: 0, dur: 0, art: 0 }
+  spotify: { on: false, available: false, title: '', artist: '', album: '', app: '', playing: false, pos: 0, dur: 0, art: 0 },
+  firmware: { version: null, busy: null }
 }
 
 let toastId = 0

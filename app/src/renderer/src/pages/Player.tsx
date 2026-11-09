@@ -319,9 +319,61 @@ function About() {
   )
 }
 
+/** Installs the firmware that ships with this app: over USB (also a brand-new ESP32) or over Wi-Fi. */
+function Firmware() {
+  const device = useStore((s) => s.snap.device)
+  const fw = useStore((s) => s.snap.firmware)
+  const toast = useStore((s) => s.toast)
+  const [wifiBusy, setWifiBusy] = useState(false)
+  if (!fw?.version) return null
+  const onPlayer = device.connected ? device.info.fw || '?' : null
+  const current = onPlayer === fw.version
+  const usb = async () => {
+    toast('Installing the firmware… keep the cable in.')
+    if (await call('device:install')) toast('Firmware installed. The player is restarting.')
+  }
+  const wifi = async () => {
+    setWifiBusy(true)
+    toast('Updating the player… do not unplug it.')
+    if (await call('device:ota')) toast('Player updated.')
+    setWifiBusy(false)
+  }
+  return (
+    <div className="card wide">
+      <h3>
+        <Icon name={device.via === 'wifi' ? 'wifi' : 'usb'} /> {device.connected ? 'Firmware' : 'Set up a new player'}
+      </h3>
+      <p className="lead">
+        {device.connected
+          ? current
+            ? `Up to date: firmware ${fw.version}.`
+            : `This app has firmware ${fw.version}; the player runs ${onPlayer}.`
+          : `Plug a bare ESP32 in by USB and install the Z0Ɛ firmware ${fw.version}. Nothing else to download.`}
+      </p>
+      {fw.busy && <p className="note mono">{fw.busy}</p>}
+      <div className="actions">
+        {device.via !== 'wifi' && (
+          <Button icon="usb" disabled={!!fw.busy} onClick={usb} variant={device.connected && current ? 'ghost' : undefined}>
+            {fw.busy ? 'Installing…' : device.connected ? 'Install over USB' : 'Install firmware'}
+          </Button>
+        )}
+        {device.via === 'wifi' && (
+          <Button icon="wifi" disabled={wifiBusy} onClick={wifi} variant={current ? 'ghost' : undefined}>
+            {wifiBusy ? 'Updating…' : 'Update over Wi-Fi'}
+          </Button>
+        )}
+      </div>
+      {device.via === 'wifi' ? (
+        <p className="note">Takes about a minute and the player restarts twice. Keep it plugged into power.</p>
+      ) : (
+        <p className="note">Takes about 40 seconds. Your songs, settings, Wi-Fi and paired headphones stay. If it can't reach the board, hold its BOOT button while the install starts.</p>
+      )}
+    </div>
+  )
+}
+
 export function Player() {
   const device = useStore((s) => s.snap.device)
-  const toast = useStore((s) => s.toast)
   return (
     <>
       <div className="head">
@@ -338,22 +390,7 @@ export function Player() {
       {device.connected ? (
         <>
           <ModeCard />
-          {device.via === 'wifi' && (
-            <div className="card wide">
-              <h3>
-                <Icon name="wifi" /> Update the player over Wi-Fi
-              </h3>
-              <p className="lead">No cable needed. Takes about a minute and the player restarts twice. Keep it plugged into power.</p>
-              <Button
-                onClick={async () => {
-                  toast('Updating the player… do not unplug it.')
-                  if (await call('device:ota')) toast('Player updated.')
-                }}
-              >
-                Update firmware
-              </Button>
-            </div>
-          )}
+          <Firmware />
           <div className="cards">
             <Headphones />
             <Wifi />
@@ -370,6 +407,7 @@ export function Player() {
           <p className="note">Once it's on Wi-Fi it also connects wirelessly, as long as it's on the same network as this computer.</p>
         </div>
       )}
+      {!device.connected && <Firmware />}
     </>
   )
 }
